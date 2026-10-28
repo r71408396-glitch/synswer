@@ -137,9 +137,9 @@ body:has(.legal) .bg3d { opacity: 0.4; }
 /* Orb */
 .orb {
   position: relative;
-  width: 112px;
-  height: 121px;
-  margin: 0 auto 28px;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 22px;
   border: 0;
   padding: 0;
   background: transparent;
@@ -150,8 +150,16 @@ body:has(.legal) .bg3d { opacity: 0.4; }
 .orb:hover { transform: scale(1.05); }
 
 .orb svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.6)); }
-.robot-bolt { filter: drop-shadow(0 0 6px #3b82f6); }
-.robot-ball { filter: drop-shadow(0 0 5px #3b82f6); }
+.robot-bolt { filter: drop-shadow(0 0 4px #1e40af); }
+.robot-ball { filter: drop-shadow(0 0 4px #1e40af); }
+.robot-eye { transform-box: fill-box; transform-origin: center; }
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .robot-eye { animation: blink 5s ease-in-out infinite; }
+}
 
 @keyframes pulse {
   0%, 100% { transform: scale(1); opacity: 0.8; }
