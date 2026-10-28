@@ -93,7 +93,22 @@
     if (S.muted && vol.value > 0) { S.toggle(); muteLabel(); }
   });
   vol.addEventListener("change", function () { if (S && !S.muted) S.play("eat"); vol.blur(); });
-  if (hud) { hud.appendChild(muteBtn); hud.appendChild(vol); hud.appendChild(pauseBtn); }
+  var card = document.querySelector(".game-card");
+  var fsBtn = document.createElement("button");
+  fsBtn.type = "button";
+  fsBtn.className = "pause-btn";
+  fsBtn.textContent = "Fullscreen";
+  var canFs = card && (card.requestFullscreen || card.webkitRequestFullscreen);
+  function fsOn() { return document.fullscreenElement || document.webkitFullscreenElement; }
+  function fsLabel() { fsBtn.textContent = fsOn() ? "Exit fullscreen" : "Fullscreen"; }
+  fsBtn.addEventListener("click", function () {
+    fsBtn.blur();
+    if (fsOn()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+    else { try { (card.requestFullscreen || card.webkitRequestFullscreen).call(card); } catch (_) {} }
+  });
+  document.addEventListener("fullscreenchange", fsLabel);
+  document.addEventListener("webkitfullscreenchange", fsLabel);
+  if (hud) { hud.appendChild(muteBtn); hud.appendChild(vol); if (canFs) hud.appendChild(fsBtn); hud.appendChild(pauseBtn); }
 
   function setPaused(on) {
     if (!playing || paused === on) return;
