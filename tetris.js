@@ -50,6 +50,7 @@
       });
     });
     var cleared = 0;
+    if (window.Sound) Sound.play("lock");
     for (var y = ROWS - 1; y >= 0; y--) {
       if (board[y].every(function (c) { return c; })) {
         board.splice(y, 1);
@@ -59,6 +60,7 @@
       }
     }
     if (cleared) {
+      if (window.Sound) Sound.play("clear");
       lines += cleared;
       level = 1 + Math.floor(lines / 10);
       document.getElementById("level").textContent = level;
@@ -67,14 +69,14 @@
     spawn();
   }
 
-  function move(dx) { if (running && !collide(cur.m, cur.x + dx, cur.y)) cur.x += dx; }
+  function move(dx) { if (running && !collide(cur.m, cur.x + dx, cur.y)) { cur.x += dx; if (window.Sound) Sound.play("move"); } }
 
   function rot() {
     if (!running) return;
     var m = rotate(cur.m);
     var kicks = [0, -1, 1, -2, 2];
     for (var i = 0; i < kicks.length; i++) {
-      if (!collide(m, cur.x + kicks[i], cur.y)) { cur.m = m; cur.x += kicks[i]; return; }
+      if (!collide(m, cur.x + kicks[i], cur.y)) { cur.m = m; cur.x += kicks[i]; if (window.Sound) Sound.play("rotate"); return; }
     }
   }
 
@@ -89,6 +91,7 @@
     var n = 0;
     while (!collide(cur.m, cur.x, cur.y + 1)) { cur.y++; n++; }
     setScore(score + n * 2);
+    if (window.Sound) Sound.play("drop");
     lock();
     acc = 0;
   }

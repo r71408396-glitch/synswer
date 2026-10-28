@@ -44,6 +44,7 @@
     snake.unshift(h);
     if (h.x === food.x && h.y === food.y) {
       score += 10;
+      if (window.Sound) Sound.play("eat");
       GameUI.setScore(score);
       tickMs = Math.max(60, tickMs - 3);
       placeFood();

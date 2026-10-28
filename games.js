@@ -46,11 +46,25 @@
   pauseBtn.textContent = "Pause";
   pauseBtn.hidden = true;
   var hud = document.querySelector(".hud");
-  if (hud) hud.appendChild(pauseBtn);
+  var S = window.Sound;
+  var muteBtn = document.createElement("button");
+  muteBtn.type = "button";
+  muteBtn.className = "pause-btn";
+  function muteLabel() { muteBtn.textContent = S && S.muted ? "Sound off" : "Sound on"; }
+  muteLabel();
+  muteBtn.addEventListener("click", function () {
+    muteBtn.blur();
+    if (!S) return;
+    S.toggle();
+    muteLabel();
+    if (!S.muted) { S.play("start"); if (playing && !paused) S.music(game === "tetris"); }
+  });
+  if (hud) { hud.appendChild(muteBtn); hud.appendChild(pauseBtn); }
 
   function setPaused(on) {
     if (!playing || paused === on) return;
     paused = on;
+    if (S) { S.play("pause"); S.music(on ? false : game === "tetris"); }
     if (on) {
       if (G.onPause) G.onPause();
       $("ov-title").textContent = "Paused";
@@ -79,6 +93,7 @@
     pauseBtn.hidden = true;
     pauseBtn.textContent = "Pause";
     lastScore = score;
+    if (S) { S.music(false); S.play("gameover"); }
     $("ov-title").textContent = "Game over";
     $("ov-text").textContent = "You scored " + score + ".";
     $("start").textContent = "Play again";
@@ -92,6 +107,7 @@
     $("overlay").hidden = true;
     playing = true;
     pauseBtn.hidden = false;
+    if (S) { S.unlock(); S.play("start"); S.music(game === "tetris"); }
     if (G.onStart) G.onStart();
   });
 
@@ -214,6 +230,7 @@
       } else {
         try { localStorage.setItem("synswer-player", name); } catch (_) {}
         dlg.close();
+        if (S) S.play("saved");
         $("save").hidden = true;
         $("ov-text").textContent = "Score saved: " + lastScore + ".";
         loadBoard();

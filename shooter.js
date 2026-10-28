@@ -44,6 +44,7 @@
     fireT -= dt;
     if ((keys[" "] || firing) && fireT <= 0) {
       bullets.push({ x: p.x, y: p.y - 18 });
+      if (window.Sound) Sound.play("shoot");
       fireT = 0.22;
     }
     bullets.forEach(function (b) { b.y -= 560 * dt; });
@@ -72,6 +73,7 @@
           score += 10;
           GameUI.setScore(score);
           burst(e.x, e.y, e.kind ? "#60a5fa" : "#e879f9");
+          if (window.Sound) Sound.play("boom");
         }
       });
     });
@@ -86,6 +88,7 @@
           enemies.splice(i, 1);
           burst(p.x, p.y, "#c4b5fd");
           lives--;
+          if (window.Sound) Sound.play("hurt");
           document.getElementById("lives").textContent = lives;
           inv = 1.5;
           if (lives <= 0) { end(); return; }
