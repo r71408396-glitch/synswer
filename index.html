@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>New Project</title>
+    <style>
+      /* This placeholder is the platform's page, not the agent's. It links
+         NO styles.css and NO app.js on purpose: on a first build the agent
+         writes those before index.html, and a linked sheet restyled this
+         heading (white, uppercase, a display font on a light background) and
+         a linked script could hide the body. Every colour and font below is
+         hardcoded so the page looks the same whatever the workspace holds,
+         until the agent's own index.html replaces it. */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        min-height: 100vh;
+        background: #fafafa;
+        color: #333333;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        display: grid;
+        place-items: center;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .empty-state h1 {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        line-height: 1.3;
+        letter-spacing: 0;
+        text-transform: none;
+        color: #333333;
+        margin-bottom: 0.5rem;
+      }
+
+      .empty-state p {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        text-transform: none;
+        color: #777777;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="empty-state">
+      <h1>Your app will appear here</h1>
+      <p>Describe what you want to build in the chat, and the AI will create it.</p>
+    </main>
+  </body>
+</html>
