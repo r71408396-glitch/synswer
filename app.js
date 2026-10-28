@@ -48,6 +48,107 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
 
   // Short-term memory: the conversation of this visit
   var history = [];
+  var lastAnswer = "";
+  var attachment = null; // { name, text } or { name, file }
+
+  var fileInput = document.getElementById("ask-file");
+  var photoInput = document.getElementById("ask-photo");
+  var chip = document.getElementById("file-chip");
+  var chipName = document.getElementById("file-name");
+  var chipClear = document.getElementById("file-clear");
+  var micBtn = document.getElementById("ask-mic");
+  var micLabel = document.getElementById("ask-mic-label");
+  var dlMd = document.getElementById("dl-md");
+  var dlCsv = document.getElementById("dl-csv");
+  var welcomeEl = document.getElementById("welcome-back");
+
+  function setAttachment(a) {
+    attachment = a;
+    chip.hidden = !a;
+    chipName.textContent = a ? a.name : "";
+    if (!a) { fileInput.value = ""; photoInput.value = ""; }
+  }
+  function onPick(e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    errorEl.textContent = "";
+    if (f.type.indexOf("image/") === 0) {
+      if (f.size > 5 * 1024 * 1024) { errorEl.textContent = "Images must be under 5 MB."; e.target.value = ""; return; }
+      if (!window.synswerUser) { errorEl.textContent = "Sign in to analyze images."; e.target.value = ""; return; }
+      setAttachment({ name: f.name || "photo", file: f });
+    } else if (/\.pdf$/i.test(f.name)) {
+      errorEl.textContent = "PDF reading is not available yet. Paste the text or upload it as .txt or .csv.";
+      e.target.value = "";
+    } else {
+      if (f.size > 2 * 1024 * 1024) { errorEl.textContent = "Text files must be under 2 MB."; e.target.value = ""; return; }
+      var rd = new FileReader();
+      rd.onload = function () { setAttachment({ name: f.name, text: String(rd.result || "") }); };
+      rd.onerror = function () { errorEl.textContent = "Could not read that file."; };
+      rd.readAsText(f);
+    }
+  }
+  fileInput.addEventListener("change", onPick);
+  photoInput.addEventListener("change", onPick);
+  chipClear.addEventListener("click", function () { setAttachment(null); });
+
+  // Voice input (speech to text) where the browser supports it
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR && micBtn) {
+    micBtn.hidden = false;
+    var rec = null, listening = false;
+    micBtn.addEventListener("click", function () {
+      if (listening && rec) { rec.stop(); return; }
+      rec = new SR();
+      rec.lang = navigator.language || "en-US";
+      rec.interimResults = true;
+      rec.continuous = false;
+      var base = input.value ? input.value + " " : "";
+      rec.onstart = function () { listening = true; micBtn.setAttribute("aria-pressed", "true"); micLabel.textContent = "Listening..."; };
+      rec.onresult = function (ev) {
+        var t = "";
+        for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript;
+        input.value = base + t;
+      };
+      rec.onerror = function () { errorEl.textContent = "Voice input was blocked or unavailable. Check microphone permission."; };
+      rec.onend = function () { listening = false; micBtn.setAttribute("aria-pressed", "false"); micLabel.textContent = "Speak"; input.focus(); };
+      try { rec.start(); } catch (_) {}
+    });
+  }
+
+  // Download the answer as a file, and any table as CSV
+  function download(name, mime, text) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function tableCsv(md) {
+    var lines = md.replace(/\r/g, "").split("\n"), out = [];
+    lines.forEach(function (l) {
+      if (!/^\s*\|/.test(l) || /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(l)) return;
+      out.push(cells(l).map(function (c) { return '"' + c.replace(/\*\*/g, "").replace(/"/g, '""') + '"'; }).join(","));
+    });
+    return out.join("\n");
+  }
+  dlMd.addEventListener("click", function () { download("synswer-answer.md", "text/markdown", lastAnswer); });
+  dlCsv.addEventListener("click", function () { download("synswer-table.csv", "text/csv", tableCsv(lastAnswer)); });
+
+  // Proactive: remind a returning visitor of their last question
+  try {
+    var prev = localStorage.getItem("synswer-last-q");
+    if (prev && welcomeEl) {
+      welcomeEl.innerHTML = "";
+      welcomeEl.appendChild(document.createTextNode("Welcome back. Last time you asked: \"" + (prev.length > 70 ? prev.slice(0, 67) + "..." : prev) + "\""));
+      var again = document.createElement("button");
+      again.type = "button";
+      again.textContent = "Ask it again";
+      again.addEventListener("click", function () { input.value = prev; input.focus(); form.requestSubmit(); });
+      welcomeEl.appendChild(again);
+      welcomeEl.hidden = false;
+    }
+  } catch (_) {}
 
   async function armCaptcha() {
     try {
@@ -317,6 +418,14 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     while (i < lines.length) {
       var l = lines[i];
       if (!l.trim()) { i++; continue; }
+      if (/^\s*```/.test(l)) {
+        var code = [];
+        i++;
+        while (i < lines.length && !/^\s*```/.test(lines[i])) { code.push(lines[i]); i++; }
+        i++;
+        out.push("<pre><code>" + esc(code.join("\n")) + "</code></pre>");
+        continue;
+      }
       if (/^\s*\|/.test(l) && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1])) {
         var head = cells(l), html = "<div class=\"table-wrap\"><table><thead><tr>" + head.map(function (c) { return "<th>" + inline(c) + "</th>"; }).join("") + "</tr></thead><tbody>";
         i += 2;
@@ -363,7 +472,9 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     "REASONING: For a complex question, break it into sub-tasks, work through them in order, and verify your result against the sources before answering. Show only the conclusion and the key trade-offs, not your scratch work. " +
     "TONE: Professional, adaptive, human-centric. No filler, no greeting, no restating the question, no robotic transitions. Get straight to the value. " +
     "FORMAT: Use markdown. Start with one or two sentences with the core answer, putting the key entities and the core answer in **bold**. Then, only if useful, use short bullet points (lines starting with '- ') and, for comparisons, a markdown table with a header row and a separator row. No headings unless the answer is long. No citation numbers. " +
-    "LENGTH: Scale to the question. A simple lookup gets a direct answer of one to three sentences. A complex or structural problem gets a visible trade-off analysis (options, pros and cons) followed by a single actionable recommendation. Never exceed about 350 words. " +
+    "LENGTH: Scale to the question. A simple lookup gets a direct answer of one to three sentences. A complex or structural problem gets a visible trade-off analysis (options, pros and cons) followed by a single actionable recommendation. Never exceed about 350 words, except when asked to draft a document. " +
+    "FILES: If an ATTACHED FILE is provided, analyze its actual contents: summarize, extract key insights, and for spreadsheets check for errors such as blanks, duplicates, inconsistent formats and outliers, citing row numbers. If the file text is marked as truncated, say so. If an image is attached, describe what you see and answer about it directly. " +
+    "DOCUMENTS: When asked to draft a contract, blog post, email, report or code, write the complete document in markdown (code inside fenced code blocks), with no commentary around it, and note briefly that contracts are drafts needing professional legal review. For data to chart or export, give a markdown table. " +
     "SOURCES: REFERENCE holds Wikipedia excerpts: use the relevant parts, ignore the rest, and explain in your own words, never copying sentences. Recent news headlines are reports, not confirmed fact: attribute them (according to reports from the publisher, dated the given date) and say plainly when they are thin. Titles from Hacker News, Stack Overflow and scholarly papers were not read: use them only to confirm a topic or finding is real and discussed. Prefer claims that more than one source supports, and say briefly when sources disagree or only one supports a point. " +
     "MEMORY: SESSION CONVERSATION holds earlier turns of this visit: use it so follow-up questions keep their context. SAVED MEMORY holds notes about this user from earlier visits: use it to personalise, but never recite it back unprompted. " +
     "HONESTY: You cannot see live data. If something cannot be verified from the sources or from solid knowledge, say so neutrally and state what to check, instead of assuming. Never invent sources, links or quotes. If the question depends on recent events, say your answer may be out of date. " +
@@ -383,6 +494,32 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     }
 
     submit.disabled = true;
+    dlMd.hidden = true;
+    dlCsv.hidden = true;
+    var att = attachment;
+    var imagePath = null;
+    if (att && att.file) {
+      try {
+        var fd = new FormData();
+        fd.append("folder", "private/ask");
+        fd.append("file", att.file);
+        var up = await fetch("api/storage/upload", { method: "POST", credentials: "include", body: fd });
+        var upData = await up.json().catch(function () { return {}; });
+        if (!up.ok) {
+          errorEl.textContent = upData.error || "Could not upload the image.";
+          submit.disabled = false;
+          armCaptcha();
+          return;
+        }
+        imagePath = upData.path;
+      } catch (_) {
+        errorEl.textContent = "Could not upload the image.";
+        submit.disabled = false;
+        armCaptcha();
+        return;
+      }
+    }
+    try { localStorage.setItem("synswer-last-q", q); } catch (_) {}
     showAnswer(q);
     setBody("Reading sources...", true);
     renderSources([]);
@@ -412,7 +549,10 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
       "SESSION CONVERSATION:\n" + (session || "(first question of this visit)") +
       "\n\nSAVED MEMORY:\n" + (memories.length ? memories.map(function (m) { return "- " + m; }).join("\n") : "(none)") +
       "\n\nQUESTION:\n" + q +
-      "\n\nREFERENCE:\n" + (reference || "(none found)");
+      (att && att.text != null
+        ? "\n\nATTACHED FILE (" + att.name + (att.text.length > 20000 ? ", truncated to the first 20000 characters" : "") + "):\n" + att.text.slice(0, 20000)
+        : "") +
+      "\n\nREFERENCE:\n" + (att && att.text != null ? (reference || "(none found)").slice(0, 3000) : (reference || "(none found)"));
 
     try {
       var res = await fetch("api/ai/complete", {
@@ -422,7 +562,8 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
         body: JSON.stringify({
           prompt: SYSTEM,
           input: inputText,
-          maxTokens: 900,
+          maxTokens: 1000,
+          images: imagePath ? [imagePath] : undefined,
           altcha: altcha
         }),
       });
@@ -432,6 +573,10 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
       } else {
         var answer = data.text || "No answer came back. Please try again.";
         setBody(answer, false);
+        lastAnswer = answer;
+        dlMd.hidden = false;
+        dlCsv.hidden = !/^\s*\|.*\|\s*$/m.test(answer);
+        setAttachment(null);
         input.value = "";
         if (data.text) {
           history.push({ q: q, a: answer });

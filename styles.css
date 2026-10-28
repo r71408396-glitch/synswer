@@ -241,6 +241,19 @@ altcha-widget {
   color: #fca5a5;
 }
 
+.ask-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.tool-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font-size: 14px; cursor: pointer; }
+.tool-btn:hover, .tool-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); }
+.tool-btn[aria-pressed="true"] { background: var(--surface-2); }
+.file-chip { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 6px 6px 6px 14px; border-radius: 999px; background: var(--surface-2); color: var(--ink); font-size: 14px; }
+.file-chip > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.file-chip button { width: 26px; height: 26px; border: 0; border-radius: 50%; background: var(--line); color: var(--ink); line-height: 1; }
+.welcome-back { margin: 22px auto 0; font-size: 15px; color: var(--text); }
+.welcome-back button { margin-left: 6px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 14px; }
+.welcome-back button:hover { border-color: var(--accent); }
+.answer-body pre { margin: 0 0 1em; padding: 14px 16px; overflow-x: auto; background: #07070b; border: 1px solid var(--line); border-radius: 12px; }
+.answer-body pre code { padding: 0; background: none; font-size: 14px; color: #dcdcec; white-space: pre; }
+
 /* Suggestions */
 .chips {
   display: flex;
