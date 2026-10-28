@@ -36,7 +36,48 @@
   };
   G.typing = function () { return !!document.querySelector("dialog[open]"); };
 
+  // ----- pause -----
+  var playing = false, paused = false;
+  G.onPause = null;
+  G.onResume = null;
+  var pauseBtn = document.createElement("button");
+  pauseBtn.type = "button";
+  pauseBtn.className = "pause-btn";
+  pauseBtn.textContent = "Pause";
+  pauseBtn.hidden = true;
+  var hud = document.querySelector(".hud");
+  if (hud) hud.appendChild(pauseBtn);
+
+  function setPaused(on) {
+    if (!playing || paused === on) return;
+    paused = on;
+    if (on) {
+      if (G.onPause) G.onPause();
+      $("ov-title").textContent = "Paused";
+      $("ov-text").textContent = "Press P or Resume to keep playing.";
+      $("start").textContent = "Resume";
+      $("save").hidden = true;
+      $("overlay").hidden = false;
+      pauseBtn.textContent = "Resume";
+    } else {
+      $("overlay").hidden = true;
+      if (G.onResume) G.onResume();
+      pauseBtn.textContent = "Pause";
+    }
+  }
+  pauseBtn.addEventListener("click", function () { pauseBtn.blur(); setPaused(!paused); });
+  document.addEventListener("keydown", function (e) {
+    if (G.typing()) return;
+    var k = e.key.toLowerCase();
+    if (k === "p" || (k === "escape" && playing)) { e.preventDefault(); setPaused(!paused); }
+  });
+  document.addEventListener("visibilitychange", function () { if (document.hidden) setPaused(true); });
+
   G.over = function (score) {
+    playing = false;
+    paused = false;
+    pauseBtn.hidden = true;
+    pauseBtn.textContent = "Pause";
     lastScore = score;
     $("ov-title").textContent = "Game over";
     $("ov-text").textContent = "You scored " + score + ".";
@@ -46,15 +87,44 @@
   };
 
   $("start").addEventListener("click", function () {
-    $("overlay").hidden = true;
     $("start").blur();
+    if (paused) { setPaused(false); return; }
+    $("overlay").hidden = true;
+    playing = true;
+    pauseBtn.hidden = false;
     if (G.onStart) G.onStart();
   });
 
   // ----- leaderboard -----
+  var mode = "week";
+  function weekStart() {
+    var d = new Date();
+    var day = (d.getUTCDay() + 6) % 7;
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - day)).toISOString();
+  }
+  var boardEl = document.querySelector(".board");
+  var boardHead = boardEl && boardEl.querySelector("h2");
+  if (boardHead) {
+    var tabs = document.createElement("div");
+    tabs.className = "tabs";
+    tabs.innerHTML = '<button type="button" class="tab is-on" data-mode="week">This week</button><button type="button" class="tab" data-mode="all">All time</button>';
+    boardHead.after(tabs);
+    tabs.addEventListener("click", function (e) {
+      var m = e.target.getAttribute && e.target.getAttribute("data-mode");
+      if (!m) return;
+      mode = m;
+      tabs.querySelectorAll(".tab").forEach(function (b) { b.classList.toggle("is-on", b.getAttribute("data-mode") === m); });
+      loadBoard();
+    });
+    var note = document.createElement("p");
+    note.className = "board-note";
+    note.textContent = "Weekly boards reset every Monday (UTC).";
+    boardEl.appendChild(note);
+  }
   function loadBoard() {
     var el = $("leaderboard");
-    fetch("api/rows/scores?game=eq." + game + "&select=player,score&sort=-score&limit=10")
+    var extra = mode === "week" ? "&created_at=gte." + encodeURIComponent(weekStart()) : "";
+    fetch("api/rows/scores?game=eq." + game + extra + "&select=player,score&sort=-score&limit=10")
       .then(function (r) { return r.json(); })
       .then(function (d) {
         el.innerHTML = "";
@@ -62,7 +132,7 @@
         if (!rows.length) {
           var e = document.createElement("li");
           e.className = "empty";
-          e.textContent = "No scores yet. Be the first.";
+          e.textContent = mode === "week" ? "No scores this week. Be the first." : "No scores yet. Be the first.";
           el.appendChild(e);
           return;
         }

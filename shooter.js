@@ -151,6 +151,8 @@
   }
 
   GameUI.onStart = function () { reset(); running = true; begin(); };
+  GameUI.onPause = function () { running = false; runId++; firing = false; keys = {}; };
+  GameUI.onResume = function () { running = true; begin(); };
 
   document.addEventListener("keydown", function (e) {
     if (GameUI.typing()) return;
