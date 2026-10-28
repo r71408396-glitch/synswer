@@ -251,9 +251,26 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     var timer = setTimeout(function () { ctrl.abort(); }, ms || 5000);
     return fetch(url, { signal: ctrl.signal }).finally(function () { clearTimeout(timer); });
   }
-  function isTech(q) { return /\b(ai|llm|gpt|software|programming|code|coding|developer|javascript|python|rust|linux|startup|app|api|framework|library|chip|gpu|cyber|security|crypto|open source|tech|computer)\b/i.test(q); }
-  function isHowTo(q) { return /\b(how (do|to|can)|error|bug|fix|install|syntax|function|array|css|html|sql|regex|git|docker|exception)\b/i.test(q); }
-  function isScience(q) { return /\b(study|studies|research|paper|evidence|clinical|trial|health|disease|vaccine|cancer|diet|sleep|climate|physics|chemistry|biology|psychology|effect|effects|cause|causes|risk|treatment)\b/i.test(q); }
+  // Every source now runs for every question; the relevance filters drop what does not fit.
+  function isTech(q) { return true; }
+  function isHowTo(q) { return true; }
+  function isScience(q) { return true; }
+
+  // DuckDuckGo instant answers (public, no key): a broad web-sourced summary and related topics.
+  async function lookupDDG(q) {
+    try {
+      var res = await timedFetch("https://api.duckduckgo.com/?format=json&no_html=1&skip_disambig=1&q=" + encodeURIComponent(q), 5000);
+      if (!res.ok) return [];
+      var d = await res.json(), out = [];
+      if (d.AbstractText && d.AbstractURL) {
+        out.push({ kind: "web", title: d.AbstractText.slice(0, 500), publisher: d.AbstractSource || "DuckDuckGo", date: "", url: d.AbstractURL });
+      }
+      (d.RelatedTopics || []).slice(0, 4).forEach(function (t) {
+        if (t.Text && t.FirstURL) out.push({ kind: "web", title: t.Text.slice(0, 200), publisher: "DuckDuckGo", date: "", url: t.FirstURL });
+      });
+      return out.slice(0, 4);
+    } catch (_) { return []; }
+  }
 
   // Hacker News discussions (public, no key) for tech questions.
   async function lookupHN(q) {
@@ -475,7 +492,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     "LENGTH: Scale to the question. A simple lookup gets a direct answer of one to three sentences. A complex or structural problem gets a visible trade-off analysis (options, pros and cons) followed by a single actionable recommendation. Never exceed about 350 words, except when asked to draft a document. " +
     "FILES: If an ATTACHED FILE is provided, analyze its actual contents: summarize, extract key insights, and for spreadsheets check for errors such as blanks, duplicates, inconsistent formats and outliers, citing row numbers. If the file text is marked as truncated, say so. If an image is attached, describe what you see and answer about it directly. " +
     "DOCUMENTS: When asked to draft a contract, blog post, email, report or code, write the complete document in markdown (code inside fenced code blocks), with no commentary around it, and note briefly that contracts are drafts needing professional legal review. For data to chart or export, give a markdown table. " +
-    "SOURCES: REFERENCE holds Wikipedia excerpts: use the relevant parts, ignore the rest, and explain in your own words, never copying sentences. Recent news headlines are reports, not confirmed fact: attribute them (according to reports from the publisher, dated the given date) and say plainly when they are thin. Titles from Hacker News, Stack Overflow and scholarly papers were not read: use them only to confirm a topic or finding is real and discussed. Prefer claims that more than one source supports, and say briefly when sources disagree or only one supports a point. " +
+    "SOURCES: REFERENCE holds Wikipedia excerpts: use the relevant parts, ignore the rest, and explain in your own words, never copying sentences. Wikipedia is only one input: when it is missing or off-topic, answer from solid general knowledge across all fields (not just encyclopedic topics) and say what could not be verified. Recent news headlines are reports, not confirmed fact: attribute them (according to reports from the publisher, dated the given date) and say plainly when they are thin. Titles from Hacker News, Stack Overflow and scholarly papers were not read: use them only to confirm a topic or finding is real and discussed. Prefer claims that more than one source supports, and say briefly when sources disagree or only one supports a point. " +
     "MEMORY: SESSION CONVERSATION holds earlier turns of this visit: use it so follow-up questions keep their context. SAVED MEMORY holds notes about this user from earlier visits: use it to personalise, but never recite it back unprompted. " +
     "HONESTY: You cannot see live data. If something cannot be verified from the sources or from solid knowledge, say so neutrally and state what to check, instead of assuming. Never invent sources, links or quotes. If the question depends on recent events, say your answer may be out of date. " +
     "PRIVACY: Never disclose or confirm credentials, passwords, API keys, government or financial identifiers, or private records about a person. If asked to verify or reveal such a string, decline neutrally without repeating it back.";
@@ -525,10 +542,10 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     renderSources([]);
 
     await window.synswerUserReady;
-    var found = await Promise.all([lookupSources(q), lookupNews(q), lookupHN(q), lookupStack(q), lookupPapers(q), recallMemory(q)]);
+    var found = await Promise.all([lookupSources(q), lookupNews(q), lookupHN(q), lookupStack(q), lookupPapers(q), recallMemory(q), lookupDDG(q)]);
     var wiki = found[0];
     var news = found[1];
-    var leads = found[2].concat(found[3], found[4]);
+    var leads = found[2].concat(found[3], found[4], found[6]);
     var memories = found[5];
     var sources = wiki.concat(news, leads);
     renderSources(sources);
