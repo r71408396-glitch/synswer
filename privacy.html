@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy - Synswer</title>
+    <meta name="theme-color" content="#07070b" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div class="glow" aria-hidden="true"></div>
+    <main class="legal">
+      <a class="back" href="index.html">&larr; Back to Synswer</a>
+      <h1>Privacy</h1>
+      <p>Draft policy - please have it reviewed before relying on it.</p>
+      <h2>What we process</h2>
+      <p>Questions you type into Synswer are sent to an AI model to produce an answer. Please do not include personal or confidential information in your questions.</p>
+      <h2>Cookies</h2>
+      <p>We use cookies and similar storage for essential functions, to remember your cookie choice, and, if you accept, to understand how the site is used.</p>
+      <h2>Contact</h2>
+      <p>Questions about privacy can be sent to the Synswer team using the contact details published on this site.</p>
+    </main>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+  </body>
+</html>
