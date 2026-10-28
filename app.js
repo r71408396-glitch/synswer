@@ -52,6 +52,7 @@
     home.hidden = true;
     answerView.hidden = false;
     window.scrollTo({ top: 0 });
+    document.dispatchEvent(new CustomEvent("synswer:view"));
   }
 
   function setBody(text, loading) {
@@ -62,6 +63,7 @@
       p.textContent = para.trim();
       if (p.textContent) bodyEl.appendChild(p);
     });
+    if (!loading) document.dispatchEvent(new CustomEvent("synswer:answer"));
   }
 
   form.addEventListener("submit", async function (e) {
@@ -112,6 +114,7 @@
   againBtn.addEventListener("click", function () {
     answerView.hidden = true;
     home.hidden = false;
+    document.dispatchEvent(new CustomEvent("synswer:home"));
     input.focus();
   });
 })();

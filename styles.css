@@ -328,6 +328,12 @@ html:not(.consent-set) body { padding-bottom: 120px; }
   .cookie-actions .btn { flex: 1; }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html.js-motion [data-animate="hero"],
+  html.js-motion [data-animate="split"],
+  html.js-motion [data-animate="stagger"] > * { visibility: hidden; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .orb::after, .answer-body.is-loading p { animation: none; }
   * { transition: none !important; }

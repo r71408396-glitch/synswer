@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <script>document.documentElement.classList.add('js-motion');setTimeout(function(){document.documentElement.classList.remove('js-motion')},2500)</script>
     <link rel="stylesheet" href="styles.css" />
     <script>
       try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}
@@ -21,13 +22,13 @@
     <main class="page">
       <div class="stage">
         <section id="home-view">
-          <button class="orb" id="orb" type="button" aria-label="Ask a question">
+          <button class="orb" id="orb" type="button" aria-label="Ask a question" data-animate="hero">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
           </button>
-          <span class="eyebrow">Tap to ask</span>
-          <h1 class="hero-title">What would you like to know?</h1>
+          <span class="eyebrow" data-animate="hero">Tap to ask</span>
+          <h1 class="hero-title" data-animate="split">What would you like to know?</h1>
 
-          <form class="ask" id="ask-form" autocomplete="off">
+          <form class="ask" id="ask-form" autocomplete="off" data-animate="hero">
             <div class="ask-row">
               <input id="ask-input" name="q" type="text" placeholder="Ask anything" maxlength="500" aria-label="Your question" required />
               <button class="btn" id="ask-submit" type="submit">Ask</button>
@@ -36,7 +37,7 @@
             <p class="form-error" id="ask-error" role="alert"></p>
           </form>
 
-          <ul class="chips">
+          <ul class="chips" data-animate="stagger">
             <li><button type="button" class="chip" data-suggest="Latest AI news">Latest AI news</button></li>
             <li><button type="button" class="chip" data-suggest="How does quantum computing work?">How does quantum computing work?</button></li>
             <li><button type="button" class="chip" data-suggest="Best programming languages 2026">Best programming languages 2026</button></li>
@@ -61,5 +62,6 @@
     {cookie}
 
     <script src="app.js"></script>
+    <script type="module" src="motion.js"></script>
   </body>
 </html>
