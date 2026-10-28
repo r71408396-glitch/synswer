@@ -23,6 +23,9 @@
 .pause-btn { min-height: 34px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); color: var(--ink); font-size: 14px; touch-action: manipulation; }
 .pause-btn:hover { border-color: var(--accent); }
 .pause-btn[hidden] { display: none; }
+.hud { flex-wrap: wrap; }
+.vol { width: 90px; min-width: 70px; padding: 0; height: 24px; background: transparent; border: 0; accent-color: var(--accent); touch-action: manipulation; }
+.vol:focus { box-shadow: none; }
 .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 .tab { flex: 1; min-height: 36px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font-size: 14px; }
 .tab.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }

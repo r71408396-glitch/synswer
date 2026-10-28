@@ -1,7 +1,10 @@
 // Classic chiptune sounds for the games, synthesised with Web Audio (no audio files).
 (function () {
   var ctx = null, master = null, muted = false, musicOn = false, timer = null, nextAt = 0, step = 0;
+  var volume = 0.7;
   try { muted = localStorage.getItem("synswer-muted") === "1"; } catch (_) {}
+  try { var sv = parseFloat(localStorage.getItem("synswer-volume")); if (!isNaN(sv)) volume = Math.max(0, Math.min(1, sv)); } catch (_) {}
+  function gainFor(v) { return 0.257 * v; }
 
   function ensure() {
     if (!ctx) {
@@ -9,7 +12,7 @@
       if (!AC) return null;
       ctx = new AC();
       master = ctx.createGain();
-      master.gain.value = 0.18;
+      master.gain.value = gainFor(volume);
       master.connect(ctx.destination);
     }
     if (ctx.state === "suspended") ctx.resume();
@@ -69,6 +72,12 @@
 
   window.Sound = {
     get muted() { return muted; },
+    get volume() { return volume; },
+    setVolume: function (v) {
+      volume = Math.max(0, Math.min(1, v));
+      try { localStorage.setItem("synswer-volume", String(volume)); } catch (_) {}
+      if (master) master.gain.value = gainFor(volume);
+    },
     play: function (name) {
       if (muted || !fx[name] || !ensure()) return;
       fx[name](ctx.currentTime + 0.005);

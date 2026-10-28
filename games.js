@@ -59,7 +59,21 @@
     muteLabel();
     if (!S.muted) { S.play("start"); if (playing && !paused) S.music(game === "tetris"); }
   });
-  if (hud) { hud.appendChild(muteBtn); hud.appendChild(pauseBtn); }
+  var vol = document.createElement("input");
+  vol.type = "range";
+  vol.className = "vol";
+  vol.min = "0";
+  vol.max = "100";
+  vol.step = "5";
+  vol.value = S ? Math.round(S.volume * 100) : 70;
+  vol.setAttribute("aria-label", "Volume");
+  vol.addEventListener("input", function () {
+    if (!S) return;
+    S.setVolume(vol.value / 100);
+    if (S.muted && vol.value > 0) { S.toggle(); muteLabel(); }
+  });
+  vol.addEventListener("change", function () { if (S && !S.muted) S.play("eat"); vol.blur(); });
+  if (hud) { hud.appendChild(muteBtn); hud.appendChild(vol); hud.appendChild(pauseBtn); }
 
   function setPaused(on) {
     if (!playing || paused === on) return;
