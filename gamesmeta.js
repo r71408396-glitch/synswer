@@ -47,5 +47,5 @@ window.GAME_META = [
     desc: "Swipe to slice flying items. Never touch a bomb.",
     hint: "Swipe through the items to slice them. A bomb ends the game. Missing 3 items also ends it." }
 ];
-window.GAME_READY = ["gridlock", "colorlink"];
+window.GAME_READY = ["gridlock", "colorlink", "merge", "perfecttap", "tilestep", "deflect"];
 window.GAME_META = window.GAME_META.filter(function (m) { return window.GAME_READY.indexOf(m.id) >= 0; });
