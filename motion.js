@@ -9,7 +9,7 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   const tl = gsap.timeline({ defaults: { ease: 'power3.out', lazy: false } });
   const orb = document.getElementById('orb');
   if (orb) {
-    tl.from(orb, { scale: 0.7, autoAlpha: 0, duration: 0.9, clearProps: 'transform,opacity,visibility' }, 0);
+    tl.from(orb, { scale: 0.7, autoAlpha: 0, duration: 0.9, clearProps: 'transform' }, 0);
   }
   const eyebrow = document.querySelector('.eyebrow[data-animate="hero"]');
   if (eyebrow) tl.from(eyebrow, { y: 10, autoAlpha: 0, duration: 0.6 }, 0.25);
@@ -24,9 +24,10 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
 
   // Orb: a slow breathing glow and a gentle drift of the icon (transform of the orb itself stays free for hover).
   if (orb) {
-    gsap.to(orb, { boxShadow: '0 0 0 1px rgba(139,92,246,0.8), 0 0 64px rgba(139,92,246,0.5)', duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+    const bolt = orb.querySelector('.robot-bolt');
+    if (bolt) gsap.to(bolt, { opacity: 0.55, duration: 1.1, ease: 'sine.inOut', yoyo: true, repeat: -1 });
     const icon = orb.querySelector('svg');
-    if (icon) gsap.to(icon, { y: -3, rotation: 6, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+    if (icon) gsap.to(icon, { y: -4, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
   }
 
   // Answer reveal: question, card, then each paragraph in turn.
