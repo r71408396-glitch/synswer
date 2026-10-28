@@ -50,7 +50,9 @@
         <section class="answer" id="answer-view" hidden aria-live="polite">
           <h2 class="answer-q" id="answer-q"></h2>
           <div class="answer-body" id="answer-body"></div>
-          <p class="answer-note">Answers come from the model's own knowledge and may be out of date. Check important facts.</p>
+          <p class="sources-label" id="sources-label" hidden>Sources checked</p>
+          <ul class="sources" id="answer-sources" hidden></ul>
+          <p class="answer-note">Synswer reads a few Wikipedia articles for each question and explains them in its own words. It does not search the whole web, so recent events may be missing. Check important facts.</p>
           <div class="answer-actions">
             <button type="button" class="btn" id="ask-again">Ask another question</button>
           </div>
@@ -61,6 +63,7 @@
     {footer}
     {cookie}
 
+    <script src="matrix.js"></script>
     <script src="app.js"></script>
     <script type="module" src="motion.js"></script>
   </body>

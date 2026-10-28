@@ -64,16 +64,54 @@ button { cursor: pointer; }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* Backdrop glow */
+/* Matrix rain canvas */
+.matrix {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+/* Backdrop glow: darkens the middle so text stays readable over the rain */
 .glow {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(60vmax 40vmax at 50% 38%, rgba(109, 40, 217, 0.22), transparent 70%),
-    radial-gradient(40vmax 30vmax at 50% 60%, rgba(37, 99, 235, 0.10), transparent 70%);
+    radial-gradient(48vmax 34vmax at 50% 46%, rgba(7, 7, 11, 0.82), transparent 75%),
+    radial-gradient(60vmax 40vmax at 50% 38%, rgba(109, 40, 217, 0.18), transparent 70%);
 }
+
+body:has(.legal) .matrix { opacity: 0.22; }
+
+.sources {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sources[hidden] { display: none; }
+.sources a {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  text-decoration: none;
+}
+.sources a:hover { border-color: var(--accent); color: var(--ink); }
+.sources-label { margin: 18px 0 0; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+.legal { text-shadow: 0 0 12px #07070b, 0 0 24px #07070b; }
+.legal h3 { font-size: 1.05rem; margin: 20px 0 6px; font-weight: 700; }
+.legal ul { margin: 0 0 1em; padding-left: 1.2em; }
+.legal li { margin-bottom: 6px; }
 
 .page {
   position: relative;

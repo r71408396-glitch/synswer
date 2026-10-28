@@ -47,6 +47,52 @@
     });
   });
 
+  var sourcesEl = document.getElementById("answer-sources");
+  var sourcesLabel = document.getElementById("sources-label");
+
+  // Look up a few Wikipedia articles for the question (public, no key). Fails quietly.
+  async function lookupSources(q) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, 5000);
+    try {
+      var url = "https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*" +
+        "&generator=search&gsrlimit=4&gsrsearch=" + encodeURIComponent(q) +
+        "&prop=extracts&exintro=1&explaintext=1&exchars=1200";
+      var res = await fetch(url, { signal: ctrl.signal });
+      if (!res.ok) return [];
+      var data = await res.json();
+      var pages = data && data.query && data.query.pages ? Object.keys(data.query.pages).map(function (k) { return data.query.pages[k]; }) : [];
+      return pages
+        .filter(function (p) { return p.extract && p.extract.length > 80; })
+        .sort(function (a, b) { return a.index - b.index; })
+        .slice(0, 3)
+        .map(function (p) {
+          return { title: p.title, extract: p.extract, url: "https://en.wikipedia.org/?curid=" + p.pageid };
+        });
+    } catch (_) {
+      return [];
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function renderSources(list) {
+    if (!sourcesEl) return;
+    sourcesEl.innerHTML = "";
+    list.forEach(function (s) {
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.href = s.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = s.title + " (Wikipedia)";
+      li.appendChild(a);
+      sourcesEl.appendChild(li);
+    });
+    sourcesEl.hidden = !list.length;
+    if (sourcesLabel) sourcesLabel.hidden = !list.length;
+  }
+
   function showAnswer(question) {
     qEl.textContent = question;
     home.hidden = true;
@@ -81,7 +127,16 @@
 
     submit.disabled = true;
     showAnswer(q);
+    setBody("Reading sources...", true);
+    renderSources([]);
+
+    var sources = await lookupSources(q);
+    renderSources(sources);
     setBody("Thinking...", true);
+
+    var reference = sources.length
+      ? sources.map(function (s, i) { return "[" + (i + 1) + "] " + s.title + ": " + s.extract; }).join("\n\n")
+      : "";
 
     try {
       var res = await fetch("api/ai/complete", {
@@ -90,8 +145,8 @@
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           prompt:
-            "You are Synswer, a calm and precise answer engine. Answer the question in plain paragraphs (no markdown, no bullet symbols, no headings), at most 220 words. Lead with the direct answer. You cannot browse the web: if the question depends on recent events or live data, say plainly that your knowledge may be out of date and what to check. Never invent sources, links or quotes.",
-          input: q,
+            "You are Synswer, a calm and precise answer engine. Answer the QUESTION in plain paragraphs (no markdown, no bullet symbols, no headings, no citation numbers), at most 220 words. Lead with the direct answer. REFERENCE holds excerpts from Wikipedia articles found for this question. Use only the parts that are relevant, ignore irrelevant ones, check them against what you know, and explain the result entirely in your own words: never copy sentences from the excerpts and never quote them. If the reference is empty or does not help, answer from your own knowledge. You cannot see live data: if the question depends on recent events, say plainly that your answer may be out of date and what to check. Never invent sources, links or quotes.",
+          input: "QUESTION:\n" + q + "\n\nREFERENCE:\n" + (reference || "(none found)"),
           maxTokens: 700,
           altcha: altcha
         }),
