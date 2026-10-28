@@ -2,7 +2,8 @@
 import { createScene } from "@kreova/scene";
 
 const PURPLES = [0x8b5cf6, 0xa78bfa, 0x7c3aed, 0xc084fc, 0x6d28d9];
-const SYMBOLS = ["\u03C0", "\u2211", "\u222B", "\u221Ax", "\u221E", "x\u00B2", "\u0394", "\u03B8", "\u03BB", "\u2248", "f(x)", "e^i\u03C0", "\u2202", "\u00B1", "a\u00B2+b\u00B2"];
+const SYMBOLS = ["E=mc\u00B2", "a\u00B2+b\u00B2=c\u00B2", "\u222Bf(x)dx", "\u03A3n=1", "sin\u00B2+cos\u00B2=1", "e^i\u03C0+1=0", "\u0394y/\u0394x", "x=(-b\u00B1\u221A\u0394)/2a", "\u03C0r\u00B2", "lim x\u2192\u221E", "\u03C0", "\u221E", "\u2202f/\u2202x", "\u221A2", "F=ma", "V=l\u00B7w\u00B7h"];
+const OLD_SYMBOLS = ["\u03C0", "\u2211", "\u222B", "\u221Ax", "\u221E", "x\u00B2", "\u0394", "\u03B8", "\u03BB", "\u2248", "f(x)", "e^i\u03C0", "\u2202", "\u00B1", "a\u00B2+b\u00B2"];
 
 // small deterministic random so layouts are stable
 function rng(seed) {
@@ -86,20 +87,21 @@ createScene({
     var low = quality === "low";
     var seg = low ? 1 : 2;
     var geos = [
-      new THREE.IcosahedronGeometry(1, seg > 1 ? 1 : 0),
-      new THREE.OctahedronGeometry(1.1, 0),
-      new THREE.TorusGeometry(1, 0.35, low ? 8 : 16, low ? 24 : 48),
-      new THREE.TorusKnotGeometry(0.8, 0.26, low ? 48 : 110, low ? 8 : 14),
-      new THREE.DodecahedronGeometry(1, 0),
       new THREE.BoxGeometry(1.4, 1.4, 1.4),
-      new THREE.TetrahedronGeometry(1.2, 0)
+      new THREE.BoxGeometry(2.2, 0.9, 1)
+,      new THREE.SphereGeometry(0.95, low ? 10 : 14, low ? 8 : 10),
+      new THREE.CylinderGeometry(0.7, 0.7, 1.6, 6),
+      new THREE.ConeGeometry(0.95, 1.6, 4),
+      new THREE.OctahedronGeometry(1.1, 0),
+      new THREE.BoxGeometry(1, 1, 2.4)
     ];
+    var wireIdx = { 2: true, 4: true, 5: true };
     var count = low ? 8 : quality === "medium" ? 11 : 14;
     var r = rng(7);
     for (var i = 0; i < count; i++) {
       var geo = geos[i % geos.length];
       var color = PURPLES[i % PURPLES.length];
-      var wire = i % 3 === 1;
+      var wire = !!wireIdx[i % geos.length] || (i >= geos.length && i % 2 === 1);
       var mat = wire
         ? new THREE.MeshBasicMaterial({ color: color, wireframe: true, transparent: true, opacity: 0.55 })
         : new THREE.MeshStandardMaterial({ color: color, metalness: 0.35, roughness: 0.3, emissive: color, emissiveIntensity: 0.22, transparent: true, opacity: 0.9 });
@@ -197,13 +199,6 @@ createScene({
     lineMat = new THREE.LineBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending });
     brain.add(new THREE.LineSegments(lg, lineMat));
 
-    // soft glow core
-    var core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.75, 16, 12),
-      new THREE.MeshBasicMaterial({ color: 0x7c3aed, transparent: true, opacity: 0.1, depthWrite: false, blending: THREE.AdditiveBlending })
-    );
-    core.scale.set(1, 0.8, 1.3);
-    brain.add(core);
 
     scene.add(brain);
     layout(size.width, size.height);
