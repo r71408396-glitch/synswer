@@ -64,14 +64,21 @@ button { cursor: pointer; }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* Matrix rain canvas */
-.matrix {
+/* 3D background: floating shapes, math symbols, AI brain */
+.bg3d {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.55;
+  background: var(--bg);
 }
+.bg3d-still, .bg3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.bg3d-still { object-fit: cover; }
 
 /* Backdrop glow: darkens the middle so text stays readable over the rain */
 .glow {
@@ -84,7 +91,7 @@ button { cursor: pointer; }
     radial-gradient(60vmax 40vmax at 50% 38%, rgba(109, 40, 217, 0.18), transparent 70%);
 }
 
-body:has(.legal) .matrix { opacity: 0.22; }
+body:has(.legal) .bg3d { opacity: 0.4; }
 
 .sources {
   list-style: none;
