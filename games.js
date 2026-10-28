@@ -8,6 +8,26 @@
 
   // ----- hub: show each game's top score -----
   if (!game) {
+    var metaList = window.GAME_META || [];
+    var grid = document.querySelector(".game-grid");
+    if (grid && metaList.length) {
+      metaList.forEach(function (m, i) {
+        var li = document.createElement("li");
+        var a = document.createElement("a");
+        a.className = "game-tile";
+        a.href = "play.html?g=" + m.id;
+        var hue = (i * 47 + 250) % 360;
+        a.innerHTML =
+          '<svg viewBox="0 0 56 56" aria-hidden="true"><rect x="4" y="4" width="48" height="48" rx="12" fill="hsl(' + hue + ',60%,28%)" stroke="hsl(' + hue + ',80%,70%)" stroke-width="2"/><text x="28" y="35" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="20" fill="#fff"></text></svg>' +
+          "<h2></h2><p></p>" +
+          '<span class="tile-top" data-top="' + m.id + '">Top score: none yet</span><span class="tile-play">Play</span>';
+        a.querySelector("text").textContent = m.title.split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
+        a.querySelector("h2").textContent = m.title;
+        a.querySelector("p").textContent = m.tag + ": " + m.desc;
+        li.appendChild(a);
+        grid.appendChild(li);
+      });
+    }
     var tops = document.querySelectorAll("[data-top]");
     if (tops.length) {
       fetch("api/rows/scores/aggregate?agg=max.score&group=game")
@@ -57,7 +77,7 @@
     if (!S) return;
     S.toggle();
     muteLabel();
-    if (!S.muted) { S.play("start"); if (playing && !paused) S.music(game === "tetris"); }
+    if (!S.muted) { S.play("start"); if (playing && !paused) S.music(true); }
   });
   var vol = document.createElement("input");
   vol.type = "range";
@@ -78,7 +98,7 @@
   function setPaused(on) {
     if (!playing || paused === on) return;
     paused = on;
-    if (S) { S.play("pause"); S.music(on ? false : game === "tetris"); }
+    if (S) { S.play("pause"); S.music(!on); }
     if (on) {
       if (G.onPause) G.onPause();
       $("ov-title").textContent = "Paused";
@@ -121,7 +141,7 @@
     $("overlay").hidden = true;
     playing = true;
     pauseBtn.hidden = false;
-    if (S) { S.unlock(); S.play("start"); S.music(game === "tetris"); }
+    if (S) { S.unlock(); S.play("start"); S.music(true); }
     if (G.onStart) G.onStart();
   });
 
@@ -213,7 +233,14 @@
   $("save").addEventListener("click", function () {
     $("score-line").textContent = "Score: " + lastScore;
     $("score-error").textContent = "";
-    try { $("player-name").value = localStorage.getItem("synswer-player") || ""; } catch (_) {}
+    try { $("player-name").value = (window.synswerUser && window.synswerUser.name) || localStorage.getItem("synswer-player") || ""; } catch (_) {}
+    if (!$("player-name").value && window.synswerUser && window.synswerUser.name) $("player-name").value = window.synswerUser.name;
+    var isNew = (window.GAME_META || []).some(function (m) { return m.id === game; });
+    var locked = isNew && !window.synswerUser;
+    $("score-submit").disabled = locked;
+    if (locked) {
+      $("score-error").innerHTML = 'Leaderboards are for signed-in players. <a href="login.html?next=index.html">Sign in</a> or <a href="signup.html?next=index.html">create an account</a>, then play again.';
+    }
     dlg.showModal();
     $("player-name").focus();
     armCaptcha();
