@@ -10,6 +10,25 @@
   });
 })();
 
+// Who is signed in (shared): updates the account link in the corner
+window.synswerUser = null;
+window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
+  .then(function (r) { return r.json(); })
+  .then(function (d) {
+    window.synswerUser = d && d.user ? d.user : null;
+    var link = document.getElementById("account-link");
+    if (link && window.synswerUser) {
+      link.textContent = "Sign out";
+      link.setAttribute("href", "#");
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        fetch("api/auth/logout", { method: "POST", credentials: "include" }).then(function () { location.reload(); });
+      });
+    }
+    return window.synswerUser;
+  })
+  .catch(function () { return null; });
+
 // Ask Synswer
 (function () {
   var form = document.getElementById("ask-form");
@@ -24,6 +43,11 @@
   var bodyEl = document.getElementById("answer-body");
   var againBtn = document.getElementById("ask-again");
   var orb = document.getElementById("orb");
+  var memoryEl = document.getElementById("memory-note");
+  var forgetBtn = document.getElementById("memory-forget");
+
+  // Short-term memory: the conversation of this visit
+  var history = [];
 
   async function armCaptcha() {
     try {
@@ -36,6 +60,38 @@
     } catch (_) {}
   }
   armCaptcha();
+
+  function showMemoryState() {
+    if (!memoryEl) return;
+    if (window.synswerUser) {
+      memoryEl.innerHTML = "Memory is on for your account.";
+      if (forgetBtn) forgetBtn.hidden = false;
+    } else {
+      memoryEl.innerHTML = 'This visit is remembered for follow-up questions. <a href="login.html">Sign in</a> to keep memory across visits.';
+      if (forgetBtn) forgetBtn.hidden = true;
+    }
+  }
+  window.synswerUserReady.then(showMemoryState);
+
+  if (forgetBtn) {
+    forgetBtn.addEventListener("click", async function () {
+      forgetBtn.disabled = true;
+      try {
+        var uid = window.synswerUser && window.synswerUser.id;
+        if (!uid) return;
+        var res = await fetch("api/rows/memories?user_id=eq." + encodeURIComponent(uid) + "&select=id&limit=200", { credentials: "include" });
+        var data = await res.json();
+        await Promise.all((data.rows || []).map(function (r) {
+          return fetch("api/rows/memories/" + r.id, { method: "DELETE", credentials: "include" });
+        }));
+        memoryEl.textContent = "Your saved memory was cleared.";
+      } catch (_) {
+        memoryEl.textContent = "Could not clear memory right now.";
+      } finally {
+        forgetBtn.disabled = false;
+      }
+    });
+  }
 
   orb.addEventListener("click", function () { input.focus(); });
 
@@ -192,6 +248,37 @@
     }
   }
 
+  // Long-term memory: notes this signed-in user saved earlier, found by meaning.
+  async function recallMemory(q) {
+    if (!window.synswerUser) return [];
+    try {
+      var res = await fetch("api/ai/search", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ table: "memories", q: q, limit: 5 })
+      });
+      if (!res.ok) return [];
+      var data = await res.json();
+      return (data.rows || [])
+        .filter(function (r) { return !r.user_id || r.user_id === window.synswerUser.id; })
+        .map(function (r) { return r.content; });
+    } catch (_) { return []; }
+  }
+
+  async function saveMemory(q, a) {
+    if (!window.synswerUser) return;
+    var gist = a.replace(/\s+/g, " ").slice(0, 260);
+    try {
+      await fetch("api/rows/memories", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ values: { user_id: window.synswerUser.id, content: "User asked: " + q + " | Answer gist: " + gist } })
+      });
+    } catch (_) {}
+  }
+
   function renderSources(list) {
     if (!sourcesEl) return;
     sourcesEl.innerHTML = "";
@@ -219,16 +306,68 @@
     document.dispatchEvent(new CustomEvent("synswer:view"));
   }
 
+  // ----- small safe markdown renderer (escapes first, then formats) -----
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function inline(s) {
+    return esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+  function cells(line) { return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(function (c) { return c.trim(); }); }
+  function markdown(text) {
+    var lines = String(text).replace(/\r/g, "").split("\n"), out = [], i = 0;
+    while (i < lines.length) {
+      var l = lines[i];
+      if (!l.trim()) { i++; continue; }
+      if (/^\s*\|/.test(l) && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1])) {
+        var head = cells(l), html = "<div class=\"table-wrap\"><table><thead><tr>" + head.map(function (c) { return "<th>" + inline(c) + "</th>"; }).join("") + "</tr></thead><tbody>";
+        i += 2;
+        while (i < lines.length && /^\s*\|/.test(lines[i])) {
+          html += "<tr>" + cells(lines[i]).map(function (c) { return "<td>" + inline(c) + "</td>"; }).join("") + "</tr>";
+          i++;
+        }
+        out.push(html + "</tbody></table></div>");
+      } else if (/^\s*[-*]\s+/.test(l)) {
+        var items = [];
+        while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push("<li>" + inline(lines[i].replace(/^\s*[-*]\s+/, "")) + "</li>"); i++; }
+        out.push("<ul>" + items.join("") + "</ul>");
+      } else if (/^\s*\d+[.)]\s+/.test(l)) {
+        var nums = [];
+        while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) { nums.push("<li>" + inline(lines[i].replace(/^\s*\d+[.)]\s+/, "")) + "</li>"); i++; }
+        out.push("<ol>" + nums.join("") + "</ol>");
+      } else if (/^#{1,4}\s+/.test(l)) {
+        out.push("<h3>" + inline(l.replace(/^#{1,4}\s+/, "")) + "</h3>");
+        i++;
+      } else {
+        var para = [];
+        while (i < lines.length && lines[i].trim() && !/^\s*(\||[-*]\s|\d+[.)]\s|#{1,4}\s)/.test(lines[i])) { para.push(lines[i]); i++; }
+        out.push("<p>" + inline(para.join(" ")) + "</p>");
+      }
+    }
+    return out.join("");
+  }
+
   function setBody(text, loading) {
     bodyEl.classList.toggle("is-loading", !!loading);
-    bodyEl.innerHTML = "";
-    String(text).split(/\n{2,}/).forEach(function (para) {
+    if (loading) {
+      bodyEl.innerHTML = "";
       var p = document.createElement("p");
-      p.textContent = para.trim();
-      if (p.textContent) bodyEl.appendChild(p);
-    });
+      p.textContent = text;
+      bodyEl.appendChild(p);
+    } else {
+      bodyEl.innerHTML = markdown(text);
+    }
     if (!loading) document.dispatchEvent(new CustomEvent("synswer:answer"));
   }
+
+  var SYSTEM =
+    "ROLE: You are Synswer, a hyper-capable, context-aware operational assistant. Synthesize the sources, the session conversation and the user's saved memory into the answer. Anticipate what the person needs next. " +
+    "REASONING: For a complex question, break it into sub-tasks, work through them in order, and verify your result against the sources before answering. Show only the conclusion and the key trade-offs, not your scratch work. " +
+    "TONE: Professional, adaptive, human-centric. No filler, no greeting, no restating the question, no robotic transitions. Get straight to the value. " +
+    "FORMAT: Use markdown. Start with one or two sentences with the core answer, putting the key entities and the core answer in **bold**. Then, only if useful, use short bullet points (lines starting with '- ') and, for comparisons, a markdown table with a header row and a separator row. No headings unless the answer is long. No citation numbers. " +
+    "LENGTH: Scale to the question. A simple lookup gets a direct answer of one to three sentences. A complex or structural problem gets a visible trade-off analysis (options, pros and cons) followed by a single actionable recommendation. Never exceed about 350 words. " +
+    "SOURCES: REFERENCE holds Wikipedia excerpts: use the relevant parts, ignore the rest, and explain in your own words, never copying sentences. Recent news headlines are reports, not confirmed fact: attribute them (according to reports from the publisher, dated the given date) and say plainly when they are thin. Titles from Hacker News, Stack Overflow and scholarly papers were not read: use them only to confirm a topic or finding is real and discussed. Prefer claims that more than one source supports, and say briefly when sources disagree or only one supports a point. " +
+    "MEMORY: SESSION CONVERSATION holds earlier turns of this visit: use it so follow-up questions keep their context. SAVED MEMORY holds notes about this user from earlier visits: use it to personalise, but never recite it back unprompted. " +
+    "HONESTY: You cannot see live data. If something cannot be verified from the sources or from solid knowledge, say so neutrally and state what to check, instead of assuming. Never invent sources, links or quotes. If the question depends on recent events, say your answer may be out of date. " +
+    "PRIVACY: Never disclose or confirm credentials, passwords, API keys, government or financial identifiers, or private records about a person. If asked to verify or reveal such a string, decline neutrally without repeating it back.";
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -248,10 +387,12 @@
     setBody("Reading sources...", true);
     renderSources([]);
 
-    var found = await Promise.all([lookupSources(q), lookupNews(q), lookupHN(q), lookupStack(q), lookupPapers(q)]);
+    await window.synswerUserReady;
+    var found = await Promise.all([lookupSources(q), lookupNews(q), lookupHN(q), lookupStack(q), lookupPapers(q), recallMemory(q)]);
     var wiki = found[0];
     var news = found[1];
     var leads = found[2].concat(found[3], found[4]);
+    var memories = found[5];
     var sources = wiki.concat(news, leads);
     renderSources(sources);
     setBody("Cross-checking sources...", true);
@@ -266,16 +407,22 @@
         leads.map(function (n) { return "- " + n.publisher + (n.date ? ", " + n.date : "") + ": " + n.title; }).join("\n");
     }
 
+    var session = history.slice(-4).map(function (t) { return "User: " + t.q + "\nSynswer: " + t.a.slice(0, 500); }).join("\n\n");
+    var inputText =
+      "SESSION CONVERSATION:\n" + (session || "(first question of this visit)") +
+      "\n\nSAVED MEMORY:\n" + (memories.length ? memories.map(function (m) { return "- " + m; }).join("\n") : "(none)") +
+      "\n\nQUESTION:\n" + q +
+      "\n\nREFERENCE:\n" + (reference || "(none found)");
+
     try {
       var res = await fetch("api/ai/complete", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          prompt:
-            "You are Synswer, a calm and precise answer engine. Answer the QUESTION in plain paragraphs (no markdown, no bullet symbols, no headings, no citation numbers), at most 220 words. Lead with the direct answer. REFERENCE holds excerpts from Wikipedia articles found for this question. Use only the parts that are relevant, ignore irrelevant ones, check them against what you know, and explain the result entirely in your own words: never copy sentences from the excerpts and never quote them. If REFERENCE includes recent news headlines, treat them as reports, not confirmed fact: attribute them in your own words (for example, according to reports from the publisher, dated the given date), do not claim details a headline does not state, and say plainly when the headlines are thin. REFERENCE may also list titles from other sources (Hacker News, Stack Overflow, scholarly papers): these show what exists on the topic but their content was not read, so use them only to confirm that a topic or finding is real and discussed, never to state details they do not give. Cross-check the sources against each other: prefer claims that more than one source supports, and if sources disagree or only one supports a point, say so briefly. If the reference is empty or does not help, answer from your own knowledge. You cannot see live data: if the question depends on recent events, say plainly that your answer may be out of date and what to check. Never invent sources, links or quotes.",
-          input: "QUESTION:\n" + q + "\n\nREFERENCE:\n" + (reference || "(none found)"),
-          maxTokens: 700,
+          prompt: SYSTEM,
+          input: inputText,
+          maxTokens: 900,
           altcha: altcha
         }),
       });
@@ -283,8 +430,13 @@
       if (!res.ok) {
         setBody(data.error || "Synswer could not answer right now. Please try again in a moment.", false);
       } else {
-        setBody(data.text || "No answer came back. Please try again.", false);
+        var answer = data.text || "No answer came back. Please try again.";
+        setBody(answer, false);
         input.value = "";
+        if (data.text) {
+          history.push({ q: q, a: answer });
+          saveMemory(q, answer);
+        }
       }
     } catch (_) {
       setBody("Synswer could not answer right now. Please check your connection and try again.", false);

@@ -326,6 +326,36 @@ altcha-widget {
 .games-link:hover { border-color: var(--accent); background: var(--surface-2); }
 .games-link svg { color: #a78bfa; }
 
+.account-link {
+  position: fixed; top: 16px; left: 16px; z-index: 6;
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: rgba(18, 18, 28, 0.85); color: var(--ink);
+  font-size: 15px; font-weight: 500; text-decoration: none;
+}
+.account-link:hover { border-color: var(--accent); background: var(--surface-2); }
+
+/* Rendered markdown in answers */
+.answer-body strong { color: var(--ink); }
+.answer-body ul, .answer-body ol { margin: 0 0 1em; padding-left: 1.3em; color: #dcdcec; }
+.answer-body li { margin-bottom: 4px; }
+.answer-body h3 { font-size: 1.05rem; margin: 0 0 8px; }
+.answer-body code { padding: 1px 6px; border-radius: 6px; background: var(--surface-2); font-size: 0.92em; }
+.table-wrap { overflow-x: auto; margin: 0 0 1em; }
+.answer-body table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.answer-body th, .answer-body td { padding: 8px 12px; border: 1px solid var(--line); text-align: left; color: #dcdcec; }
+.answer-body th { background: var(--surface-2); color: var(--ink); }
+
+/* Auth pages */
+.auth { position: relative; z-index: 1; flex: 1; display: flex; align-items: center; justify-content: center; padding: 72px 20px 24px; }
+.auth-card { width: 100%; max-width: 420px; padding: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); }
+.auth-card h1 { font-size: 1.8rem; margin-bottom: 18px; }
+.auth-card label { display: block; margin: 14px 0 6px; font-size: 14px; color: var(--muted); }
+.auth-card .btn { width: 100%; margin-top: 18px; }
+.auth-card .alt { margin: 16px 0 0; font-size: 15px; color: var(--muted); }
+.auth-card .alt a { color: var(--ink); }
+.auth-card .ok { color: #86efac; margin: 12px 0 0; }
+
 /* Footer */
 .site-footer {
   position: relative;

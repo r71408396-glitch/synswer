@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign in - Synswer</title>
+    <meta name="theme-color" content="#07070b" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script>try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}</script>
+    <script async defer type="module" src="api/auth/altcha.js"></script>
+  </head>
+  <body>
+    {bg3d}
+    <div class="glow" aria-hidden="true"></div>
+    <main class="auth">
+      <form class="auth-card" id="auth-form" data-auth="login">
+        <h1>Sign in</h1>
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" required />
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required />
+        <p class="alt"><a href="forgot.html">Forgot password?</a></p>
+        <altcha-widget id="captcha"></altcha-widget>
+        <p class="form-error" id="auth-error" role="alert"></p>
+        <button class="btn" type="submit">Sign in</button>
+        <p class="alt">New here? <a href="signup.html" data-carry>Create an account</a></p>
+        <p class="alt"><a href="index.html">Back to Synswer</a></p>
+      </form>
+    </main>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+  </body>
+</html>
