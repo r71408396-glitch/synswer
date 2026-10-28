@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tetris - Synswer Games</title>
+    <meta name="theme-color" content="#07070b" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="games.css" />
+    <script>
+      try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}
+    </script>
+    <script async defer type="module" src="api/auth/altcha.js"></script>
+  </head>
+  <body data-game="tetris">
+    <main class="games-page">
+      <a class="back" href="games.html">&larr; All games</a>
+      <h1>Tetris</h1>
+      <div class="game-layout">
+        <section class="game-card">
+          <div class="hud"><span>Score <b id="score">0</b></span><span>Level <b id="level">1</b></span><span>Best <b id="best">0</b></span></div>
+          <div class="canvas-wrap" style="--cw:300px;--ar:0.5">
+            <canvas id="game" width="280" height="560"></canvas>
+            <div class="overlay" id="overlay">
+              <h2 id="ov-title">Tetris</h2>
+              <p id="ov-text">Complete full rows to clear them.</p>
+              <button class="btn" id="start" type="button">Play</button>
+              <button class="btn btn-ghost" id="save" type="button" hidden>Save score</button>
+            </div>
+          </div>
+          <div class="pad">
+            <button type="button" data-act="left">Left</button><button type="button" data-act="rotate">Rotate</button><button type="button" data-act="right">Right</button>
+            <button type="button" data-act="down">Down</button><button type="button" data-act="drop">Drop</button><span></span>
+          </div>
+          <p class="hint">Keys: left and right to move, up to rotate, down to speed up, space to drop. Touch: swipe to move, tap to rotate, flick down to drop, or use the buttons.</p>
+        </section>
+        <aside class="board">
+          <h2>Leaderboard</h2>
+          <ol id="leaderboard"></ol>
+        </aside>
+      </div>
+    </main>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+    <script src="games.js"></script>
+    <script src="tetris.js"></script>
+  </body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Space Shooter - Synswer Games</title>
+    <meta name="theme-color" content="#07070b" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="games.css" />
+    <script>
+      try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}
+    </script>
+    <script async defer type="module" src="api/auth/altcha.js"></script>
+  </head>
+  <body data-game="shooter">
+    <main class="games-page">
+      <a class="back" href="games.html">&larr; All games</a>
+      <h1>Space Shooter</h1>
+      <div class="game-layout">
+        <section class="game-card">
+          <div class="hud"><span>Score <b id="score">0</b></span><span>Lives <b id="lives">3</b></span><span>Best <b id="best">0</b></span></div>
+          <div class="canvas-wrap" style="--cw:420px;--ar:0.75">
+            <canvas id="game" width="420" height="560"></canvas>
+            <div class="overlay" id="overlay">
+              <h2 id="ov-title">Space Shooter</h2>
+              <p id="ov-text">Shoot the incoming ships. Do not let them hit you.</p>
+              <button class="btn" id="start" type="button">Play</button>
+              <button class="btn btn-ghost" id="save" type="button" hidden>Save score</button>
+            </div>
+          </div>
+          <p class="hint">Arrow keys or A and D to move, hold space to fire. On a phone, drag on the game to move and fire.</p>
+        </section>
+        <aside class="board">
+          <h2>Leaderboard</h2>
+          <ol id="leaderboard"></ol>
+        </aside>
+      </div>
+    </main>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+    <script src="games.js"></script>
+    <script src="shooter.js"></script>
+  </body>
+</html>
