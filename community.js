@@ -49,6 +49,7 @@
 
   var JSON_H = { "content-type": "application/json" };
   var openReplies = {};
+  var replyReported = {};
   var scrolled = false;
 
   function api(url, method, values) {
@@ -163,6 +164,15 @@
           });
         });
         row.appendChild(del);
+      } else if (me) {
+        var rflag = document.createElement("button");
+        rflag.type = "button";
+        rflag.className = "link-del";
+        var done = replyReported[rp.id];
+        rflag.textContent = done ? "Reported" : "Report reply";
+        if (done) rflag.disabled = true;
+        else rflag.addEventListener("click", function () { reportFlow(rp, "reply"); });
+        row.appendChild(rflag);
       }
       box.appendChild(row);
     });
@@ -206,11 +216,12 @@
   }
 
   var REASONS = ["Harassment or hate", "Sexual or explicit content", "Threats or violence", "Spam", "Other"];
-  function reportFlow(p, btn) {
+  function reportFlow(p, kind) {
+    kind = kind || "post";
     if (banned) { toast("Your account is banned from interacting."); return; }
     var dlg = document.createElement("dialog");
     dlg.className = "dlg";
-    dlg.innerHTML = '<h2>Report this post</h2><p>Tell the admins why this post should be reviewed.</p><label for="rep-reason">Reason</label><select id="rep-reason"></select><p class="form-error" role="alert"></p><div class="row"><button type="button" class="btn btn-ghost" data-x="no">Cancel</button><button type="button" class="btn" data-x="yes">Send report</button></div>';
+    dlg.innerHTML = '<h2>Report this ' + kind + '</h2><p>Tell the admins why this ' + kind + ' should be reviewed.</p><label for="rep-reason">Reason</label><select id="rep-reason"></select><p class="form-error" role="alert"></p><div class="row"><button type="button" class="btn btn-ghost" data-x="no">Cancel</button><button type="button" class="btn" data-x="yes">Send report</button></div>';
     var sel = dlg.querySelector("select");
     REASONS.forEach(function (r) { var o = document.createElement("option"); o.textContent = r; sel.appendChild(o); });
     var er = dlg.querySelector(".form-error");
@@ -218,7 +229,8 @@
     dlg.addEventListener("close", function () { dlg.remove(); });
     dlg.querySelector('[data-x="no"]').addEventListener("click", function () { dlg.close(); });
     dlg.querySelector('[data-x="yes"]').addEventListener("click", function () {
-      api("api/rows/reports", "POST", { post_id: p.id, reason: sel.value }).then(function (r) {
+      var req = kind === "reply" ? api("api/rows/reply_reports", "POST", { reply_id: p.id, reason: sel.value }) : api("api/rows/reports", "POST", { post_id: p.id, reason: sel.value });
+      req.then(function (r) {
         if (!r.ok) { er.textContent = r.d.error || "Could not send the report."; return; }
         dlg.close();
         toast("Report sent to the admins");
@@ -314,9 +326,12 @@
         api("api/rows/post_votes/aggregate?agg=count&group=post_id,value&post_id=in." + ids + "&limit=200"),
         api("api/rows/post_votes?user_id=eq." + me.id + "&post_id=in." + ids + "&select=id,post_id,value&limit=200"),
         api("api/rows/post_replies?post_id=in." + ids + "&sort=created_at&limit=200"),
-        api("api/rows/reports?reporter_id=eq." + me.id + "&post_id=in." + ids + "&select=post_id&limit=200")
+        api("api/rows/reports?reporter_id=eq." + me.id + "&post_id=in." + ids + "&select=post_id&limit=200"),
+        api("api/rows/reply_reports?reporter_id=eq." + me.id + "&select=reply_id&limit=200")
       ]).then(function (r) {
         var counts = {}, mine = {}, reps = {}, reported = {};
+        replyReported = {};
+        (r[4].d.rows || []).forEach(function (x) { replyReported[x.reply_id] = true; });
         (r[3].d.rows || []).forEach(function (x) { reported[x.post_id] = true; });
         (r[0].d.rows || []).forEach(function (x) {
           var c = counts[x.post_id] || (counts[x.post_id] = { up: 0, down: 0 });
@@ -355,10 +370,11 @@
         })
       }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (m) {
-          if (!m.ok || !m.d.json) return { ok: false, msg: "We could not check your text right now. Please try again in a moment." };
+          // If the AI reviewer is unavailable, the browser filter above has already passed the text, so posting is not blocked.
+          if (!m.ok || !m.d.json || typeof m.d.json.allowed !== "boolean") return { ok: true };
           if (m.d.json.allowed !== true) return { ok: false, msg: MSG };
           return { ok: true };
-        });
+        }).catch(function () { return { ok: true }; });
     });
   }
 

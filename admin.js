@@ -139,6 +139,52 @@
     return li;
   }
 
+  function dismissReplyReports(replyId) {
+    return api("api/rows/reply_reports?reply_id=eq." + replyId + "&status=eq.open&select=id&limit=200").then(function (r) {
+      var ups = (r.d.rows || []).map(function (x) { return { id: x.id, values: { status: "dismissed" } }; });
+      if (!ups.length) return true;
+      return fetch("api/rows/reply_reports/bulk", { method: "PATCH", credentials: "include", headers: JSON_H, body: JSON.stringify({ updates: ups }) });
+    });
+  }
+  function replyCard(rp, reps) {
+    var li = document.createElement("li");
+    li.className = "post";
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    var who = document.createElement("b");
+    who.textContent = handle(rp.user_id);
+    who.title = rp.user_id;
+    var t = document.createElement("span");
+    t.textContent = "Reply - " + when(rp.created_at);
+    meta.appendChild(who);
+    meta.appendChild(t);
+    var body = document.createElement("p");
+    body.textContent = rp.content;
+    li.appendChild(meta);
+    li.appendChild(body);
+    var rl = document.createElement("p");
+    rl.className = "meta";
+    var counts = {};
+    (reps || []).forEach(function (x) { counts[x.reason] = (counts[x.reason] || 0) + 1; });
+    rl.textContent = (reps || []).length + " report" + ((reps || []).length === 1 ? "" : "s") + ": " + Object.keys(counts).map(function (k) { return k + " (" + counts[k] + ")"; }).join(", ");
+    li.appendChild(rl);
+    var bar = document.createElement("div");
+    bar.className = "actions";
+    bar.appendChild(btn("Dismiss reports", "on", function () { dismissReplyReports(rp.id).then(function () { toast("Reports dismissed"); refresh(); }); }));
+    bar.appendChild(btn("Ban author", "del-soft", function () { banFlow(rp.user_id); }));
+    bar.appendChild(btn("Delete reply", "del", function () {
+      ask("Delete this reply?", "The reply and its reports are removed for good.", "Delete").then(function (ok) {
+        if (!ok) return;
+        api("api/rows/post_replies/" + rp.id, "DELETE").then(function (r) {
+          if (!r.ok) toast(r.d.error || "Could not delete the reply."); else toast("Reply deleted");
+          refresh();
+        });
+      });
+    }));
+    li.appendChild(bar);
+    return li;
+  }
+
   function userCard(u, count) {
     var li = document.createElement("li");
     li.className = "post user-row";
@@ -177,10 +223,12 @@
     return Promise.all([
       api("api/rows/posts/aggregate?agg=count&group=status"),
       api("api/rows/member_standing/aggregate?agg=count&group=status"),
-      api("api/rows/reports/aggregate?agg=count&status=eq.open")
+      api("api/rows/reports/aggregate?agg=count&status=eq.open"),
+      api("api/rows/reply_reports/aggregate?agg=count&status=eq.open")
     ]).then(function (r) {
       var c = { pending: 0, approved: 0, hidden: 0, banned: 0 };
       ((r[2].d.rows || [])[0] || {}).count && (c.pending = r[2].d.rows[0].count);
+      ((r[3].d.rows || [])[0] || {}).count && (c.pending += r[3].d.rows[0].count);
       (r[0].d.rows || []).forEach(function (x) {
         if (x.status === "approved") c.approved = x.count;
         else c.hidden += x.count;
@@ -211,15 +259,24 @@
       });
     }
     if (tab === "reports") {
-      return api("api/rows/reports?status=eq.open&sort=created_at&limit=200").then(function (rr) {
-        var reps = rr.d.rows || [], byPost = {}, ids = [];
+      return Promise.all([
+        api("api/rows/reports?status=eq.open&sort=created_at&limit=200"),
+        api("api/rows/reply_reports?status=eq.open&sort=created_at&limit=200")
+      ]).then(function (both) {
+        var reps = both[0].d.rows || [], byPost = {}, ids = [];
         reps.forEach(function (x) { if (!byPost[x.post_id]) { byPost[x.post_id] = []; ids.push(x.post_id); } byPost[x.post_id].push(x); });
+        var rreps = both[1].d.rows || [], byReply = {}, rids = [];
+        rreps.forEach(function (x) { if (!byReply[x.reply_id]) { byReply[x.reply_id] = []; rids.push(x.reply_id); } byReply[x.reply_id].push(x); });
         list.innerHTML = "";
-        if (!ids.length) { list.appendChild(empty("No open reports.")); return; }
-        return api("api/rows/posts?id=in." + ids.slice(0, 100).join(",") + "&limit=100").then(function (pr) {
-          var posts = pr.d.rows || [];
-          if (!posts.length) { list.appendChild(empty("No open reports.")); return; }
+        if (!ids.length && !rids.length) { list.appendChild(empty("No open reports.")); return; }
+        return Promise.all([
+          ids.length ? api("api/rows/posts?id=in." + ids.slice(0, 100).join(",") + "&limit=100") : { d: {} },
+          rids.length ? api("api/rows/post_replies?id=in." + rids.slice(0, 100).join(",") + "&limit=100") : { d: {} }
+        ]).then(function (pr) {
+          var posts = pr[0].d.rows || [], replies = pr[1].d.rows || [];
+          if (!posts.length && !replies.length) { list.appendChild(empty("No open reports.")); return; }
           posts.forEach(function (p) { list.appendChild(postCard(p, byPost[p.id])); });
+          replies.forEach(function (rp) { list.appendChild(replyCard(rp, byReply[rp.id])); });
         });
       }).catch(function () { list.innerHTML = ""; list.appendChild(empty("Could not load.")); });
     }
