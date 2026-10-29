@@ -62,6 +62,30 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
   var dlCsv = document.getElementById("dl-csv");
   var welcomeEl = document.getElementById("welcome-back");
 
+  // Phone photos are often 5 MB or more: scale to 1600px JPEG so the upload and the AI always accept them.
+  function shrinkImage(file) {
+    return new Promise(function (resolve) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var s = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.naturalWidth * s));
+        c.height = Math.max(1, Math.round(img.naturalHeight * s));
+        var g = c.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function (b) { resolve(b); }, "image/jpeg", 0.85);
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        resolve(file.size <= 5 * 1024 * 1024 && /^image\/(jpeg|png|webp|gif)$/.test(file.type) ? file : null);
+      };
+      img.src = url;
+    });
+  }
+
   function setAttachment(a) {
     attachment = a;
     chip.hidden = !a;
@@ -73,9 +97,13 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     if (!f) return;
     errorEl.textContent = "";
     if (f.type.indexOf("image/") === 0) {
-      if (f.size > 5 * 1024 * 1024) { errorEl.textContent = "Images must be under 5 MB."; e.target.value = ""; return; }
-      if (!window.synswerUser) { errorEl.textContent = "Sign in to analyze images."; e.target.value = ""; return; }
-      setAttachment({ name: f.name || "photo", file: f });
+      if (f.size > 25 * 1024 * 1024) { errorEl.textContent = "Images must be under 25 MB."; e.target.value = ""; return; }
+      if (!window.synswerUser) { errorEl.innerHTML = 'Sign in to analyze images. <a href="login.html">Sign in</a>'; e.target.value = ""; return; }
+      var picked = e.target;
+      shrinkImage(f).then(function (blob) {
+        if (!blob) { errorEl.textContent = "Could not read that image. Try a JPEG or PNG."; picked.value = ""; return; }
+        setAttachment({ name: f.name || "photo", file: blob, path: null });
+      });
     } else if (/\.pdf$/i.test(f.name)) {
       errorEl.textContent = "PDF reading is not available yet. Paste the text or upload it as .txt or .csv.";
       e.target.value = "";
@@ -400,15 +428,15 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
   function renderSources(list) {
     if (!sourcesEl) return;
     sourcesEl.innerHTML = "";
-    list.forEach(function (s) {
+    list.forEach(function (s, idx) {
       var li = document.createElement("li");
       var a = document.createElement("a");
       a.href = s.url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.textContent = s.kind
+      a.textContent = "[" + (idx + 1) + "] " + (s.kind
         ? s.publisher + (s.date ? ", " + s.date : "") + ": " + (s.title.length > 70 ? s.title.slice(0, 67) + "..." : s.title)
-        : s.title + " (Wikipedia)";
+        : s.title + " (Wikipedia)");
       li.appendChild(a);
       sourcesEl.appendChild(li);
     });
@@ -427,7 +455,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
   // ----- small safe markdown renderer (escapes first, then formats) -----
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function inline(s) {
-    return esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>");
+    return esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\[(\d{1,2})\]/g, '<sup class="cite">[$1]</sup>');
   }
   function cells(line) { return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(function (c) { return c.trim(); }); }
   function markdown(text) {
@@ -488,9 +516,9 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     "ROLE: You are Synswer, a hyper-capable, context-aware operational assistant. Synthesize the sources, the session conversation and the user's saved memory into the answer. Anticipate what the person needs next. " +
     "REASONING: For a complex question, break it into sub-tasks, work through them in order, and verify your result against the sources before answering. Show only the conclusion and the key trade-offs, not your scratch work. " +
     "TONE: Professional, adaptive, human-centric. No filler, no greeting, no restating the question, no robotic transitions. Get straight to the value. " +
-    "FORMAT: Use markdown. Start with one or two sentences with the core answer, putting the key entities and the core answer in **bold**. Then, only if useful, use short bullet points (lines starting with '- ') and, for comparisons, a markdown table with a header row and a separator row. No headings unless the answer is long. No citation numbers. " +
+    "FORMAT: Use markdown. Start with one or two sentences with the core answer, putting the key entities and the core answer in **bold**. Then, only if useful, use short bullet points (lines starting with '- ') and, for comparisons, a markdown table with a header row and a separator row. No headings unless the answer is long. CITATIONS: every factual claim that comes from a numbered source in REFERENCE ends with its number in square brackets, like [1] or [2][3]. Use only numbers that exist in REFERENCE, never invent one. Claims taken from an ATTACHED FILE are cited by line, like [File, line 12] or [File, lines 4-9]. Claims taken from an attached image are marked (from the image). Claims from general knowledge carry no number. " +
     "LENGTH: Scale to the question. A simple lookup gets a direct answer of one to three sentences. A complex or structural problem gets a visible trade-off analysis (options, pros and cons) followed by a single actionable recommendation. Never exceed about 350 words, except when asked to draft a document. " +
-    "FILES: If an ATTACHED FILE is provided, analyze its actual contents: summarize, extract key insights, and for spreadsheets check for errors such as blanks, duplicates, inconsistent formats and outliers, citing row numbers. If the file text is marked as truncated, say so. If an image is attached, describe what you see and answer about it directly. " +
+    "FILES: If an ATTACHED FILE is provided, analyze its actual contents: summarize, extract key insights, and for spreadsheets check for errors such as blanks, duplicates, inconsistent formats and outliers, citing row numbers. If the file text is marked as truncated, say so. Each file line is prefixed with its line number (L1:, L2:); for a CSV, line 1 is the header, so data row N is line N+1. Answer the question from the file first, quoting exact values. If an image is attached, look at it carefully: read any visible text exactly, identify the main subject (and brand, model, species or place only when clearly recognisable), answer the question directly, then add real information about the subject from REFERENCE with citations. Say plainly when something in the image is unclear, and never identify a real person from their face. " +
     "DOCUMENTS: When asked to draft a contract, blog post, email, report or code, write the complete document in markdown (code inside fenced code blocks), with no commentary around it, and note briefly that contracts are drafts needing professional legal review. For data to chart or export, give a markdown table. " +
     "SOURCES: REFERENCE holds Wikipedia excerpts: use the relevant parts, ignore the rest, and explain in your own words, never copying sentences. Wikipedia is only one input: when it is missing or off-topic, answer from solid general knowledge across all fields (not just encyclopedic topics) and say what could not be verified. Recent news headlines are reports, not confirmed fact: attribute them (according to reports from the publisher, dated the given date) and say plainly when they are thin. Titles from Hacker News, Stack Overflow and scholarly papers were not read: use them only to confirm a topic or finding is real and discussed. Prefer claims that more than one source supports, and say briefly when sources disagree or only one supports a point. " +
     "MEMORY: SESSION CONVERSATION holds earlier turns of this visit: use it so follow-up questions keep their context. SAVED MEMORY holds notes about this user from earlier visits: use it to personalise, but never recite it back unprompted. " +
@@ -515,11 +543,13 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     dlCsv.hidden = true;
     var att = attachment;
     var imagePath = null;
-    if (att && att.file) {
+    if (att && att.file && att.path) {
+      imagePath = att.path;
+    } else if (att && att.file) {
       try {
         var fd = new FormData();
         fd.append("folder", "private/ask");
-        fd.append("file", att.file);
+        fd.append("file", att.file, "photo.jpg");
         var up = await fetch("api/storage/upload", { method: "POST", credentials: "include", body: fd });
         var upData = await up.json().catch(function () { return {}; });
         if (!up.ok) {
@@ -529,6 +559,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
           return;
         }
         imagePath = upData.path;
+        att.path = imagePath;
       } catch (_) {
         errorEl.textContent = "Could not upload the image.";
         submit.disabled = false;
@@ -542,7 +573,48 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     renderSources([]);
 
     await window.synswerUserReady;
-    var found = await Promise.all([lookupSources(q), lookupNews(q), lookupHN(q), lookupStack(q), lookupPapers(q), recallMemory(q), lookupDDG(q)]);
+
+    // Which text do we search the web with?
+    var lq = q, imageNotes = "";
+    if (imagePath) {
+      // Pass 1: look at the picture so the web lookup is about what is really in it.
+      setBody("Looking at your image...", true);
+      try {
+        var r1 = await fetch("api/ai/complete", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            prompt: "Look closely at the image. Describe it factually: the main subject, other notable objects, setting, and any visible text, logos, labels or numbers read exactly. Then give search_query: 3 to 8 words that would find reliable reference information about the main subject on the web (a specific name, brand, model, species, landmark or topic when clearly recognisable, otherwise the general kind of thing), shaped by the user's question. Never identify a real person from their face.",
+            input: "USER QUESTION: " + q,
+            images: [imagePath],
+            format: "json",
+            schema: { type: "object", properties: { description: { type: "string" }, visible_text: { type: "string" }, search_query: { type: "string" } }, required: ["description", "visible_text", "search_query"] },
+            maxTokens: 500,
+            altcha: altcha
+          })
+        });
+        var d1 = await r1.json().catch(function () { return {}; });
+        if (r1.ok && d1.json) {
+          imageNotes = "IMAGE ANALYSIS (first pass):\nDescription: " + d1.json.description + (d1.json.visible_text ? "\nVisible text: " + d1.json.visible_text : "");
+          if (d1.json.search_query && d1.json.search_query.length > 2) lq = d1.json.search_query;
+        } else if (!r1.ok && (r1.status === 401 || r1.status === 429)) {
+          setBody(d1.error || "Synswer could not read the image right now. Please try again in a moment.", false);
+          submit.disabled = false;
+          armCaptcha();
+          return;
+        }
+      } catch (_) {}
+      setBody("Reading sources...", true);
+    } else if (att && att.text != null) {
+      // A file question: only search the web when the question itself names a topic beyond the file.
+      var FILEW = "summarize summarise summary file document data text csv spreadsheet attached attachment row rows column columns line lines errors error check find tell explain analyze analyse analysis insights key points list extract content contents report above below here".split(" ");
+      var topical = termsOf(q).filter(function (w) { return FILEW.indexOf(w) < 0; });
+      lq = topical.length >= 2 ? topical.join(" ") : "";
+    }
+
+    var skip = function () { return Promise.resolve([]); };
+    var found = await Promise.all([lq ? lookupSources(lq) : skip(), lq ? lookupNews(lq) : skip(), lq ? lookupHN(lq) : skip(), lq ? lookupStack(lq) : skip(), lq ? lookupPapers(lq) : skip(), recallMemory(q), lq ? lookupDDG(lq) : skip()]);
     var wiki = found[0];
     var news = found[1];
     var leads = found[2].concat(found[3], found[4], found[6]);
@@ -551,23 +623,28 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     renderSources(sources);
     setBody("Cross-checking sources...", true);
 
-    var reference = wiki.map(function (s, i) { return "[Wikipedia " + (i + 1) + "] " + s.title + ": " + s.extract; }).join("\n\n");
+    // Numbered to match the source pills shown under the answer: [1], [2], ...
+    var reference = wiki.map(function (s, i) { return "[" + (i + 1) + "] Wikipedia, " + s.title + ": " + s.extract; }).join("\n\n");
+    var n0 = wiki.length;
     if (news.length) {
       reference += (reference ? "\n\n" : "") + "RECENT NEWS HEADLINES (headline only, no article text):\n" +
-        news.map(function (n) { return "- " + n.publisher + ", " + n.date + ": " + n.title; }).join("\n");
+        news.map(function (n, i) { return "[" + (n0 + i + 1) + "] " + n.publisher + ", " + n.date + ": " + n.title; }).join("\n");
     }
+    n0 += news.length;
     if (leads.length) {
       reference += (reference ? "\n\n" : "") + "OTHER RELEVANT SOURCES (titles only, the content was not read):\n" +
-        leads.map(function (n) { return "- " + n.publisher + (n.date ? ", " + n.date : "") + ": " + n.title; }).join("\n");
+        leads.map(function (n, i) { return "[" + (n0 + i + 1) + "] " + n.publisher + (n.date ? ", " + n.date : "") + ": " + n.title; }).join("\n");
     }
+    if (imageNotes) reference = imageNotes + (reference ? "\n\n" + reference : "");
 
+    var numbered = att && att.text != null ? att.text.replace(/\r/g, "").split("\n").map(function (ln, i) { return "L" + (i + 1) + ": " + ln; }).join("\n") : "";
     var session = history.slice(-4).map(function (t) { return "User: " + t.q + "\nSynswer: " + t.a.slice(0, 500); }).join("\n\n");
     var inputText =
       "SESSION CONVERSATION:\n" + (session || "(first question of this visit)") +
       "\n\nSAVED MEMORY:\n" + (memories.length ? memories.map(function (m) { return "- " + m; }).join("\n") : "(none)") +
       "\n\nQUESTION:\n" + q +
       (att && att.text != null
-        ? "\n\nATTACHED FILE (" + att.name + (att.text.length > 20000 ? ", truncated to the first 20000 characters" : "") + "):\n" + att.text.slice(0, 20000)
+        ? "\n\nATTACHED FILE (" + att.name + (numbered.length > 20000 ? ", truncated to the first 20000 characters" : "") + "):\n" + numbered.slice(0, 20000)
         : "") +
       "\n\nREFERENCE:\n" + (att && att.text != null ? (reference || "(none found)").slice(0, 3000) : (reference || "(none found)"));
 
@@ -593,7 +670,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
         lastAnswer = answer;
         dlMd.hidden = false;
         dlCsv.hidden = !/^\s*\|.*\|\s*$/m.test(answer);
-        setAttachment(null);
+        // The file or photo stays attached so follow-up questions keep working on it; the x removes it.
         input.value = "";
         if (data.text) {
           history.push({ q: q, a: answer });
