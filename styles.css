@@ -341,6 +341,26 @@ altcha-widget {
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 .games-link.about-link { right: 138px; min-height: 34px; width: 34px; padding: 0; justify-content: center; top: 21px; }
+.games-link.social-link { top: 68px; }
+.post .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.act { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font-size: 14px; }
+.act:hover { border-color: var(--accent); color: var(--ink); }
+.act.on { background: var(--surface-2); border-color: var(--accent); color: #c4b5fd; }
+.act.del { margin-left: auto; }
+.act.del:hover { border-color: #f87171; color: #fca5a5; }
+.replies { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.reply { padding: 10px 12px; background: var(--surface-2); border-radius: 12px; }
+.reply .meta { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.reply .meta b { color: #c4b5fd; font-weight: 500; }
+.reply p { margin: 0; font-size: 15px; color: #dcdcec; overflow-wrap: anywhere; white-space: pre-wrap; }
+.link-del { margin-top: 4px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 12px; text-decoration: underline; }
+.link-del:hover { color: #fca5a5; }
+.reply-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.reply-form input { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 999px; }
+.reply-form .btn { min-height: 42px; padding: 0 18px; }
+.reply-form .form-error { flex-basis: 100%; margin: 0; min-height: 0; font-size: 13px; }
+.post.hl { border-color: var(--accent); }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 30; margin: 0; max-width: calc(100% - 32px); padding: 10px 18px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--accent); color: var(--ink); font-size: 14px; overflow-wrap: anywhere; }
 .games-link.about-link span { display: none; }
 .games-link.about-link svg { width: 18px; height: 18px; }
 

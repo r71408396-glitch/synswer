@@ -33,6 +33,15 @@
       </form>
       <ul class="feed" id="feed"><li class="empty">Loading posts...</li></ul>
     </main>
+    <p class="toast" id="toast" role="status" hidden></p>
+    <dialog class="dlg" id="confirm-dlg">
+      <h2 id="confirm-title">Delete?</h2>
+      <p id="confirm-text"></p>
+      <div class="row">
+        <button type="button" class="btn btn-ghost" id="confirm-no">Cancel</button>
+        <button type="button" class="btn" id="confirm-yes">Delete</button>
+      </div>
+    </dialog>
     {footer}
     {cookie}
     <script src="app.js"></script>
