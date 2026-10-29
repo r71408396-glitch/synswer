@@ -69,14 +69,14 @@
     spawn();
   }
 
-  function move(dx) { if (running && !collide(cur.m, cur.x + dx, cur.y)) { cur.x += dx; if (window.Sound) Sound.play("move"); } }
+  function move(dx) { if (running && !collide(cur.m, cur.x + dx, cur.y)) { cur.x += dx; cur.grace = false; if (window.Sound) Sound.play("move"); } }
 
   function rot() {
     if (!running) return;
     var m = rotate(cur.m);
     var kicks = [0, -1, 1, -2, 2];
     for (var i = 0; i < kicks.length; i++) {
-      if (!collide(m, cur.x + kicks[i], cur.y)) { cur.m = m; cur.x += kicks[i]; if (window.Sound) Sound.play("rotate"); return; }
+      if (!collide(m, cur.x + kicks[i], cur.y)) { cur.m = m; cur.x += kicks[i]; cur.grace = false; if (window.Sound) Sound.play("rotate"); return; }
     }
   }
 
@@ -97,10 +97,12 @@
   }
 
   function gravity() {
-    if (!collide(cur.m, cur.x, cur.y + 1)) cur.y++; else lock();
+    if (!collide(cur.m, cur.x, cur.y + 1)) cur.y++;
+    else if (!cur.grace) cur.grace = true; // one extra tick to slide or rotate before locking
+    else lock();
   }
 
-  function interval() { return Math.max(80, 800 - (level - 1) * 70); }
+  function interval() { return Math.max(110, 900 - (level - 1) * 55); }
 
   function end() {
     running = false;
@@ -161,7 +163,8 @@
     var k = e.key;
     if (k === "ArrowLeft" || k === "a") { e.preventDefault(); move(-1); }
     else if (k === "ArrowRight" || k === "d") { e.preventDefault(); move(1); }
-    else if (k === "ArrowUp" || k === "w") { e.preventDefault(); rot(); }
+    else if (k === "ArrowUp" || k === "w" || k === "x") { e.preventDefault(); rot(); }
+    else if (k === "z") { e.preventDefault(); rot(); rot(); rot(); }
     else if (k === "ArrowDown" || k === "s") { e.preventDefault(); softDrop(); }
     else if (k === " ") { e.preventDefault(); hardDrop(); }
   });
@@ -198,19 +201,46 @@
   cv.addEventListener("pointermove", function (e) {
     if (!g || !running) return;
     var cell = cv.getBoundingClientRect().width / COLS;
-    while (e.clientX - g.ax >= cell) { move(1); g.ax += cell; g.moved = true; }
-    while (g.ax - e.clientX >= cell) { move(-1); g.ax -= cell; g.moved = true; }
-    while (e.clientY - g.ay >= cell * 1.5) { softDrop(); g.ay += cell * 1.5; g.moved = true; }
+    var step = cell * 0.7;
+    while (e.clientX - g.ax >= step) { move(1); g.ax += step; g.moved = true; }
+    while (g.ax - e.clientX >= step) { move(-1); g.ax -= step; g.moved = true; }
+    while (e.clientY - g.ay >= cell) { softDrop(); g.ay += cell; g.moved = true; }
   });
   function endGesture(e) {
     if (!g) return;
     var dt = Math.max(1, Date.now() - g.t), dy = e.clientY - g.y;
-    if (!g.moved && dt < 300 && Math.abs(e.clientX - g.x) < 10 && Math.abs(dy) < 10) rot();
-    else if (dy > 80 && dy / dt > 1.0) hardDrop();
+    if (!g.moved && dt < 400 && Math.abs(e.clientX - g.x) < 14 && Math.abs(dy) < 14) rot();
+    else if (dy > 70 && dy / dt > 0.8) hardDrop();
     g = null;
   }
   cv.addEventListener("pointerup", endGesture);
   cv.addEventListener("pointercancel", function () { g = null; });
+
+  function ghostY() {
+    if (!cur) return 0;
+    var gy = cur.y;
+    while (!collide(cur.m, cur.x, gy + 1)) gy++;
+    return gy;
+  }
+
+  // 3D layer: a WebGL canvas over the 2D one, drawn by games/tetris3d.js
+  window.Tetris3D = {
+    COLS: COLS, ROWS: ROWS, COLORS: COLORS, render3d: false,
+    board: function () { return board; },
+    cur: function () { return running ? cur : null; },
+    ghostY: ghostY
+  };
+  var wrap = document.querySelector(".canvas-wrap");
+  if (wrap) {
+    var c3 = document.createElement("canvas");
+    c3.id = "game3d";
+    c3.className = "brick3d";
+    wrap.insertBefore(c3, document.getElementById("overlay"));
+    var ms = document.createElement("script");
+    ms.type = "module";
+    ms.src = "games/tetris3d.js";
+    document.body.appendChild(ms);
+  }
 
   reset();
   draw();

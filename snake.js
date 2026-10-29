@@ -15,7 +15,7 @@
     dir = { x: 1, y: 0 };
     queue = [];
     score = 0;
-    tickMs = 130;
+    tickMs = 150;
     acc = 0;
     placeFood();
     GameUI.setScore(0);
@@ -36,8 +36,9 @@
   function step() {
     if (queue.length) dir = queue.shift();
     var h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-    if (h.x < 0 || h.y < 0 || h.x >= N || h.y >= N ||
-        snake.some(function (s) { return s.x === h.x && s.y === h.y; })) {
+    h.x = (h.x + N) % N; // walls wrap around to the opposite side
+    h.y = (h.y + N) % N;
+    if (snake.slice(0, -1).some(function (s) { return s.x === h.x && s.y === h.y; })) {
       end();
       return;
     }
@@ -46,7 +47,7 @@
       score += 10;
       if (window.Sound) Sound.play("eat");
       GameUI.setScore(score);
-      tickMs = Math.max(60, tickMs - 3);
+      tickMs = Math.max(75, tickMs - 2);
       placeFood();
     } else {
       snake.pop();
@@ -104,15 +105,37 @@
     });
   });
 
-  var sx, sy;
+  // Swipe turns the moment the finger has moved a short way, and keeps working in one long drag.
+  var sx = null, sy = null;
   cv.addEventListener("pointerdown", function (e) { sx = e.clientX; sy = e.clientY; });
-  cv.addEventListener("pointerup", function (e) {
+  cv.addEventListener("pointermove", function (e) {
     if (sx == null || !running) return;
     var dx = e.clientX - sx, dy = e.clientY - sy;
-    sx = null;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 14) return;
     if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0); else turn(0, dy > 0 ? 1 : -1);
+    sx = e.clientX; sy = e.clientY;
   });
+  function endSwipe() { sx = null; }
+  cv.addEventListener("pointerup", endSwipe);
+  cv.addEventListener("pointercancel", endSwipe);
+
+  window.SnakeState = {
+    N: N, render3d: false,
+    snake: function () { return snake; },
+    food: function () { return food; },
+    dir: function () { return dir; }
+  };
+  var wrap = document.querySelector(".canvas-wrap");
+  if (wrap) {
+    var c3 = document.createElement("canvas");
+    c3.id = "game3d";
+    c3.className = "brick3d";
+    wrap.insertBefore(c3, document.getElementById("overlay"));
+    var ms = document.createElement("script");
+    ms.type = "module";
+    ms.src = "games/snake3d.js";
+    document.body.appendChild(ms);
+  }
 
   reset();
   draw();
