@@ -4,6 +4,25 @@
   var game = document.body.getAttribute("data-game");
   var lastScore = 0;
 
+  // Hub thumbnails, drawn on a 56x56 grid in the same style as Snake, Tetris and Space Shooter.
+  var THUMBS = {
+    gridlock: '<rect x="6" y="22" width="24" height="12" rx="3" fill="#8b5cf6"/><rect x="36" y="8" width="12" height="26" rx="3" fill="#60a5fa"/><rect x="10" y="40" width="36" height="10" rx="3" fill="#c084fc"/><path d="M34 28h16m-5-5 5 5-5 5" fill="none" stroke="#a78bfa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
+    colorlink: '<path d="M12 14h16v16h16" fill="none" stroke="#a78bfa" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 44h32" fill="none" stroke="#c084fc" stroke-width="4" stroke-linecap="round"/><circle cx="12" cy="14" r="6" fill="#60a5fa"/><circle cx="44" cy="30" r="6" fill="#60a5fa"/><circle cx="12" cy="44" r="6" fill="#c084fc"/><circle cx="44" cy="44" r="6" fill="#c084fc"/>',
+    merge: '<rect x="5" y="16" width="20" height="24" rx="5" fill="#6d28d9"/><rect x="31" y="16" width="20" height="24" rx="5" fill="#8b5cf6"/><text x="15" y="34" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="16" fill="#fff">2</text><text x="41" y="34" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="16" fill="#fff">4</text>',
+    perfecttap: '<rect x="4" y="26" width="48" height="4" rx="2" fill="#34343f"/><rect x="21" y="12" width="14" height="32" rx="3" fill="#8b5cf6" fill-opacity=".55"/><rect x="27" y="8" width="2" height="40" fill="#c4b5fd"/><circle cx="39" cy="28" r="7" fill="#60a5fa"/>',
+    tilestep: '<rect x="4" y="6" width="11" height="16" rx="2" fill="#4c1d95"/><rect x="16" y="22" width="11" height="16" rx="2" fill="#8b5cf6"/><rect x="28" y="6" width="11" height="16" rx="2" fill="#4c1d95"/><rect x="40" y="38" width="11" height="14" rx="2" fill="#60a5fa"/><rect x="4" y="38" width="11" height="14" rx="2" fill="#4c1d95"/>',
+    deflect: '<circle cx="28" cy="28" r="7" fill="#60a5fa"/><path d="M10 28a18 18 0 0 1 36 0" fill="none" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><circle cx="28" cy="46" r="3.5" fill="#f87171"/><circle cx="48" cy="46" r="3" fill="#f87171"/>',
+    gravity: '<rect x="4" y="8" width="48" height="3" rx="1.5" fill="#8b5cf6"/><rect x="4" y="45" width="48" height="3" rx="1.5" fill="#8b5cf6"/><rect x="10" y="30" width="14" height="14" rx="4" fill="#60a5fa"/><path d="M38 44V32l5-0 0 12z" fill="#ef4444"/><path d="M46 11v10h5V11z" fill="#ef4444"/>',
+    orbit: '<circle cx="24" cy="32" r="12" fill="none" stroke="#a78bfa" stroke-opacity=".5" stroke-width="2"/><circle cx="24" cy="32" r="6" fill="#8b5cf6"/><circle cx="44" cy="12" r="5" fill="#22c55e"/><path d="M32 22l8-6" stroke="#60a5fa" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 5"/><path d="M33 22l5-1-2 5z" fill="#60a5fa"/>',
+    helix: '<rect x="6" y="14" width="44" height="7" rx="3" fill="#6d28d9"/><rect x="24" y="14" width="10" height="7" fill="#07070b"/><rect x="6" y="36" width="44" height="7" rx="3" fill="#6d28d9"/><rect x="12" y="36" width="9" height="7" fill="#ef4444"/><circle cx="29" cy="7" r="5" fill="#60a5fa"/>',
+    simon: '<rect x="6" y="6" width="20" height="20" rx="6" fill="#ef4444"/><rect x="30" y="6" width="20" height="20" rx="6" fill="#3b82f6"/><rect x="6" y="30" width="20" height="20" rx="6" fill="#22c55e"/><rect x="30" y="30" width="20" height="20" rx="6" fill="#eab308"/>',
+    pairmatch: '<rect x="5" y="12" width="21" height="30" rx="5" fill="#3b82f6"/><rect x="30" y="12" width="21" height="30" rx="5" fill="#2a2a4a" stroke="#4c1d95" stroke-width="2"/><text x="15.5" y="33" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="16" fill="#fff">A</text><text x="40.5" y="33" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="16" fill="#8b7bd0">?</text>',
+    pathtrace: '<path d="M10 10h18v18h18v18" fill="none" stroke="#c4b5fd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="6" fill="#22c55e"/><circle cx="28" cy="28" r="4" fill="#8b5cf6"/><circle cx="46" cy="46" r="5" fill="#60a5fa"/><circle cx="46" cy="10" r="2.5" fill="#34343f"/><circle cx="10" cy="46" r="2.5" fill="#34343f"/>',
+    brick: '<rect x="6" y="8" width="13" height="8" fill="#ef4444"/><rect x="21" y="8" width="13" height="8" fill="#eab308"/><rect x="36" y="8" width="13" height="8" fill="#22c55e"/><rect x="13" y="18" width="13" height="8" fill="#3b82f6"/><rect x="28" y="18" width="13" height="8" fill="#a855f7"/><circle cx="32" cy="38" r="4" fill="#dbeafe"/><rect x="16" y="46" width="26" height="5" rx="2.5" fill="#8b5cf6"/>',
+    glitch: '<rect x="6" y="6" width="14" height="14" rx="4" fill="#171726"/><rect x="21" y="6" width="14" height="14" rx="4" fill="#171726"/><rect x="36" y="6" width="14" height="14" rx="4" fill="#171726"/><rect x="6" y="21" width="14" height="14" rx="4" fill="#171726"/><rect x="21" y="21" width="14" height="14" rx="4" fill="#171726"/><rect x="36" y="21" width="14" height="14" rx="4" fill="#171726"/><rect x="6" y="36" width="14" height="14" rx="4" fill="#171726"/><rect x="21" y="36" width="14" height="14" rx="4" fill="#171726"/><rect x="36" y="36" width="14" height="14" rx="4" fill="#171726"/><circle cx="28" cy="28" r="5.5" fill="#16a34a"/><circle cx="43" cy="13" r="5.5" fill="#dc2626"/>',
+    slice: '<circle cx="26" cy="30" r="15" fill="#22c55e"/><circle cx="26" cy="30" r="9" fill="#bbf7d0" fill-opacity=".5"/><path d="M8 52L50 8" stroke="#c4b5fd" stroke-width="4" stroke-linecap="round"/><circle cx="46" cy="46" r="6" fill="#1f2937" stroke="#ef4444" stroke-width="2"/>'
+  };
+
   function $(id) { return document.getElementById(id); }
 
   // ----- hub: show each game's top score -----
@@ -16,16 +35,27 @@
         var a = document.createElement("a");
         a.className = "game-tile";
         a.href = "play.html?g=" + m.id;
-        var hue = (i * 47 + 250) % 360;
         a.innerHTML =
-          '<svg viewBox="0 0 56 56" aria-hidden="true"><rect x="4" y="4" width="48" height="48" rx="12" fill="hsl(' + hue + ',60%,28%)" stroke="hsl(' + hue + ',80%,70%)" stroke-width="2"/><text x="28" y="35" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="20" fill="#fff"></text></svg>' +
+          '<svg viewBox="0 0 56 56" aria-hidden="true">' + (THUMBS[m.id] || "") + "</svg>" +
           "<h2></h2><p></p>" +
           '<span class="tile-top" data-top="' + m.id + '">Top score: none yet</span><span class="tile-play">Play</span>';
-        a.querySelector("text").textContent = m.title.split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
         a.querySelector("h2").textContent = m.title;
         a.querySelector("p").textContent = m.tag + ": " + m.desc;
         li.appendChild(a);
         grid.appendChild(li);
+      });
+    }
+    var search = document.getElementById("game-search"), none = document.getElementById("no-games");
+    if (search && grid) {
+      search.addEventListener("input", function () {
+        var q = search.value.trim().toLowerCase(), shown = 0;
+        grid.querySelectorAll("li").forEach(function (li) {
+          var h = li.querySelector("h2");
+          var hit = !q || (h && h.textContent.toLowerCase().indexOf(q) >= 0);
+          li.hidden = !hit;
+          if (hit) shown++;
+        });
+        if (none) none.hidden = shown > 0;
       });
     }
     var tops = document.querySelectorAll("[data-top]");

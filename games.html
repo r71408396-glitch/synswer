@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Games - Synswer</title>
-    <meta name="description" content="Play Snake, Tetris and a space shooter, and climb the leaderboards." />
+    <meta name="description" content="Play 18 free games, including Snake, Tetris and Space Shooter, and climb the leaderboards." />
     <meta name="theme-color" content="#07070b" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,6 +23,11 @@
       <a class="back" href="index.html">&larr; Back to Synswer</a>
       <h1>Games</h1>
       <p class="lead">Pick a game. Every game has its own leaderboard, and each plays its own classic tune. Sign in to put your score on the boards.</p>
+      <div class="game-search">
+        <label for="game-search" class="eyebrow">Search games</label>
+        <input id="game-search" type="search" placeholder="Search by game name" autocomplete="off" aria-label="Search games by name" />
+      </div>
+      <p class="lead" id="no-games" hidden>No games match your search.</p>
       <ul class="game-grid">
         <li>
           <a class="game-tile" href="snake.html">

@@ -44,7 +44,7 @@ window.GAME_META = [
     desc: "Tap the glitches, avoid the traps. 30 seconds, highest net score wins.",
     hint: "Tap green glitch bugs for +1. Tapping a red trap costs 3 points. You have 30 seconds." },
   { id: "slice", title: "Slice & Dice", tag: "Action", w: 400, h: 560,
-    desc: "Swipe to slice flying items. Never touch a bomb.",
+    desc: "Swipe to slice flying 3D fruit. Never touch a bomb.",
     hint: "Swipe through the items to slice them. A bomb ends the game. Missing 3 items also ends it." }
 ];
 window.GAME_READY = ["gridlock", "colorlink", "merge", "perfecttap", "tilestep", "deflect", "gravity", "orbit", "helix", "simon", "pairmatch", "pathtrace", "brick", "glitch", "slice"];

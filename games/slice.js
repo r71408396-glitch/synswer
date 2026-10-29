@@ -3,6 +3,25 @@
   var items, halves, trail, prev, score, miss, spawnT, setMiss, wave;
   setMiss = E.stat("Missed", "0/3");
 
+  // 3D layer: a WebGL canvas over the 2D one, drawn by games/slice3d.js
+  var SS = (window.SliceState = {
+    render3d: false,
+    items: function () { return items; },
+    halves: function () { return halves; },
+    trail: function () { return trail; }
+  });
+  var wrap3 = document.getElementById("wrap");
+  if (wrap3) {
+    var c3 = document.createElement("canvas");
+    c3.id = "slice3d";
+    c3.className = "brick3d";
+    wrap3.insertBefore(c3, document.getElementById("overlay"));
+    var ms = document.createElement("script");
+    ms.type = "module";
+    ms.src = "games/slice3d.js";
+    document.body.appendChild(ms);
+  }
+
   function distSeg(px, py, ax, ay, bx, by) {
     var dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy, t = l ? E.clamp(((px - ax) * dx + (py - ay) * dy) / l, 0, 1) : 0;
     var cx = ax + t * dx, cy = ay + t * dy;
@@ -68,7 +87,7 @@
     draw: function (c) {
       c.fillStyle = "#0d0d16";
       c.fillRect(0, 0, W, H);
-      if (!items) return;
+      if (!items || SS.render3d) return;
       halves.forEach(function (h) {
         c.globalAlpha = Math.max(0, h.life);
         c.beginPath();
