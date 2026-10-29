@@ -57,7 +57,7 @@
   G.typing = function () { return !!document.querySelector("dialog[open]"); };
 
   // ----- pause -----
-  var playing = false, paused = false;
+  var playing = false, paused = false, plays = 0;
   G.onPause = null;
   G.onResume = null;
   var pauseBtn = document.createElement("button");
@@ -148,10 +148,27 @@
     $("start").textContent = "Play again";
     $("save").hidden = !(score > 0);
     $("overlay").hidden = false;
+    // One ad after every 4 games played in a row (only once cookies were accepted)
+    plays++;
+    if (plays >= 4) {
+      plays = 0;
+      var ad = $("game-ad");
+      if (!ad) {
+        ad = document.createElement("div");
+        ad.id = "game-ad";
+        ad.setAttribute("data-ad-box", "");
+        ad.hidden = true;
+        ad.style.cssText = "width:100%;max-width:320px;margin-top:6px;overflow:hidden";
+        $("overlay").appendChild(ad);
+      }
+      if (window.SynswerAds) window.SynswerAds.fill(ad);
+    }
   };
 
   $("start").addEventListener("click", function () {
     $("start").blur();
+    var gad = $("game-ad");
+    if (gad && window.SynswerAds) window.SynswerAds.clear(gad);
     if (paused) { setPaused(false); return; }
     $("overlay").hidden = true;
     playing = true;

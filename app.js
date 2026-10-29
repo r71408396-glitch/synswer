@@ -1,3 +1,41 @@
+// Ads (shared): Google AdSense loads ONLY after the visitor taps Accept on the cookie bar.
+// Paste your AdSense ad unit id into SLOT to show the in-page units (games, Social).
+window.SynswerAds = (function () {
+  var CLIENT = "ca-pub-8679733413041334";
+  var SLOT = "";
+  var blocked = /\/(login|signup|forgot|reset|admin)(\.html)?$/.test(location.pathname);
+  var loaded = false;
+  function ok() { try { return localStorage.getItem("synswer-consent") === "accepted" && !blocked; } catch (_) { return false; } }
+  function fill(box) {
+    if (!box || !SLOT || box.getAttribute("data-filled")) return false;
+    box.setAttribute("data-filled", "1");
+    box.hidden = false;
+    var ins = document.createElement("ins");
+    ins.className = "adsbygoogle";
+    ins.style.display = "block";
+    ins.setAttribute("data-ad-client", CLIENT);
+    ins.setAttribute("data-ad-slot", SLOT);
+    ins.setAttribute("data-ad-format", "auto");
+    ins.setAttribute("data-full-width-responsive", "true");
+    box.appendChild(ins);
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) {}
+    return true;
+  }
+  function load() {
+    if (loaded || !ok()) return;
+    loaded = true;
+    var s = document.createElement("script");
+    s.async = true;
+    s.crossOrigin = "anonymous";
+    s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + CLIENT;
+    document.head.appendChild(s);
+    document.querySelectorAll("[data-ad-box]").forEach(fill);
+  }
+  function clear(box) { box.innerHTML = ""; box.removeAttribute("data-filled"); box.hidden = true; }
+  load();
+  return { ok: ok, load: load, fill: function (box) { load(); return ok() && fill(box); }, clear: clear };
+})();
+
 // Cookie consent (shared by every page)
 (function () {
   var banner = document.getElementById("cookie");
@@ -7,6 +45,7 @@
     if (!choice) return;
     try { localStorage.setItem("synswer-consent", choice); } catch (_) {}
     document.documentElement.classList.add("consent-set");
+    if (choice === "accepted") window.SynswerAds.load();
   });
 })();
 
