@@ -1,0 +1,1 @@
+alter table posts add constraint posts_content_len check (char_length(btrim(content)) between 1 and 280);
