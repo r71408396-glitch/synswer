@@ -18,6 +18,7 @@
       <nav class="c-nav" aria-label="Community">
         <a class="brand" href="index.html">Synswer Community</a>
         <div class="me">
+          <a class="btn btn-ghost" id="admin-link" href="admin.html" hidden>Admin</a>
           <span>Signed in as <b id="me-id">...</b></span>
           <button type="button" class="btn btn-ghost" id="signout">Sign out</button>
         </div>
@@ -30,6 +31,8 @@
           <button class="btn" id="post-btn" type="submit">Post</button>
         </div>
         <p class="form-error" id="post-error" role="alert"></p>
+        <p class="note">New posts are reviewed by an admin before they appear in the feed.</p>
+        <p class="form-error" id="ban-note" hidden>Your account has been banned from posting, replying and voting.</p>
       </form>
       <ul class="feed" id="feed"><li class="empty">Loading posts...</li></ul>
     </main>

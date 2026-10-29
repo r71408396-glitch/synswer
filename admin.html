@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin - Synswer</title>
+    <meta name="theme-color" content="#07070b" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script>try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}</script>
+  </head>
+  <body style="display:none">
+    <div class="glow" aria-hidden="true"></div>
+    <main class="community admin">
+      <nav class="c-nav" aria-label="Admin">
+        <a class="brand" href="index.html">Synswer Admin</a>
+        <div class="me">
+          <a class="btn btn-ghost" href="community.html">Community</a>
+          <button type="button" class="btn btn-ghost" id="signout">Sign out</button>
+        </div>
+      </nav>
+
+      <section class="profile" aria-label="Admin profile">
+        <div class="avatar" id="p-initial" aria-hidden="true">A</div>
+        <div>
+          <h1 id="p-name">Admin</h1>
+          <p id="p-email"></p>
+          <p class="meta">Role: <b>Administrator</b> - User ID <span id="p-id"></span></p>
+        </div>
+      </section>
+
+      <div class="stats" id="stats">
+        <div><b id="s-pending">0</b><span>Awaiting approval</span></div>
+        <div><b id="s-approved">0</b><span>Live posts</span></div>
+        <div><b id="s-hidden">0</b><span>Hidden</span></div>
+        <div><b id="s-banned">0</b><span>Banned users</span></div>
+      </div>
+
+      <div class="tabs admin-tabs" role="tablist">
+        <button type="button" class="tab is-on" data-tab="pending">Pending</button>
+        <button type="button" class="tab" data-tab="approved">Live</button>
+        <button type="button" class="tab" data-tab="hidden">Hidden</button>
+        <button type="button" class="tab" data-tab="users">Users</button>
+      </div>
+
+      <ul class="feed" id="list"><li class="empty">Loading...</li></ul>
+    </main>
+    <p class="toast" id="toast" role="status" hidden></p>
+    <dialog class="dlg" id="confirm-dlg">
+      <h2 id="confirm-title">Confirm</h2>
+      <p id="confirm-text"></p>
+      <div class="row">
+        <button type="button" class="btn btn-ghost" id="confirm-no">Cancel</button>
+        <button type="button" class="btn" id="confirm-yes">Confirm</button>
+      </div>
+    </dialog>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>

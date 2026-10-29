@@ -120,6 +120,7 @@
 
   function vote(p, mine, value) {
     var req;
+    if (banned) { toast("Your account is banned from interacting."); return; }
     if (mine && mine.value === value) req = api("api/rows/post_votes/" + mine.id, "DELETE");
     else if (mine) req = api("api/rows/post_votes/" + mine.id, "PATCH", { value: value });
     else req = api("api/rows/post_votes", "POST", { post_id: p.id, value: value });
@@ -187,6 +188,7 @@
       var text = inp.value.trim();
       er.textContent = "";
       if (!text) return;
+      if (banned) { er.textContent = "Your account is banned from replying."; return; }
       send.disabled = true;
       er.textContent = "Checking your reply...";
       moderate(text).then(function (res) {
@@ -219,6 +221,12 @@
     body.textContent = p.content;
     li.appendChild(meta);
     li.appendChild(body);
+    if (p.status && p.status !== "approved") {
+      var badge = document.createElement("span");
+      badge.className = "badge " + p.status;
+      badge.textContent = p.status === "pending" ? "Awaiting approval - only you can see this" : p.status === "rejected" ? "Not approved - only you can see this" : "Restricted by an admin - only you can see this";
+      li.appendChild(badge);
+    }
 
     var bar = document.createElement("div");
     bar.className = "actions";
@@ -264,7 +272,7 @@
   }
 
   function loadFeed() {
-    return api("api/rows/posts?sort=-created_at&limit=100").then(function (res) {
+    return api("api/rows/posts?or=(status.eq.approved,user_id.eq." + me.id + ")&sort=-created_at&limit=100").then(function (res) {
       var rows = res.d.rows || [];
       var feed = $("feed");
       if (!rows.length) {
@@ -322,6 +330,23 @@
     });
   }
 
+  var banned = false;
+  // Every member has one standing row (active or banned); it is created on first visit.
+  function ensureStanding() {
+    return api("api/rows/member_standing?user_id=eq." + me.id + "&limit=1").then(function (r) {
+      var row = (r.d.rows || [])[0];
+      if (row) return row;
+      return api("api/rows/member_standing", "POST", { user_id: me.id }).then(function (c) { return c.d.row || { status: "active" }; });
+    }).then(function (row) {
+      banned = !!row && row.status === "banned";
+      if (banned) {
+        $("ban-note").hidden = false;
+        $("post-text").disabled = true;
+        $("post-btn").disabled = true;
+      }
+    }).catch(function () {});
+  }
+
   fetch("api/auth/me", { credentials: "include" })
     .then(function (r) { return r.json(); })
     .then(function (d) {
@@ -329,8 +354,9 @@
       me = d.user;
       $("me-id").textContent = handle(me.id);
       $("me-id").title = me.id;
+      if (me.role === "admin") $("admin-link").hidden = false;
       document.body.style.display = "";
-      loadFeed();
+      ensureStanding().then(loadFeed);
     })
     .catch(function () { location.replace("login.html?next=community.html"); });
 
@@ -366,6 +392,7 @@
         if (!res.ok) { err.textContent = res.d.error || "Could not post. Please try again."; return; }
         box.value = "";
         $("count").textContent = "0 / 280";
+        toast("Submitted. It will appear in the feed once an admin approves it.");
         return loadFeed();
       })
       .catch(function () { err.textContent = "Could not connect. Please try again."; })

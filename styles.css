@@ -380,6 +380,26 @@ altcha-widget {
 .post .meta b { color: #c4b5fd; font-weight: 500; }
 .post p { margin: 0; color: #dcdcec; white-space: pre-wrap; overflow-wrap: anywhere; }
 .feed .empty { color: var(--muted); text-align: center; padding: 24px 0; }
+.composer .note { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.badge { display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); font-size: 13px; color: #c4b5fd; }
+.badge.rejected, .badge.restricted { color: #fca5a5; }
+.act.del-soft:hover { border-color: #f87171; color: #fca5a5; }
+a.btn { display: inline-flex; align-items: center; text-decoration: none; }
+.admin .profile { display: flex; align-items: center; gap: 16px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.admin .profile h1 { font-size: 1.4rem; }
+.admin .profile p { margin: 2px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+.admin .profile .meta { color: var(--muted); font-size: 13px; }
+.admin .avatar { flex: none; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent); color: #fff; font-family: "Sora", sans-serif; font-weight: 800; font-size: 1.3rem; }
+.admin .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 16px 0; }
+.admin .stats div { padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; text-align: center; }
+.admin .stats b { display: block; font-family: "Sora", sans-serif; font-size: 1.5rem; color: var(--ink); }
+.admin .stats span { font-size: 12px; color: var(--muted); }
+.admin-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.admin-tabs .tab { flex: 1; min-width: 70px; min-height: 38px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font-size: 14px; }
+.admin-tabs .tab.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.admin .profile > div:last-child { min-width: 0; }
+.admin .profile h1 { overflow-wrap: anywhere; font-size: clamp(1.1rem, 4.5vw, 1.4rem); }
+.admin .profile .meta { overflow-wrap: anywhere; }
 .games-link:hover { border-color: var(--accent); background: var(--surface-2); }
 .games-link svg { color: #a78bfa; }
 
