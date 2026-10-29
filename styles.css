@@ -336,6 +336,11 @@ altcha-widget {
   text-decoration: none;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
+.games-link.about-link { right: 138px; }
+@media (max-width: 480px) {
+  .games-link.about-link span { display: none; }
+  .games-link.about-link { right: 138px; padding: 0 12px; }
+}
 .games-link:hover { border-color: var(--accent); background: var(--surface-2); }
 .games-link svg { color: #a78bfa; }
 
