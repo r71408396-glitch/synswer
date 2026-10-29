@@ -340,11 +340,26 @@ altcha-widget {
   text-decoration: none;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
-.games-link.about-link { right: 138px; }
-@media (max-width: 480px) {
-  .games-link.about-link span { display: none; }
-  .games-link.about-link { right: 138px; padding: 0 12px; }
-}
+.games-link.about-link { right: 138px; min-height: 34px; width: 34px; padding: 0; justify-content: center; top: 21px; }
+.games-link.about-link span { display: none; }
+.games-link.about-link svg { width: 18px; height: 18px; }
+
+/* Community page */
+.community { position: relative; z-index: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 0 20px 24px; flex: 1; }
+.c-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 0; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.c-nav a.brand { font-family: "Sora", sans-serif; font-weight: 800; color: var(--ink); text-decoration: none; }
+.c-nav .me { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+.c-nav .me b { color: var(--ink); font-weight: 500; }
+.c-nav .btn { min-height: 34px; padding: 0 16px; font-size: 14px; }
+.composer textarea { min-height: 96px; resize: vertical; }
+.composer .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; }
+.composer .count { font-size: 13px; color: var(--muted); }
+.feed { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 12px; }
+.post { padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.post .meta { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.post .meta b { color: #c4b5fd; font-weight: 500; }
+.post p { margin: 0; color: #dcdcec; white-space: pre-wrap; overflow-wrap: anywhere; }
+.feed .empty { color: var(--muted); text-align: center; padding: 24px 0; }
 .games-link:hover { border-color: var(--accent); background: var(--surface-2); }
 .games-link svg { color: #a78bfa; }
 

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Community - Synswer</title>
+    <meta name="theme-color" content="#07070b" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script>try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}</script>
+  </head>
+  <body style="display:none">
+    <div class="glow" aria-hidden="true"></div>
+    <main class="community">
+      <nav class="c-nav" aria-label="Community">
+        <a class="brand" href="index.html">Synswer Community</a>
+        <div class="me">
+          <span>Signed in as <b id="me-id">...</b></span>
+          <button type="button" class="btn btn-ghost" id="signout">Sign out</button>
+        </div>
+      </nav>
+      <form class="composer" id="composer" autocomplete="off">
+        <label for="post-text" class="eyebrow">Share a text post</label>
+        <textarea id="post-text" maxlength="280" placeholder="What is on your mind?" required></textarea>
+        <div class="row">
+          <span class="count" id="count">0 / 280</span>
+          <button class="btn" id="post-btn" type="submit">Post</button>
+        </div>
+        <p class="form-error" id="post-error" role="alert"></p>
+      </form>
+      <ul class="feed" id="feed"><li class="empty">Loading posts...</li></ul>
+    </main>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+    <script src="community.js"></script>
+  </body>
+</html>
