@@ -401,44 +401,6 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     return /\b(latest|today|tonight|yesterday|this (week|month|year)|news|recent|recently|current|currently|now|breaking|update|updates|price|prices|score|scores|won|wins|winner|election|results?|happening|20(2[5-9]|3\d))\b/i.test(q);
   }
 
-  var lastNewsAt = 0;
-
-  // Recent headlines from GDELT (public, no key). Fails quietly, skips when throttled.
-  async function lookupNews(q) {
-    if (!isTimely(q)) return [];
-    var now = Date.now();
-    if (now - lastNewsAt < 5500) return [];
-    lastNewsAt = now;
-    var ctrl = new AbortController();
-    var timer = setTimeout(function () { ctrl.abort(); }, 6000);
-    try {
-      var terms = q.replace(/[^\w\s'-]/g, " ").replace(/\s+/g, " ").trim();
-      if (terms.length < 3) return [];
-      var url = "https://api.gdeltproject.org/api/v2/doc/doc?mode=artlist&format=json&maxrecords=8&sort=hybridrel&timespan=7d" +
-        "&query=" + encodeURIComponent(terms + " sourcelang:english");
-      var res = await fetch(url, { signal: ctrl.signal });
-      if (!res.ok) return [];
-      var data = await res.json();
-      var seen = {};
-      return (data.articles || [])
-        .filter(function (a) {
-          if (!a.title || !a.url || seen[a.domain + a.title]) return false;
-          seen[a.domain + a.title] = 1;
-          return true;
-        })
-        .slice(0, 5)
-        .map(function (a) {
-          var d = a.seendate || "";
-          var date = d.length >= 8 ? d.slice(0, 4) + "-" + d.slice(4, 6) + "-" + d.slice(6, 8) : "";
-          return { kind: "news", title: a.title, publisher: a.domain || "unknown", date: date, url: a.url };
-        });
-    } catch (_) {
-      return [];
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
   // Long-term memory: notes this signed-in user saved earlier, found by meaning.
   async function recallMemory(q) {
     if (!window.synswerUser) return [];
@@ -571,9 +533,10 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     "LENGTH: Scale to the question. A simple lookup gets a direct answer of one to three sentences. A complex or structural problem gets a visible trade-off analysis (options, pros and cons) followed by a single actionable recommendation. Never exceed about 350 words, except when asked to draft a document. " +
     "FILES: If an ATTACHED FILE is provided, analyze its actual contents: summarize, extract key insights, and for spreadsheets check for errors such as blanks, duplicates, inconsistent formats and outliers, citing row numbers. If the file text is marked as truncated, say so. Each file line is prefixed with its line number (L1:, L2:); for a CSV, line 1 is the header, so data row N is line N+1. Answer the question from the file first, quoting exact values. If an image is attached, look at it carefully: read any visible text exactly, identify the main subject (and brand, model, species or place only when clearly recognisable), answer the question directly, then add real information about the subject from REFERENCE with citations. Say plainly when something in the image is unclear, and never identify a real person from their face. " +
     "DOCUMENTS: When asked to draft a contract, blog post, email, report or code, write the complete document in markdown (code inside fenced code blocks), with no commentary around it, and note briefly that contracts are drafts needing professional legal review. For data to chart or export, give a markdown table. " +
-    "SOURCES: REFERENCE holds Wikipedia excerpts: use the relevant parts, ignore the rest, and explain in your own words, never copying sentences. Wikipedia is only one input: when it is missing or off-topic, answer from solid general knowledge across all fields (not just encyclopedic topics) and say what could not be verified. Recent news headlines are reports, not confirmed fact: attribute them (according to reports from the publisher, dated the given date) and say plainly when they are thin. Titles from Hacker News, Stack Overflow and scholarly papers were not read: use them only to confirm a topic or finding is real and discussed. Prefer claims that more than one source supports, and say briefly when sources disagree or only one supports a point. " +
+    "LIVE WEB: When web search is available for this question, live web results come first. Base the answer on what the web search finds, attribute news to its publisher and date, and cite those pages as [1], [2], [3] in the order you used them (the visitor sees them as a numbered list of links under the answer). Wikipedia in REFERENCE is only background for context and definitions: never let it override a newer live result, and never cite it. Never say you cannot see live news or current information. " +
+    "SOURCES: REFERENCE holds Wikipedia excerpts: use the relevant parts, ignore the rest, and explain in your own words, never copying sentences. Wikipedia is only one input: when it is missing or off-topic, answer from solid general knowledge across all fields (not just encyclopedic topics) and say what could not be verified. Titles from Hacker News, Stack Overflow and scholarly papers were not read: use them only to confirm a topic or finding is real and discussed. Prefer claims that more than one source supports, and say briefly when sources disagree or only one supports a point. " +
     "MEMORY: SESSION CONVERSATION holds earlier turns of this visit: use it so follow-up questions keep their context. SAVED MEMORY holds notes about this user from earlier visits: use it to personalise, but never recite it back unprompted. " +
-    "HONESTY: You cannot see live data. If something cannot be verified from the sources or from solid knowledge, say so neutrally and state what to check, instead of assuming. Never invent sources, links or quotes. If the question depends on recent events, say your answer may be out of date. " +
+    "HONESTY: If something cannot be verified from the sources or from solid knowledge, say so neutrally and state what to check, instead of assuming. Never invent sources, links or quotes. Never tell the visitor you cannot see live news or current events. " +
     "PRIVACY: Never disclose or confirm credentials, passwords, API keys, government or financial identifiers, or private records about a person. If asked to verify or reveal such a string, decline neutrally without repeating it back.";
 
   form.addEventListener("submit", async function (e) {
@@ -667,17 +630,27 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     }
 
     var skip = function () { return Promise.resolve([]); };
-    var found = await Promise.all([lq ? lookupSources(lq) : skip(), lq ? lookupNews(lq) : skip(), lq ? lookupHN(lq) : skip(), lq ? lookupStack(lq) : skip(), lq ? lookupPapers(lq) : skip(), recallMemory(q), lq ? lookupDDG(lq) : skip()]);
+    var found = await Promise.all([lq ? lookupSources(lq) : skip(), skip(), lq ? lookupHN(lq) : skip(), lq ? lookupStack(lq) : skip(), lq ? lookupPapers(lq) : skip(), recallMemory(q), lq ? lookupDDG(lq) : skip()]);
     var wiki = found[0];
     var news = found[1];
     var leads = found[2].concat(found[3], found[4], found[6]);
     var memories = found[5];
-    var sources = wiki.concat(news, leads);
+    var timely = !!lq && isTimely(q) && !(att && att.text != null);
+    var sources = timely ? [] : wiki.concat(news, leads);
     renderSources(sources);
-    setBody("Cross-checking sources...", true);
+    setBody(timely ? "Searching the web live..." : "Cross-checking sources...", true);
 
     // Numbered to match the source pills shown under the answer: [1], [2], ...
-    var reference = wiki.map(function (s, i) { return "[" + (i + 1) + "] Wikipedia, " + s.title + ": " + s.extract; }).join("\n\n");
+    // For time-sensitive questions the numbers belong to the live web sources only; the rest is unnumbered background.
+    var reference;
+    if (timely) {
+      reference = "BACKGROUND ONLY (no citation numbers, never cite these):\n" +
+        wiki.map(function (s) { return "Wikipedia, " + s.title + ": " + s.extract; }).join("\n\n");
+      if (!wiki.length) reference = "";
+      leads = [];
+    } else {
+      reference = wiki.map(function (s, i) { return "[" + (i + 1) + "] Wikipedia, " + s.title + ": " + s.extract; }).join("\n\n");
+    }
     var n0 = wiki.length;
     if (news.length) {
       reference += (reference ? "\n\n" : "") + "RECENT NEWS HEADLINES (headline only, no article text):\n" +
@@ -711,6 +684,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
           input: inputText,
           maxTokens: 1000,
           images: imagePath ? [imagePath] : undefined,
+          web: timely ? true : undefined,
           altcha: altcha
         }),
       });
@@ -718,6 +692,13 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
       if (!res.ok) {
         setBody(data.error || "Synswer could not answer right now. Please try again in a moment.", false);
       } else {
+        if (timely && data.sources && data.sources.length) {
+          renderSources(data.sources.filter(function (s) { return s && s.url; }).slice(0, 12).map(function (s) {
+            var host = "";
+            try { host = new URL(s.url).hostname.replace(/^www\./, ""); } catch (_) {}
+            return { kind: "web", publisher: host || "web", date: "", title: s.title || s.url, url: s.url };
+          }));
+        }
         var answer = data.text || "No answer came back. Please try again.";
         if (data.text) bodyEl.setAttribute("data-ok", "1");
         setBody(answer, false);
