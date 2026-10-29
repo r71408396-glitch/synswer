@@ -1,6 +1,6 @@
 (function () {
   var JSON_H = { "content-type": "application/json" };
-  var tab = "pending";
+  var tab = "reports";
   var me = null;
 
   function $(id) { return document.getElementById(id); }
@@ -56,8 +56,16 @@
   function setStatus(p, status) {
     return api("api/rows/posts/" + p.id, "PATCH", { status: status, reviewed_at: new Date().toISOString() }).then(function (r) {
       if (!r.ok) toast(r.d.error || "Could not update the post.");
-      else toast(status === "approved" ? "Post approved" : status === "rejected" ? "Post rejected" : "Post restricted");
+      else toast(status === "approved" ? "Post restored" : "Post hidden");
+      if (status === "restricted") return dismissReports(p.id, "actioned").then(refresh);
       return refresh();
+    });
+  }
+  function dismissReports(postId, status) {
+    return api("api/rows/reports?post_id=eq." + postId + "&status=eq.open&select=id&limit=200").then(function (r) {
+      var ups = (r.d.rows || []).map(function (x) { return { id: x.id, values: { status: status } }; });
+      if (!ups.length) return true;
+      return fetch("api/rows/reports/bulk", { method: "PATCH", credentials: "include", headers: JSON_H, body: JSON.stringify({ updates: ups }) });
     });
   }
   function deletePost(p) {
@@ -95,7 +103,7 @@
     });
   }
 
-  function postCard(p) {
+  function postCard(p, reps) {
     var li = document.createElement("li");
     li.className = "post";
     var meta = document.createElement("div");
@@ -113,9 +121,17 @@
     li.appendChild(body);
     var bar = document.createElement("div");
     bar.className = "actions";
-    if (p.status !== "approved") bar.appendChild(btn(p.status === "pending" ? "Approve" : "Restore", "on", function () { setStatus(p, "approved"); }));
-    if (p.status === "pending") bar.appendChild(btn("Reject", "", function () { setStatus(p, "rejected"); }));
-    if (p.status === "approved") bar.appendChild(btn("Restrict", "", function () { setStatus(p, "restricted"); }));
+    if (reps && reps.length) {
+      var rl = document.createElement("p");
+      rl.className = "meta";
+      var counts = {};
+      reps.forEach(function (x) { counts[x.reason] = (counts[x.reason] || 0) + 1; });
+      rl.textContent = reps.length + " report" + (reps.length === 1 ? "" : "s") + ": " + Object.keys(counts).map(function (k) { return k + " (" + counts[k] + ")"; }).join(", ");
+      li.insertBefore(rl, body.nextSibling);
+      bar.appendChild(btn("Dismiss reports", "on", function () { dismissReports(p.id, "dismissed").then(function () { toast("Reports dismissed"); refresh(); }); }));
+    }
+    if (p.status !== "approved") bar.appendChild(btn("Restore", "on", function () { setStatus(p, "approved"); }));
+    else bar.appendChild(btn("Hide", "", function () { setStatus(p, "restricted"); }));
     bar.appendChild(btn("Ban author", "del-soft", function () { banFlow(p.user_id); }));
     var del = btn("Delete", "del", function () { deletePost(p); });
     bar.appendChild(del);
@@ -160,12 +176,13 @@
   function stats() {
     return Promise.all([
       api("api/rows/posts/aggregate?agg=count&group=status"),
-      api("api/rows/member_standing/aggregate?agg=count&group=status")
+      api("api/rows/member_standing/aggregate?agg=count&group=status"),
+      api("api/rows/reports/aggregate?agg=count&status=eq.open")
     ]).then(function (r) {
       var c = { pending: 0, approved: 0, hidden: 0, banned: 0 };
+      ((r[2].d.rows || [])[0] || {}).count && (c.pending = r[2].d.rows[0].count);
       (r[0].d.rows || []).forEach(function (x) {
-        if (x.status === "pending") c.pending = x.count;
-        else if (x.status === "approved") c.approved = x.count;
+        if (x.status === "approved") c.approved = x.count;
         else c.hidden += x.count;
       });
       (r[1].d.rows || []).forEach(function (x) { if (x.status === "banned") c.banned = x.count; });
@@ -193,12 +210,25 @@
         rows.forEach(function (u) { list.appendChild(userCard(u, counts[u.user_id] || 0)); });
       });
     }
-    var filter = tab === "pending" ? "status=eq.pending" : tab === "approved" ? "status=eq.approved" : "status=in.rejected,restricted";
-    return api("api/rows/posts?" + filter + "&sort=" + (tab === "pending" ? "created_at" : "-created_at") + "&limit=100").then(function (r) {
+    if (tab === "reports") {
+      return api("api/rows/reports?status=eq.open&sort=created_at&limit=200").then(function (rr) {
+        var reps = rr.d.rows || [], byPost = {}, ids = [];
+        reps.forEach(function (x) { if (!byPost[x.post_id]) { byPost[x.post_id] = []; ids.push(x.post_id); } byPost[x.post_id].push(x); });
+        list.innerHTML = "";
+        if (!ids.length) { list.appendChild(empty("No open reports.")); return; }
+        return api("api/rows/posts?id=in." + ids.slice(0, 100).join(",") + "&limit=100").then(function (pr) {
+          var posts = pr.d.rows || [];
+          if (!posts.length) { list.appendChild(empty("No open reports.")); return; }
+          posts.forEach(function (p) { list.appendChild(postCard(p, byPost[p.id])); });
+        });
+      }).catch(function () { list.innerHTML = ""; list.appendChild(empty("Could not load.")); });
+    }
+    var filter = tab === "approved" ? "" : "status=in.rejected,restricted&";
+    return api("api/rows/posts?" + filter + "sort=-created_at&limit=100").then(function (r) {
       var rows = r.d.rows || [];
       list.innerHTML = "";
       if (!rows.length) {
-        list.appendChild(empty(tab === "pending" ? "Nothing waiting for approval." : tab === "approved" ? "No live posts." : "No hidden posts."));
+        list.appendChild(empty(tab === "approved" ? "No posts yet." : "No hidden posts."));
         return;
       }
       rows.forEach(function (p) { list.appendChild(postCard(p)); });

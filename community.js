@@ -104,6 +104,7 @@
     down: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 13V4H4v9zM7 13l4 8c1.5 0 2.5-1 2.5-2.5V15h5.2a1.8 1.8 0 0 0 1.8-2.1l-1.2-7A2 2 0 0 0 17.3 4H7"/></svg>',
     reply: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>',
     share: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.3M8.2 13.2l7.6 4.3"/></svg>',
+    flag: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
     trash: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>'
   };
 
@@ -204,7 +205,31 @@
     box.appendChild(form);
   }
 
-  function renderPost(p, votes, mine, replies) {
+  var REASONS = ["Harassment or hate", "Sexual or explicit content", "Threats or violence", "Spam", "Other"];
+  function reportFlow(p, btn) {
+    if (banned) { toast("Your account is banned from interacting."); return; }
+    var dlg = document.createElement("dialog");
+    dlg.className = "dlg";
+    dlg.innerHTML = '<h2>Report this post</h2><p>Tell the admins why this post should be reviewed.</p><label for="rep-reason">Reason</label><select id="rep-reason"></select><p class="form-error" role="alert"></p><div class="row"><button type="button" class="btn btn-ghost" data-x="no">Cancel</button><button type="button" class="btn" data-x="yes">Send report</button></div>';
+    var sel = dlg.querySelector("select");
+    REASONS.forEach(function (r) { var o = document.createElement("option"); o.textContent = r; sel.appendChild(o); });
+    var er = dlg.querySelector(".form-error");
+    document.body.appendChild(dlg);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.querySelector('[data-x="no"]').addEventListener("click", function () { dlg.close(); });
+    dlg.querySelector('[data-x="yes"]').addEventListener("click", function () {
+      api("api/rows/reports", "POST", { post_id: p.id, reason: sel.value }).then(function (r) {
+        if (!r.ok) { er.textContent = r.d.error || "Could not send the report."; return; }
+        dlg.close();
+        toast("Report sent to the admins");
+        loadFeed();
+      });
+    });
+    dlg.showModal();
+    sel.focus();
+  }
+
+  function renderPost(p, votes, mine, replies, reported) {
     var li = document.createElement("li");
     li.className = "post";
     li.id = "post-" + p.id;
@@ -224,7 +249,7 @@
     if (p.status && p.status !== "approved") {
       var badge = document.createElement("span");
       badge.className = "badge " + p.status;
-      badge.textContent = p.status === "pending" ? "Awaiting approval - only you can see this" : p.status === "rejected" ? "Not approved - only you can see this" : "Restricted by an admin - only you can see this";
+      badge.textContent = "Hidden by an admin - only you can see this";
       li.appendChild(badge);
     }
 
@@ -254,6 +279,11 @@
         });
       });
       bar.appendChild(del);
+    } else if (me && p.user_id !== me.id) {
+      var flag = actBtn("report", ICON.flag, reported ? "Reported" : "Report", "Report post");
+      if (reported) flag.disabled = true;
+      else flag.addEventListener("click", function () { reportFlow(p); });
+      bar.appendChild(flag);
     }
     li.appendChild(bar);
 
@@ -283,9 +313,11 @@
       return Promise.all([
         api("api/rows/post_votes/aggregate?agg=count&group=post_id,value&post_id=in." + ids + "&limit=200"),
         api("api/rows/post_votes?user_id=eq." + me.id + "&post_id=in." + ids + "&select=id,post_id,value&limit=200"),
-        api("api/rows/post_replies?post_id=in." + ids + "&sort=created_at&limit=200")
+        api("api/rows/post_replies?post_id=in." + ids + "&sort=created_at&limit=200"),
+        api("api/rows/reports?reporter_id=eq." + me.id + "&post_id=in." + ids + "&select=post_id&limit=200")
       ]).then(function (r) {
-        var counts = {}, mine = {}, reps = {};
+        var counts = {}, mine = {}, reps = {}, reported = {};
+        (r[3].d.rows || []).forEach(function (x) { reported[x.post_id] = true; });
         (r[0].d.rows || []).forEach(function (x) {
           var c = counts[x.post_id] || (counts[x.post_id] = { up: 0, down: 0 });
           if (Number(x.value) === 1) c.up = x.count; else c.down = x.count;
@@ -294,7 +326,7 @@
         (r[2].d.rows || []).forEach(function (x) { (reps[x.post_id] = reps[x.post_id] || []).push(x); });
         feed.innerHTML = "";
         rows.forEach(function (p) {
-          feed.appendChild(renderPost(p, counts[p.id] || { up: 0, down: 0 }, mine[p.id], reps[p.id] || []));
+          feed.appendChild(renderPost(p, counts[p.id] || { up: 0, down: 0 }, mine[p.id], reps[p.id] || [], reported[p.id]));
         });
         if (!scrolled && location.hash.indexOf("#post-") === 0) {
           scrolled = true;
@@ -392,7 +424,7 @@
         if (!res.ok) { err.textContent = res.d.error || "Could not post. Please try again."; return; }
         box.value = "";
         $("count").textContent = "0 / 280";
-        toast("Submitted. It will appear in the feed once an admin approves it.");
+        toast("Posted");
         return loadFeed();
       })
       .catch(function () { err.textContent = "Could not connect. Please try again."; })
