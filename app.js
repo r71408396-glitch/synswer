@@ -90,6 +90,12 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     attachment = a;
     chip.hidden = !a;
     chipName.textContent = a ? a.name : "";
+    var thumb = document.getElementById("file-thumb");
+    if (thumb) {
+      if (thumb.src && thumb.src.indexOf("blob:") === 0) URL.revokeObjectURL(thumb.src);
+      if (a && a.file) { thumb.src = URL.createObjectURL(a.file); thumb.hidden = false; }
+      else { thumb.removeAttribute("src"); thumb.hidden = true; }
+    }
     if (!a) { fileInput.value = ""; photoInput.value = ""; }
   }
   function onPick(e) {

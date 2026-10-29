@@ -246,6 +246,9 @@ altcha-widget {
 .tool-btn:hover, .tool-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); }
 .tool-btn[aria-pressed="true"] { background: var(--surface-2); }
 .file-chip { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 6px 6px 6px 14px; border-radius: 999px; background: var(--surface-2); color: var(--ink); font-size: 14px; }
+.file-chip { padding-left: 6px; }
+.file-chip .chip-thumb { width: 36px; height: 36px; flex: none; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+.file-chip .chip-thumb[hidden] { display: none; }
 .file-chip > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
 .file-chip button { width: 26px; height: 26px; border: 0; border-radius: 50%; background: var(--line); color: var(--ink); line-height: 1; }
 .welcome-back { margin: 22px auto 0; font-size: 15px; color: var(--text); }
