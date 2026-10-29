@@ -546,6 +546,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
 
   function setBody(text, loading) {
     bodyEl.classList.toggle("is-loading", !!loading);
+    if (loading) bodyEl.removeAttribute("data-ok");
     if (loading) {
       bodyEl.innerHTML = "";
       var p = document.createElement("p");
@@ -554,7 +555,12 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     } else {
       bodyEl.innerHTML = markdown(text);
     }
-    if (!loading) document.dispatchEvent(new CustomEvent("synswer:answer"));
+    if (!loading) {
+      document.dispatchEvent(new CustomEvent("synswer:answer"));
+      // One ad under a finished answer (never while it is loading, never on the home screen).
+      var adBox = document.getElementById("answer-ad");
+      if (adBox && window.SynswerAds && bodyEl.getAttribute("data-ok") === "1") window.SynswerAds.fill(adBox);
+    }
   }
 
   var SYSTEM =
@@ -613,6 +619,8 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
       }
     }
     try { localStorage.setItem("synswer-last-q", q); } catch (_) {}
+    var prevAd = document.getElementById("answer-ad");
+    if (prevAd && window.SynswerAds) window.SynswerAds.clear(prevAd);
     showAnswer(q);
     setBody("Reading sources...", true);
     renderSources([]);
@@ -711,6 +719,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
         setBody(data.error || "Synswer could not answer right now. Please try again in a moment.", false);
       } else {
         var answer = data.text || "No answer came back. Please try again.";
+        if (data.text) bodyEl.setAttribute("data-ok", "1");
         setBody(answer, false);
         lastAnswer = answer;
         dlMd.hidden = false;
