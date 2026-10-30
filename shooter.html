@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Space Shooter - Synswer Games</title>
     <meta name="theme-color" content="#07070b" />
+    <meta name="google-adsense-account" content="ca-pub-8679733413041334" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,20 +26,22 @@
           <div class="hud"><span>Score <b id="score">0</b></span><span>Lives <b id="lives">3</b></span><span>Best <b id="best">0</b></span></div>
           <div class="canvas-wrap" style="--cw:420px;--ar:0.75">
             <canvas id="game" width="420" height="560"></canvas>
+            <div class="boss-bar" id="boss-bar" hidden><span id="boss-name">Boss</span><i><b id="boss-fill"></b></i></div>
             <div class="overlay" id="overlay">
               <h2 id="ov-title">Space Shooter</h2>
-              <p id="ov-text">Shoot the incoming ships. Do not let them hit you.</p>
+              <p id="ov-text">Shoot the incoming ships in 3D. A boss arrives every 300 points, so dodge its shots and bring it down.</p>
               <button class="btn" id="start" type="button">Play</button>
               <button class="btn btn-ghost" id="save" type="button" hidden>Save score</button>
             </div>
           </div>
-          <p class="hint">Arrow keys or A and D to move, hold space to fire. On a phone, drag on the game to move and fire.</p>
+          <p class="hint">Arrow keys or A and D to move, hold space to fire. Bosses have a health bar at the top. On a phone, drag on the game to move and fire.</p>
         </section>
         <aside class="board">
           <h2>Leaderboard</h2>
           <ol id="leaderboard"></ol>
         </aside>
       </div>
+      <div class="ad-box" data-ad-box hidden style="margin:24px 0 0;text-align:center;overflow:hidden"></div>
     </main>
     {footer}
     {cookie}
