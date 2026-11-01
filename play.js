@@ -5,6 +5,8 @@
   if (!m) { location.replace("games.html"); return; }
   window.GAME_CFG = m;
   document.body.setAttribute("data-game", id);
+  var can = document.querySelector('link[rel="canonical"]');
+  if (can) can.setAttribute("href", "https://synswer.com/play.html?g=" + encodeURIComponent(id));
   document.title = m.title + " - Synswer Games";
   document.getElementById("game-title").textContent = m.title;
   document.getElementById("ov-title").textContent = m.title;

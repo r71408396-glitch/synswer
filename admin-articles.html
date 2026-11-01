@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manage articles - Synswer</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href="https://synswer.com/admin-articles.html" />
+    <meta name="theme-color" content="#07070b" />
+    <meta name="google-adsense-account" content="ca-pub-8679733413041334" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="blog.css" />
+    <script>try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}</script>
+  </head>
+  <body style="display:none">
+    <div class="glow" aria-hidden="true"></div>
+    <main class="community admin cms">
+      <nav class="c-nav" aria-label="Admin">
+        <a class="brand" href="index.html">Synswer Articles</a>
+        <div class="me">
+          <a class="btn btn-ghost" href="articles.html">View Articles</a>
+          <a class="btn btn-ghost" href="admin.html">Moderation</a>
+        </div>
+      </nav>
+
+      <section id="list-view">
+        <div class="cms-bar">
+          <h1>Articles</h1>
+          <button type="button" class="btn" id="new-btn">New article</button>
+        </div>
+        <ul class="cms-list" id="cms-list"><li class="empty">Loading...</li></ul>
+      </section>
+
+      <section id="edit-view" hidden>
+        <div class="cms-bar">
+          <h1 id="edit-title">New article</h1>
+          <button type="button" class="btn btn-ghost" id="back-btn">Back to list</button>
+        </div>
+        <form class="cms-form" id="cms-form" autocomplete="off">
+          <div>
+            <label for="f-title">Title</label>
+            <input id="f-title" type="text" maxlength="160" required />
+          </div>
+          <div class="cms-two">
+            <div>
+              <label for="f-slug">Address (slug)</label>
+              <input id="f-slug" type="text" maxlength="120" pattern="[a-z0-9\-]+" placeholder="generated from the title" />
+            </div>
+            <div>
+              <label for="f-cat">Category</label>
+              <input id="f-cat" type="text" maxlength="40" placeholder="e.g. Guides" />
+            </div>
+          </div>
+          <div class="cms-two">
+            <div>
+              <label for="f-tags">Tags (comma separated)</label>
+              <input id="f-tags" type="text" maxlength="200" placeholder="ai, search, tips" />
+            </div>
+            <div>
+              <label for="f-date">Publication date</label>
+              <input id="f-date" type="datetime-local" />
+            </div>
+          </div>
+          <div>
+            <label>Featured header image</label>
+            <div class="cms-img">
+              <img id="f-img-prev" alt="" width="160" height="90" hidden />
+              <input id="f-img-file" type="file" accept="image/*" />
+              <button type="button" class="btn btn-ghost" id="f-img-clear" hidden>Remove image</button>
+            </div>
+          </div>
+          <div>
+            <label for="f-excerpt">Short preview (shown on the Articles page)</label>
+            <textarea id="f-excerpt" rows="2" maxlength="300" placeholder="Leave empty to use the start of the article"></textarea>
+          </div>
+          <div>
+            <label for="body">Article</label>
+            <textarea id="body" name="body_rich" data-rich-editor="upload,pasteimage,resizimg,table,colors,history,cleanpaste,indent,noembed,pasteembed" data-upload-folder="articles" placeholder="Write the article"></textarea>
+          </div>
+          <div>
+            <label for="f-status">Status</label>
+            <select id="f-status">
+              <option value="draft">Draft (hidden)</option>
+              <option value="published">Published (live)</option>
+            </select>
+          </div>
+          <p class="form-error" id="f-error" role="alert"></p>
+          <p class="cms-ok" id="f-ok" role="status"></p>
+          <div class="cms-actions">
+            <button type="submit" class="btn" id="save-btn">Save article</button>
+            <a class="btn btn-ghost" id="view-link" href="#" hidden target="_blank" rel="noopener">View live</a>
+          </div>
+        </form>
+      </section>
+    </main>
+    <dialog class="dlg" id="confirm-dlg">
+      <h2>Delete article?</h2>
+      <p id="confirm-text"></p>
+      <div class="row">
+        <button type="button" class="btn btn-ghost" id="confirm-no">Cancel</button>
+        <button type="button" class="btn" id="confirm-yes">Delete</button>
+      </div>
+    </dialog>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+    <script type="module" src="admin-articles.js"></script>
+  </body>
+</html>
