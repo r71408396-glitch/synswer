@@ -101,6 +101,7 @@ async function openEditor(id) {
   $("f-cat").value = editing ? editing.category : "";
   $("f-tags").value = editing ? editing.tags : "";
   $("f-excerpt").value = editing ? editing.excerpt : "";
+  $("f-alt").value = editing ? editing.image_alt || "" : "";
   $("f-status").value = editing ? editing.status : "draft";
   $("f-date").value = toLocalInput(editing && editing.published_at ? editing.published_at : null);
   $("f-img-file").value = "";
@@ -136,7 +137,7 @@ async function save(e) {
     published_at = v ? new Date(v).toISOString() : new Date().toISOString();
   }
   const values = {
-    title, slug, excerpt, body_rich: html, image_url: imageUrl || null,
+    title, slug, excerpt, body_rich: html, image_url: imageUrl || null, image_alt: $("f-alt").value.trim(),
     category: $("f-cat").value.trim(), tags: $("f-tags").value.trim(),
     status, published_at, updated_at: new Date().toISOString()
   };

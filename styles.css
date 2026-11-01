@@ -342,6 +342,8 @@ altcha-widget {
 }
 .games-link.about-link { right: 138px; min-height: 34px; width: 34px; padding: 0; justify-content: center; top: 21px; }
 .games-link.social-link { top: 68px; }
+.games-link.articles-link { top: 68px; right: 136px; }
+@media (max-width: 420px) { .games-link.articles-link span, .games-link.social-link span { display: none; } .games-link.articles-link, .games-link.social-link { padding: 0 12px; } .games-link.articles-link { right: 72px; } }
 .post .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .act { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font-size: 14px; }
 .act:hover { border-color: var(--accent); color: var(--ink); }

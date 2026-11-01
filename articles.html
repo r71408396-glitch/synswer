@@ -28,12 +28,13 @@
       <p class="lead">Guides, news and ideas from the Synswer team.</p>
       <div class="blog-filters" id="filters" hidden></div>
       <ul class="post-grid" id="posts">
-<ul class="page-links" data-kreova-links="articles" data-kreova-href="article.html?slug={{slug}}" data-kreova-text="{{title}}"></ul><li class="post-empty">Loading articles...</li></ul>
+<ul class="page-links" data-kreova-links="articles" data-kreova-href="article.html?slug={{slug}}" data-kreova-text="{{title}}"></ul>
+<li class="post-empty">Loading articles...</li></ul>
       <div class="ad-box" data-ad-box hidden style="margin:28px 0 0;text-align:center;overflow:hidden"></div>
     </main>
     {footer}
     {cookie}
-    <script type="application/json" data-kreova-rows="articles" data-kreova-query="select=id,title,slug,excerpt,image_url,category,tags,published_at&amp;status=eq.published&amp;sort=-published_at&amp;limit=30"></script>
+    <script type="application/json" data-kreova-rows="articles" data-kreova-query="select=id,title,slug,excerpt,image_url,image_alt,category,tags,published_at&amp;status=eq.published&amp;sort=-published_at&amp;limit=10"></script>
     <script src="app.js"></script>
     <script src="blog.js"></script>
   </body>
