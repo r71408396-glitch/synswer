@@ -15,6 +15,26 @@
     if (text != null) e.textContent = text;
     return e;
   }
+  function makeCard(r) {
+    var li = el("li");
+    var a = el("a", "post-card");
+    a.href = "article.html?slug=" + encodeURIComponent(r.slug);
+    if (r.image_url) {
+      var img = el("img", "post-thumb");
+      img.src = r.image_url; img.alt = r.image_alt || ""; img.loading = "lazy"; img.width = 640; img.height = 360;
+      a.appendChild(img);
+    } else a.appendChild(el("div", "post-thumb-empty"));
+    var body = el("div", "post-body");
+    var meta = el("div", "post-meta");
+    if (r.category) { meta.appendChild(el("b", null, r.category)); meta.appendChild(document.createTextNode(" - ")); }
+    meta.appendChild(document.createTextNode(fmt(r.published_at)));
+    body.appendChild(meta);
+    body.appendChild(el("h2", null, r.title));
+    if (r.excerpt) body.appendChild(el("p", null, r.excerpt));
+    a.appendChild(body);
+    li.appendChild(a);
+    return li;
+  }
   function seed(table) {
     var s = document.querySelector('script[data-kreova-rows="' + table + '"]');
     try { return s && s.textContent.trim() ? JSON.parse(s.textContent) : null; } catch (_) { return null; }
@@ -25,6 +45,15 @@
   if (list) {
     var qs = new URLSearchParams(location.search);
     var cat = qs.get("cat") || "";
+    var q = (qs.get("q") || "").trim().replace(/[(),*]/g, " ").trim();
+    var qInput = document.getElementById("blog-q");
+    if (qInput) {
+      qInput.value = q;
+      document.getElementById("blog-search").addEventListener("submit", function (e) {
+        e.preventDefault();
+        location.href = href(cat, 1, qInput.value.trim());
+      });
+    }
     var page = Math.max(1, parseInt(qs.get("page") || "1", 10) || 1);
     var filters = document.getElementById("filters");
     var pager = document.createElement("nav");
@@ -33,8 +62,10 @@
     pager.hidden = true;
     list.parentNode.insertBefore(pager, list.nextSibling);
 
-    var href = function (c, p) {
+    var href = function (c, p, query) {
       var u = [];
+      var qq = query === undefined ? q : query;
+      if (qq) u.push("q=" + encodeURIComponent(qq));
       if (c) u.push("cat=" + encodeURIComponent(c));
       if (p > 1) u.push("page=" + p);
       return "articles.html" + (u.length ? "?" + u.join("&") : "");
@@ -42,27 +73,8 @@
 
     var render = function (rows, total) {
       list.textContent = "";
-      if (!rows.length) { list.appendChild(el("li", "post-empty", cat ? "No articles in this category." : "No articles yet. Check back soon.")); pager.hidden = true; return; }
-      rows.forEach(function (r) {
-        var li = el("li");
-        var a = el("a", "post-card");
-        a.href = "article.html?slug=" + encodeURIComponent(r.slug);
-        if (r.image_url) {
-          var img = el("img", "post-thumb");
-          img.src = r.image_url; img.alt = r.image_alt || ""; img.loading = "lazy"; img.width = 640; img.height = 360;
-          a.appendChild(img);
-        } else a.appendChild(el("div", "post-thumb-empty"));
-        var body = el("div", "post-body");
-        var meta = el("div", "post-meta");
-        if (r.category) { meta.appendChild(el("b", null, r.category)); meta.appendChild(document.createTextNode(" - ")); }
-        meta.appendChild(document.createTextNode(fmt(r.published_at)));
-        body.appendChild(meta);
-        body.appendChild(el("h2", null, r.title));
-        if (r.excerpt) body.appendChild(el("p", null, r.excerpt));
-        a.appendChild(body);
-        li.appendChild(a);
-        list.appendChild(li);
-      });
+      if (!rows.length) { list.appendChild(el("li", "post-empty", q ? "No articles match your search." : cat ? "No articles in this category." : "No articles yet. Check back soon.")); pager.hidden = true; return; }
+      rows.forEach(function (r) { list.appendChild(makeCard(r)); });
       var pages = Math.max(1, Math.ceil(total / PER));
       pager.textContent = "";
       if (pages < 2) { pager.hidden = true; return; }
@@ -87,11 +99,12 @@
       });
     };
 
-    var s0 = !cat && page === 1 ? seed("articles") : null;
+    var s0 = !cat && !q && page === 1 ? seed("articles") : null;
     if (s0 && s0.rows) render(s0.rows, s0.total != null ? s0.total : s0.rows.length);
 
     var url = "api/rows/articles?select=" + COLS + "&status=eq.published&sort=-published_at&limit=" + PER + "&offset=" + (page - 1) * PER;
     if (cat) url += "&category=eq." + encodeURIComponent(cat);
+    if (q) url += "&or=" + encodeURIComponent("(title.like." + q + ",excerpt.like." + q + ",tags.like." + q + ")");
     fetch(url)
       .then(function (r) { return r.json(); })
       .then(function (d) { render(d.rows || [], d.total != null ? d.total : (d.rows || []).length); })
@@ -115,6 +128,28 @@
       box.appendChild(a);
     };
     if (!slug) { fail(); return; }
+    var loadRelated = function (cur) {
+      var base = "api/rows/articles?select=" + COLS + "&status=eq.published&slug=neq." + encodeURIComponent(cur.slug) + "&sort=-published_at&limit=3";
+      var get = function (u) { return fetch(u).then(function (r) { return r.json(); }).then(function (d) { return d.rows || []; }); };
+      var same = cur.category ? get(base + "&category=eq." + encodeURIComponent(cur.category)) : Promise.resolve([]);
+      same.then(function (rows) {
+        if (rows.length >= 3) return rows;
+        var have = rows.map(function (x) { return x.slug; });
+        return get(base).then(function (more) {
+          more.forEach(function (m) { if (rows.length < 3 && have.indexOf(m.slug) < 0) rows.push(m); });
+          return rows;
+        });
+      }).then(function (rows) {
+        if (!rows.length) return;
+        var sec = el("section", "related");
+        sec.setAttribute("aria-label", "Related articles");
+        sec.appendChild(el("h2", null, "Related articles"));
+        var ul = el("ul", "post-grid");
+        rows.forEach(function (r) { ul.appendChild(makeCard(r)); });
+        sec.appendChild(ul);
+        box.parentNode.insertBefore(sec, box.nextSibling);
+      }).catch(function () {});
+    };
     fetch("api/rows/articles?slug=eq." + encodeURIComponent(slug) + "&status=eq.published&limit=1")
       .then(function (r) { return r.json(); })
       .then(async function (d) {
@@ -131,6 +166,7 @@
         if (r.category) { meta.appendChild(el("b", null, r.category)); meta.appendChild(document.createTextNode(" - ")); }
         meta.appendChild(document.createTextNode(fmt(r.published_at)));
         box.appendChild(meta);
+        loadRelated(r);
         if (r.image_url) {
           var img = el("img", "article-hero");
           img.src = r.image_url; img.alt = r.image_alt || r.title; img.width = 1280; img.height = 720;

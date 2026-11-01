@@ -140,9 +140,23 @@
   document.addEventListener("webkitfullscreenchange", fsLabel);
   if (hud) { hud.appendChild(muteBtn); hud.appendChild(vol); if (canFs) hud.appendChild(fsBtn); hud.appendChild(pauseBtn); }
 
+  // While a round is running, the game area never scrolls the page (touch, wheel, space and arrow keys).
+  function lockScroll() { document.body.classList.toggle("game-active", playing && !paused); }
+  function stopScroll(e) { if (playing && !paused && e.cancelable) e.preventDefault(); }
+  if (card) {
+    card.addEventListener("touchmove", stopScroll, { passive: false });
+    card.addEventListener("wheel", stopScroll, { passive: false });
+  }
+  window.addEventListener("keydown", function (e) {
+    if (!playing || paused || G.typing()) return;
+    var k = e.key;
+    if (k === " " || k === "ArrowUp" || k === "ArrowDown" || k === "ArrowLeft" || k === "ArrowRight" || k === "PageUp" || k === "PageDown") e.preventDefault();
+  });
+
   function setPaused(on) {
     if (!playing || paused === on) return;
     paused = on;
+    lockScroll();
     if (S) { S.play("pause"); S.music(!on); }
     if (on) {
       if (G.onPause) G.onPause();
@@ -169,6 +183,7 @@
   G.over = function (score) {
     playing = false;
     paused = false;
+    lockScroll();
     pauseBtn.hidden = true;
     pauseBtn.textContent = "Pause";
     lastScore = score;
@@ -202,6 +217,7 @@
     if (paused) { setPaused(false); return; }
     $("overlay").hidden = true;
     playing = true;
+    lockScroll();
     pauseBtn.hidden = false;
     if (S) { S.unlock(); S.play("start"); S.music(true); }
     if (G.onStart) G.onStart();

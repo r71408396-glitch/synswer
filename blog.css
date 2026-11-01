@@ -4,6 +4,11 @@
 .blog h1 { font-weight: 800; font-size: clamp(2rem, 5vw, 2.75rem); margin-bottom: 8px; }
 .blog .lead { margin: 0 0 24px; }
 
+.blog-search { max-width: 420px; margin: 0 0 18px; }
+.blog-search label { display: block; margin-bottom: 8px; }
+.blog-search input { width: 100%; }
+.related { max-width: 1040px; margin: 48px auto 0; }
+.related h2 { font-size: 1.4rem; margin: 0 0 16px; }
 .blog-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
 .blog-filters button { min-height: 36px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font-size: 14px; cursor: pointer; }
 .blog-filters button.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
