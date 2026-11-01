@@ -196,6 +196,17 @@ function askDelete(r) {
   no.focus();
 }
 
+// Links inside the editor open in a new tab when clicked.
+document.addEventListener("click", function (e) {
+  var a = e.target.closest && e.target.closest("a[href]");
+  if (!a || !a.closest("#edit-view") || a.closest(".cms-actions")) return;
+  if (!a.closest("[contenteditable], .trumbowyg-editor, .kreova-editor")) return;
+  var h = a.getAttribute("href");
+  if (!h || h === "#") return;
+  e.preventDefault();
+  window.open(a.href, "_blank", "noopener");
+});
+
 (async function init() {
   if (!(await gate())) return;
   $("new-btn").addEventListener("click", () => openEditor(null));

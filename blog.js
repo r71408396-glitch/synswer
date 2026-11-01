@@ -35,6 +35,38 @@
     li.appendChild(a);
     return li;
   }
+  // Turn bare web addresses in article text into links, and open every outside link in a new tab.
+  function autoLink(root) {
+    var re = /\b((?:https?:\/\/|www\.)[^\s<>"')\]]+[^\s<>"')\].,;:!?])/gi;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    var nodes = [], n;
+    while ((n = walker.nextNode())) {
+      if (n.parentNode.closest("a, pre, code, script, style")) continue;
+      if (re.test(n.nodeValue)) nodes.push(n);
+      re.lastIndex = 0;
+    }
+    nodes.forEach(function (t) {
+      var text = t.nodeValue, frag = document.createDocumentFragment(), last = 0, m;
+      re.lastIndex = 0;
+      while ((m = re.exec(text))) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var a = document.createElement("a");
+        a.href = /^www\./i.test(m[1]) ? "https://" + m[1] : m[1];
+        a.textContent = m[1];
+        frag.appendChild(a);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      t.parentNode.replaceChild(frag, t);
+    });
+    root.querySelectorAll("a[href]").forEach(function (a) {
+      var h = a.getAttribute("href") || "";
+      if (/^(https?:)?\/\//i.test(h) || /^mailto:/i.test(h)) {
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+      }
+    });
+  }
   function seed(table) {
     var s = document.querySelector('script[data-kreova-rows="' + table + '"]');
     try { return s && s.textContent.trim() ? JSON.parse(s.textContent) : null; } catch (_) { return null; }
@@ -220,6 +252,7 @@
           tmp.innerHTML = "";
           content.appendChild(el("p", "post-empty", "The article text could not be displayed. Please reload the page."));
         }
+        autoLink(content);
         buildShare(r);
         var tags = (r.tags || "").split(",").map(function (t) { return t.trim(); }).filter(Boolean);
         if (tags.length) {

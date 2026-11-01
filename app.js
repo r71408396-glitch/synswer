@@ -55,6 +55,8 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
   .then(function (r) { return r.json(); })
   .then(function (d) {
     window.synswerUser = d && d.user ? d.user : null;
+    var adminLink = document.getElementById("top-admin-link");
+    if (adminLink && window.synswerUser && window.synswerUser.role === "admin") adminLink.hidden = false;
     var link = document.getElementById("account-link");
     if (link && window.synswerUser) {
       link.textContent = "Sign out";
