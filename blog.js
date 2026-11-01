@@ -128,6 +128,44 @@
       box.appendChild(a);
     };
     if (!slug) { fail(); return; }
+    var buildShare = function (r) {
+      var om = document.querySelector('meta[name="kreova-site-origin"]');
+      var origin = (om && om.content) || "https://synswer.com";
+      var url = origin.replace(/\/$/, "") + "/article.html?slug=" + encodeURIComponent(r.slug);
+      var wrap = el("div", "share");
+      wrap.appendChild(el("span", "share-label", "Share this article"));
+      var row = el("div", "share-row");
+      var status = el("span", "share-status");
+      status.setAttribute("role", "status");
+      if (navigator.share) {
+        var nb = el("button", "btn", "Share");
+        nb.type = "button";
+        nb.addEventListener("click", function () {
+          navigator.share({ title: r.title, text: r.excerpt || r.title, url: url }).catch(function () {});
+        });
+        row.appendChild(nb);
+      }
+      var enc = encodeURIComponent;
+      [["X", "https://twitter.com/intent/tweet?text=" + enc(r.title) + "&url=" + enc(url)],
+       ["Facebook", "https://www.facebook.com/sharer/sharer.php?u=" + enc(url)],
+       ["WhatsApp", "https://wa.me/?text=" + enc(r.title + " " + url)],
+       ["LinkedIn", "https://www.linkedin.com/sharing/share-offsite/?url=" + enc(url)]].forEach(function (s) {
+        var a = el("a", "btn btn-ghost", s[0]);
+        a.href = s[1]; a.target = "_blank"; a.rel = "noopener noreferrer";
+        row.appendChild(a);
+      });
+      var cb = el("button", "btn btn-ghost", "Copy link");
+      cb.type = "button";
+      cb.addEventListener("click", function () {
+        var done = function (ok) { status.textContent = ok ? "Link copied" : "Copy failed: " + url; };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { done(true); }, function () { done(false); });
+        else done(false);
+      });
+      row.appendChild(cb);
+      row.appendChild(status);
+      wrap.appendChild(row);
+      box.appendChild(wrap);
+    };
     var loadRelated = function (cur) {
       var base = "api/rows/articles?select=" + COLS + "&status=eq.published&slug=neq." + encodeURIComponent(cur.slug) + "&sort=-published_at&limit=3";
       var get = function (u) { return fetch(u).then(function (r) { return r.json(); }).then(function (d) { return d.rows || []; }); };
@@ -174,8 +212,15 @@
         }
         var content = el("div", "article-content");
         box.appendChild(content);
-        var mod = await import("@kreova/editor");
-        await mod.renderRichText(content, r.body_rich || "");
+        try {
+          var mod = await import("@kreova/editor");
+          await mod.renderRichText(content, r.body_rich || "");
+        } catch (_) {
+          var tmp = document.createElement("div");
+          tmp.innerHTML = "";
+          content.appendChild(el("p", "post-empty", "The article text could not be displayed. Please reload the page."));
+        }
+        buildShare(r);
         var tags = (r.tags || "").split(",").map(function (t) { return t.trim(); }).filter(Boolean);
         if (tags.length) {
           var ul = el("ul", "tag-list");

@@ -45,6 +45,12 @@
 .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 0; padding: 0; list-style: none; }
 .tag-list li { padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; color: var(--muted); }
 
+.share { margin: 32px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
+.share-label { display: block; margin-bottom: 10px; font-size: 14px; color: var(--muted); }
+.share-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.share-row .btn { min-height: 38px; padding: 0 16px; font-size: 14px; text-decoration: none; }
+.share-status { font-size: 14px; color: #86efac; }
+
 /* Admin editor */
 .cms { max-width: 920px; }
 .cms-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
