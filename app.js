@@ -2,7 +2,7 @@
 // Paste your AdSense ad unit id into SLOT to show the in-page units (games, Social).
 window.SynswerAds = (function () {
   var CLIENT = "ca-pub-8679733413041334";
-  var SLOT = "";
+  var SLOT = "7497253509";
   var blocked = /\/(login|signup|forgot|reset|admin)(\.html)?$/.test(location.pathname);
   var loaded = false;
   function ok() { try { return localStorage.getItem("synswer-consent") === "accepted" && !blocked; } catch (_) { return false; } }
