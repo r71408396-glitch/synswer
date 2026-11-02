@@ -93,7 +93,25 @@
     twinkle: { beat: 0.3, wave: "triangle", vol: 0.5,
       n: "C4:1 C4:1 G4:1 G4:1 A4:1 A4:1 G4:2 F4:1 F4:1 E4:1 E4:1 D4:1 D4:1 C4:2 G4:1 G4:1 F4:1 F4:1 E4:1 E4:1 D4:2 G4:1 G4:1 F4:1 F4:1 E4:1 E4:1 D4:2" }
   };
+  // Original Synswer tunes, composed for this site (no copyright).
+  TRACKS.neon = { beat: 0.14, wave: "square", vol: 0.16,
+    n: "A3:1 C4:1 E4:1 A4:1 G4:1 E4:1 C4:1 E4:1 F3:1 A3:1 C4:1 F4:1 E4:1 C4:1 A3:1 C4:1 G3:1 B3:1 D4:1 G4:1 F4:1 D4:1 B3:1 D4:1 E3:1 G3:1 B3:1 E4:1 D4:1 B3:1 G3:1 B3:1" };
+  TRACKS.drift = { beat: 0.34, wave: "triangle", vol: 0.5,
+    n: "D4:2 F4:1 A4:2 G4:1 F4:2 E4:1 D4:3 R:1 C4:2 E4:1 G4:2 F4:1 E4:2 D4:1 C4:3 R:1 D4:2 F4:1 A4:2 C5:1 A4:2 F4:1 D4:4" };
+  TRACKS.sunrise = { beat: 0.22, wave: "triangle", vol: 0.5,
+    n: "C4:1 E4:1 G4:1 C5:2 B4:1 G4:1 E4:2 D4:1 F4:1 A4:1 D5:2 C5:1 A4:1 F4:2 E4:1 G4:1 B4:1 E5:2 D5:1 B4:1 G4:2 C4:1 E4:1 G4:1 C5:4" };
+  TRACKS.chase = { beat: 0.12, wave: "sawtooth", vol: 0.1,
+    n: "E4:1 E4:1 R:1 G4:1 E4:1 E4:1 R:1 A4:1 E4:1 E4:1 R:1 B4:1 A4:1 G4:1 E4:1 D4:1 D4:1 D4:1 R:1 F4:1 D4:1 D4:1 R:1 G4:1 D4:1 D4:1 R:1 A4:1 G4:1 F4:1 D4:1 C4:1" };
+  TRACKS.lullaby = { beat: 0.4, wave: "sine", vol: 0.55,
+    n: "G4:2 E4:1 G4:2 C5:1 B4:2 G4:1 A4:3 R:1 F4:2 D4:1 F4:2 A4:1 G4:2 E4:1 C4:3 R:1" };
+  TRACKS.arcade = { beat: 0.13, wave: "square", vol: 0.15,
+    n: "C5:1 R:.5 C5:.5 G4:1 E4:1 C5:1 R:.5 C5:.5 G4:1 E4:1 D5:1 R:.5 D5:.5 A4:1 F4:1 D5:1 R:.5 D5:.5 B4:1 G4:1 E5:1 D5:1 C5:1 G4:1 C5:4" };
+  var ALL = Object.keys(TRACKS);
   Object.keys(TRACKS).forEach(function (k) { TRACKS[k].notes = parse(TRACKS[k].n); });
+  function pick(avoid) {
+    var o = ALL.filter(function (k) { return TRACKS[k] !== avoid; });
+    return TRACKS[o[Math.floor(Math.random() * o.length)]];
+  }
 
   var BY_GAME = {
     snake: "susanna", tetris: "korobeiniki", shooter: "king", gridlock: "green", colorlink: "ode", merge: "twinkle",
@@ -104,7 +122,8 @@
   function schedule() {
     if (!musicOn || !ctx || !track) return;
     while (nextAt < ctx.currentTime + 0.4) {
-      var n = track.notes[step % track.notes.length];
+      if (step >= track.notes.length) { track = pick(track); step = 0; }
+      var n = track.notes[step];
       if (n[0]) tone(n[0], nextAt, n[1] * track.beat * 0.92, track.wave, track.vol);
       nextAt += n[1] * track.beat;
       step++;
@@ -131,9 +150,8 @@
       musicOn = !!on && !muted;
       clearInterval(timer);
       if (musicOn && ensure()) {
-        var g = document.body.getAttribute("data-game");
-        track = TRACKS[BY_GAME[g] || "ode"];
-        if (!track._started) { step = 0; }
+        track = pick(null);
+        step = 0;
         nextAt = ctx.currentTime + 0.05;
         schedule();
         timer = setInterval(schedule, 100);

@@ -3,6 +3,14 @@
   var id = new URLSearchParams(location.search).get("g");
   var m = (window.GAME_META || []).filter(function (x) { return x.id === id; })[0];
   if (!m) { location.replace("games.html"); return; }
+  fetch("api/rows/hidden_games?game=eq." + encodeURIComponent(id) + "&limit=1")
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!(d.rows && d.rows.length)) return;
+      return fetch("api/auth/me", { credentials: "include" }).then(function (r) { return r.json(); }).then(function (u) {
+        if (!(u.user && u.user.role === "admin")) location.replace("games.html");
+      });
+    }).catch(function () {});
   window.GAME_CFG = m;
   document.body.setAttribute("data-game", id);
   var can = document.querySelector('link[rel="canonical"]');

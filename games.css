@@ -15,6 +15,11 @@
 .game-tile svg { width: 56px; height: 56px; margin-bottom: 14px; }
 .game-tile h2 { font-size: 1.4rem; margin-bottom: 6px; }
 .game-tile p { margin: 0 0 14px; font-size: 15px; }
+.game-grid li { position: relative; }
+.del-btn { position: absolute; top: 12px; right: 12px; z-index: 2; min-height: 32px; padding: 0 14px; border: 1px solid #7f1d1d; border-radius: 999px; background: rgba(127, 29, 29, 0.85); color: #fecaca; font-size: 13px; font-weight: 500; }
+.del-btn:hover { background: #b91c1c; color: #fff; }
+.game-grid li.is-deleted .game-tile { opacity: 0.4; }
+.game-grid li.is-deleted .del-btn { background: rgba(30, 64, 175, 0.9); border-color: #1e40af; color: #dbeafe; }
 .tile-top { display: block; font-size: 14px; color: var(--muted); margin-bottom: 14px; }
 .tile-play { display: inline-block; padding: 8px 20px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 500; font-size: 15px; }
 
