@@ -368,6 +368,30 @@
   });
 
   // ----- leaderboard -----
+  var CROWN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="currentColor" stroke="rgba(0,0,0,.35)" stroke-width="1" stroke-linejoin="round"/><circle cx="3" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="21" cy="8" r="1.6" fill="currentColor"/></svg>';
+  var FB = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.5V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H7.9v3h2.6V21z"/></svg>';
+  function gameName() { var h = document.querySelector("h1"); return h ? h.textContent : "a game"; }
+  function pageUrl() {
+    var m = document.querySelector('meta[name="kreova-site-origin"]');
+    var origin = ((m && m.content) || location.origin).replace(/\/$/, "");
+    return origin + "/" + location.pathname.split("/").pop() + location.search;
+  }
+  function fbShare(text) {
+    var u = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(pageUrl()) + "&quote=" + encodeURIComponent(text);
+    window.open(u, "_blank", "noopener,width=620,height=560");
+  }
+  var shareBtn = document.createElement("button");
+  shareBtn.type = "button";
+  shareBtn.className = "btn btn-ghost fb-share-big";
+  shareBtn.innerHTML = FB + " Share on Facebook";
+  shareBtn.hidden = true;
+  $("save").after(shareBtn);
+  shareBtn.addEventListener("click", function () {
+    fbShare("I scored " + lastScore + " in " + gameName() + " on Synswer. Can you beat it?");
+  });
+  var _over = G.over;
+  G.over = function (score) { _over(score); shareBtn.hidden = !(score > 0); };
+  $("start").addEventListener("click", function () { shareBtn.hidden = true; });
   var mode = "week";
   function weekStart() {
     var d = new Date();
@@ -408,16 +432,35 @@
           el.appendChild(e);
           return;
         }
-        rows.forEach(function (row) {
+        rows.forEach(function (row, idx) {
           var li = document.createElement("li");
+          if (idx < 3) {
+            li.className = "podium p" + (idx + 1);
+            var cr = document.createElement("span");
+            cr.className = "crown";
+            cr.setAttribute("role", "img");
+            cr.setAttribute("aria-label", ["Gold", "Silver", "Bronze"][idx] + " crown, place " + (idx + 1));
+            cr.innerHTML = CROWN;
+            li.appendChild(cr);
+          }
           var nm = document.createElement("span");
           nm.className = "nm";
           nm.textContent = row.player;
           var sc = document.createElement("span");
           sc.className = "sc";
           sc.textContent = row.score;
+          var sh = document.createElement("button");
+          sh.type = "button";
+          sh.className = "fb-share";
+          sh.setAttribute("aria-label", "Share " + row.player + "'s score of " + row.score + " on Facebook");
+          sh.title = "Share on Facebook";
+          sh.innerHTML = FB;
+          sh.addEventListener("click", function () {
+            fbShare(row.player + " scored " + row.score + " in " + gameName() + " on Synswer. Can you beat it?");
+          });
           li.appendChild(nm);
           li.appendChild(sc);
+          li.appendChild(sh);
           el.appendChild(li);
         });
       })

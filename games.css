@@ -71,6 +71,16 @@ body[data-game] { touch-action: manipulation; }
 .board li::before { content: counter(rank); width: 22px; color: var(--muted); font-size: 13px; }
 .board li .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
 .board li .sc { font-family: "Sora", sans-serif; color: #c4b5fd; }
+.board li.podium::before { content: none; }
+.board li .crown { width: 22px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.board li.p1 .crown { color: #facc15; filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.55)); }
+.board li.p2 .crown { color: #cbd5e1; filter: drop-shadow(0 0 4px rgba(203, 213, 225, 0.4)); }
+.board li.p3 .crown { color: #cd7f32; filter: drop-shadow(0 0 4px rgba(205, 127, 50, 0.45)); }
+.board li.p1 .nm { font-weight: 500; }
+.fb-share { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: #8ab4ff; touch-action: manipulation; }
+.fb-share:hover, .fb-share:focus-visible { border-color: #1877f2; background: #1877f2; color: #fff; }
+.fb-share-big { display: inline-flex; align-items: center; gap: 8px; }
+.fb-share-big[hidden] { display: none; }
 .board li.empty { color: var(--muted); border-bottom: 0; }
 .board li.empty::before { content: none; }
 
