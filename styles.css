@@ -319,6 +319,10 @@ altcha-widget {
 .answer-note { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
 
 .answer-actions { margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; }
+.card-dlg { width: min(94vw, 640px); max-height: 92vh; overflow: auto; }
+.card-dlg .card-preview { margin: 12px 0 16px; max-height: 58vh; overflow: auto; border-radius: 10px; border: 1px solid rgba(255,255,255,.12); background: #fff; }
+.card-dlg .card-preview img { width: 100%; height: auto; display: block; }
+.card-dlg .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 
 /* Games link (top right of every page) */
 .games-link {

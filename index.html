@@ -98,6 +98,7 @@
           <p class="answer-note" id="memory-note"></p>
           <div class="answer-actions">
             <button type="button" class="btn" id="ask-again">Ask another question</button>
+            <button type="button" class="btn btn-ghost" id="make-card" hidden>Create printable image</button>
             <button type="button" class="btn btn-ghost" id="dl-md" hidden>Download as file</button>
             <button type="button" class="btn btn-ghost" id="dl-csv" hidden>Download table as CSV</button>
             <button type="button" class="btn btn-ghost" id="memory-forget" hidden>Clear my saved memory</button>
@@ -107,10 +108,21 @@
       </div>
     </main>
 
+    <dialog class="dlg card-dlg" id="card-dlg" aria-labelledby="card-title">
+      <h2 id="card-title">Your findings image</h2>
+      <div class="card-preview"><img id="card-img" alt="Printable summary of the answer with its key findings and sources" /></div>
+      <div class="row">
+        <button type="button" class="btn btn-ghost" id="card-close">Close</button>
+        <button type="button" class="btn btn-ghost" id="card-print">Print</button>
+        <button type="button" class="btn" id="card-save">Download image</button>
+      </div>
+    </dialog>
+
     {footer}
     {cookie}
 
     <script src="app.js"></script>
+    <script src="findings.js"></script>
     <script type="module" src="motion.js"></script>
   </body>
 </html>
