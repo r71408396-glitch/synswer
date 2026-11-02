@@ -58,8 +58,9 @@
               <path d="M50 92 V96" stroke="#34343f" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
-          <span class="eyebrow" data-animate="hero">Tap to ask</span>
-          <h1 class="hero-title" data-animate="split">What would you like to know?</h1>
+          <span class="eyebrow brand-word" data-animate="hero">Synswer</span>
+          <h1 class="hero-title" data-animate="split">Ask Anything. <span class="grad">Understand Everything.</span></h1>
+          <p class="hero-sub">Synswer reads trusted public sources, cross-checks them and explains the result in plain language, with the sources one tap away. Type a question, attach a photo or file, or speak it.</p>
 
           <form class="ask" id="ask-form" autocomplete="off" data-animate="hero">
             <div class="ask-row">
@@ -95,7 +96,43 @@
             <li><button type="button" class="chip" data-suggest="Explain black holes simply">Explain black holes simply</button></li>
           </ul>
 
-          <p class="tagline">Synswer gives you clear, direct answers.</p>
+          <ul class="tasks" aria-label="Quick tasks">
+            <li><button type="button" class="task" data-prefill="Explain simply: ">Explain simply</button></li>
+            <li><button type="button" class="task" data-prefill="Summarise this: ">Summarise</button></li>
+            <li><button type="button" class="task" data-prefill="Give me ideas for ">Generate ideas</button></li>
+            <li><button type="button" class="task" data-prefill="Write a short piece about ">Write content</button></li>
+            <li><button type="button" class="task" data-prefill="Help me with this code: ">Code help</button></li>
+            <li><button type="button" class="task" data-prefill="What is the latest news on ">Latest news</button></li>
+          </ul>
+
+          <div class="home-extra">
+            <section class="hx" aria-labelledby="cap-h">
+              <h2 id="cap-h">What Synswer can do</h2>
+              <div class="cards">
+                <article class="card"><h3>Sourced answers</h3><p>Combines Wikipedia, instant answers, Hacker News, Stack Overflow and scholarly papers, and lists the sources it used.</p></article>
+                <article class="card"><h3>Live web research</h3><p>Time-sensitive questions such as news and prices trigger a live web search with links you can open.</p></article>
+                <article class="card"><h3>Images and files</h3><p>Attach a photo, an image or a text, CSV, Markdown or JSON file and ask about it.</p></article>
+                <article class="card"><h3>Voice input</h3><p>Press Speak to dictate your question, where your browser supports it.</p></article>
+                <article class="card"><h3>Code, tables, lists</h3><p>Answers can include headings, bullet points, tables and code blocks. Download an answer, or its table as CSV.</p></article>
+                <article class="card"><h3>Optional memory</h3><p>Signed-in members can let Synswer remember context, and clear it any time from an answer.</p></article>
+              </div>
+            </section>
+
+            <section class="hx" aria-labelledby="how-h">
+              <h2 id="how-h">How it works</h2>
+              <ol class="steps">
+                <li><b>1</b><div><h3>Ask</h3><p>Type, speak or attach something.</p></div></li>
+                <li><b>2</b><div><h3>Check</h3><p>Synswer gathers and filters public sources for relevance.</p></div></li>
+                <li><b>3</b><div><h3>Explain</h3><p>You get a clear answer with the sources listed. Check important facts.</p></div></li>
+              </ol>
+            </section>
+
+            <section class="hx" aria-labelledby="art-h">
+              <div class="hx-head"><h2 id="art-h">Recent articles</h2><a href="articles.html">All articles</a></div>
+              <div class="cards" id="home-articles">
+<ul class="page-links" data-kreova-links="articles" data-kreova-href="article.html?slug={{slug}}" data-kreova-text="{{title}}"></ul><p class="muted">Loading articles...</p></div>
+            </section>
+          </div>
           <div class="ad-box" data-ad-box hidden style="margin:24px auto 0;max-width:720px;text-align:center;overflow:hidden"></div>
         </section>
 
@@ -120,7 +157,9 @@
     {footer}
     {cookie}
 
+    <script type="application/json" data-kreova-rows="articles" data-kreova-query="select=title,slug,excerpt,image_url,image_alt,category&amp;status=eq.published&amp;sort=-published_at&amp;limit=3"></script>
     <script src="app.js"></script>
+    <script src="home.js"></script>
     <script type="module" src="motion.js"></script>
   </body>
 </html>
