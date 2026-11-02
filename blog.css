@@ -35,6 +35,9 @@
 .pager .off { opacity: .4; pointer-events: none; }
 .pager span { color: var(--muted); font-size: 14px; }
 .article-content { font-size: 17px; line-height: 1.6; color: var(--text); overflow-wrap: anywhere; }
+.article-content, .article-content * { text-align: left !important; }
+.article-content [align] { text-align: left !important; }
+.article-content img, .article-content iframe { float: none !important; margin-left: 0 !important; margin-right: 0 !important; }
 .article-content h2, .article-content h3 { margin: 1.6em 0 0.5em; color: var(--ink); }
 .article-content p, .article-content ul, .article-content ol { margin: 0 0 1.1em; }
 .article-content ul, .article-content ol { padding-left: 1.4em; }

@@ -252,6 +252,12 @@
           tmp.innerHTML = "";
           content.appendChild(el("p", "post-empty", "The article text could not be displayed. Please reload the page."));
         }
+        content.querySelectorAll("[align]").forEach(function (n) { n.removeAttribute("align"); });
+        content.querySelectorAll("[style]").forEach(function (n) {
+          n.style.textAlign = "";
+          n.style.removeProperty("float");
+          if (!n.getAttribute("style")) n.removeAttribute("style");
+        });
         autoLink(content);
         buildShare(r);
         var tags = (r.tags || "").split(",").map(function (t) { return t.trim(); }).filter(Boolean);
