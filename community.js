@@ -591,6 +591,40 @@
   $("more").onclick = function () { offset += PAGE; loadFeed(false); };
   $("btn-notes").onclick = openNotes;
   $("btn-theme").onclick = function () { var n = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light"; document.documentElement.setAttribute("data-theme", n); try { localStorage.setItem("synswer-theme", n); } catch (x) {} };
+  // Settings and security: account info, message privacy, delete social profile
+  function wipe(path, filter) {
+    return api("api/rows/" + path + "?" + filter + "&select=id&limit=200").then(function (r) {
+      var rows = r.d.rows || [];
+      return Promise.all(rows.map(function (x) { return api("api/rows/" + path + "/" + x.id, "DELETE"); })).then(function () { return rows.length === 200 ? wipe(path, filter) : null; });
+    });
+  }
+  $("btn-settings").onclick = function () {
+    dialog(function (d) {
+      d.appendChild(el("h2", "", "Settings and security"));
+      d.appendChild(el("p", "", "Signed in as " + (me.email || "your account") + (profile ? " - @" + profile.username : "")));
+      var l = el("label", "", "Who can message me"); d.appendChild(l);
+      var dm = el("select"); [["everyone", "Anyone"], ["none", "Nobody"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; dm.appendChild(op); });
+      dm.value = (profile && profile.dm_policy) || "everyone"; d.appendChild(dm);
+      dm.onchange = function () { if (!profile) return; api("api/rows/profiles/" + profile.id, "PATCH", { dm_policy: dm.value }).then(function (x) { if (x.ok) { profile = x.d.row; prof[me.id] = profile; toast("Saved"); } else toast("Could not save."); }); };
+      d.appendChild(el("h2", "", "Delete social profile")).style.marginTop = "18px";
+      d.appendChild(el("p", "", "Removes your username, posts, comments, likes, saved posts and follows from the community. Your Synswer account and chat stay. This cannot be undone."));
+      var er = el("p", "cm-err"); d.appendChild(er);
+      var r = el("div", "row"), cl = el("button", "cm-btn ghost", "Close"), del = el("button", "cm-btn danger", "Delete my profile"); cl.type = del.type = "button";
+      cl.onclick = function () { d.close(); };
+      del.onclick = function () {
+        if (!profile) { er.textContent = "You have no social profile."; return; }
+        confirmBox("Delete your social profile?", "Everything you shared in the community will be removed.").then(function (ok) {
+          if (!ok) return; del.disabled = true; er.textContent = "Deleting...";
+          var u = "user_id=eq." + me.id;
+          wipe("posts", u).then(function () { return Promise.all([wipe("post_replies", u), wipe("post_votes", u), wipe("poll_votes", u), wipe("bookmarks", u), wipe("follows", "follower_id=eq." + me.id), wipe("notifications", u), wipe("messages", "sender_id=eq." + me.id)]); })
+            .then(function () { return api("api/rows/profiles/" + profile.id, "DELETE"); })
+            .then(function (x) { if (!x.ok) { er.textContent = "Your content was removed, but the profile itself could not be deleted yet."; del.disabled = false; return; } location.replace("index.html"); })
+            .catch(function () { er.textContent = "Could not delete. Please try again."; del.disabled = false; });
+        });
+      };
+      r.appendChild(cl); r.appendChild(del); d.appendChild(r);
+    });
+  };
   $("btn-out").onclick = function () { fetch("api/auth/logout", { method: "POST", credentials: "include" }).then(function () { location.replace("login.html"); }); };
 
   // ---------- standing banner, appeals ----------

@@ -146,6 +146,10 @@ body.cm-body { margin:0; background:var(--m-bg); color:var(--m-text); font-famil
 .cm-toast { position:fixed; left:50%; bottom:90px; transform:translateX(-50%); background:var(--m-card); border:1px solid var(--m-acc); padding:10px 16px; border-radius:12px; z-index:80; max-width:90vw; }
 .cm-toast[hidden] { display:none; }
 
+/* Names stay readable in both themes (dark text in light mode) */
+.cm-body .cm-pi h2, .cm-body .cm-meta .nm, .cm-body .cm-rep .cm-meta b, .cm-body .cm-person .who b, .cm-body .cm-item .t b, .cm-body .cm-dlg h2, .cm-body .cm-box h3, .cm-body .cm-tag b { color:var(--m-text) !important; }
+.cm-body .cm-pi .stats, .cm-body .cm-pi p { color:var(--m-mute); }
+.cm-body .cm-pi .stats b { color:var(--m-text) !important; }
 .cm-tab-bar { display:none; }
 @media (max-width:1020px) { .cm-wrap { grid-template-columns:200px minmax(0,1fr); } .cm-side { display:none; } }
 @media (max-width:760px) {
