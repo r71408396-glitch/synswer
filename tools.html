@@ -23,6 +23,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="tools.css" />
+    <link rel="stylesheet" href="calc.css" />
     <script>
       try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}
     </script>
@@ -36,7 +37,7 @@
 
       <section id="tool-list-view">
         <h1>AI Tools</h1>
-        <p class="lead">Fifteen focused tools. Pick one, fill in a short form and get a result you can copy, refine, share or download.</p>
+        <p class="lead">Sixteen focused tools, including a scientific calculator. Pick one, fill in a short form and get a result you can copy, refine, share or download.</p>
         <div class="style-row">
           <label for="style-sel" class="eyebrow">Response style</label>
           <select id="style-sel">
@@ -57,6 +58,7 @@
         <a class="back" id="tool-back" href="tools.html">&larr; All tools</a>
         <h1 id="tool-title">Tool</h1>
         <p class="lead" id="tool-desc"></p>
+        <div id="calc-box" hidden></div>
         <form id="tool-form" class="tool-form" autocomplete="off">
           <div id="tool-fields"></div>
           <div class="fld" id="img-row" hidden>
@@ -122,5 +124,6 @@
       })();
     </script>
     <script src="tools.js"></script>
+    <script src="calc.js"></script>
   </body>
 </html>

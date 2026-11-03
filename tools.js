@@ -5,6 +5,7 @@
   var LANGS = ["English", "Spanish", "French", "German", "Italian", "Portuguese", "Dutch", "Hindi", "Arabic", "Chinese (Simplified)", "Japanese", "Korean", "Russian", "Turkish", "Swahili"];
 
   var TOOLS = [
+    { id: "calculator", name: "Scientific Calculator", desc: "Trig, logs, powers, factorials and memory.", calc: true, fields: [] },
     { id: "writing", name: "Writing Assistant", desc: "Essays, posts, stories and speeches.", fields: [
       { id: "type", label: "What are you writing?", type: "select", options: ["Blog post", "Essay", "Short story", "Speech", "Social media post", "Product description", "Poem"] },
       { id: "topic", label: "Topic or brief", type: "textarea", ph: "What should it be about, who is it for?", req: true },
@@ -166,6 +167,10 @@
     fileRow.hidden = !t.file;
     imgBlob = null; imgPath = null; imgName.textContent = ""; imgIn.value = ""; fileIn.value = "";
     outBox.hidden = true; outBody.innerHTML = ""; followEl.innerHTML = ""; errEl.textContent = ""; lastText = ""; quizData = null;
+    var cb = $("calc-box");
+    if (cb) cb.hidden = !t.calc;
+    form.hidden = !!t.calc;
+    if (t.calc) outBox.hidden = true;
     listView.hidden = true;
     panel.hidden = false;
     window.scrollTo({ top: 0 });
