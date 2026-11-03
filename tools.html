@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M10YFWM4RX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-M10YFWM4RX');
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Tools - Synswer</title>
+    <meta name="description" content="Free AI tools: writing, homework help, math solver, coding, research, translator, summarizer, quiz generator and more." />
+    <link rel="canonical" href="https://synswer.com/tools.html" />
+    <meta name="theme-color" content="#07070b" />
+    <meta name="google-adsense-account" content="ca-pub-8679733413041334" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="tools.css" />
+    <script>
+      try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}
+    </script>
+    <script async defer type="module" src="api/auth/altcha.js"></script>
+  </head>
+  <body>
+    {bg3d}
+    <div class="glow" aria-hidden="true"></div>
+    {games_link}
+    <main class="tools-page">
+
+      <section id="tool-list-view">
+        <h1>AI Tools</h1>
+        <p class="lead">Fifteen focused tools. Pick one, fill in a short form and get a result you can copy, refine, share or download.</p>
+        <div class="style-row">
+          <label for="style-sel" class="eyebrow">Response style</label>
+          <select id="style-sel">
+            <option value="simple">Simple</option>
+            <option value="detailed">Detailed</option>
+            <option value="professional">Professional</option>
+            <option value="creative">Creative</option>
+          </select>
+        </div>
+        <div id="recent-wrap" hidden>
+          <p class="eyebrow">Recently used</p>
+          <div class="chips-row" id="recent-tools"></div>
+        </div>
+        <div class="tool-grid" id="tool-grid"></div>
+      </section>
+
+      <section id="tool-panel" hidden>
+        <a class="back" id="tool-back" href="tools.html">&larr; All tools</a>
+        <h1 id="tool-title">Tool</h1>
+        <p class="lead" id="tool-desc"></p>
+        <form id="tool-form" class="tool-form" autocomplete="off">
+          <div id="tool-fields"></div>
+          <div class="fld" id="img-row" hidden>
+            <label for="img-in">Photo (optional, sign in required)</label>
+            <input id="img-in" type="file" accept="image/*" />
+            <p class="muted"><span id="img-name"></span> <button type="button" class="link-btn" id="img-clear">Remove photo</button></p>
+          </div>
+          <div class="fld" id="file-row" hidden>
+            <label for="file-in">Attach a text file (.txt, .md, .csv)</label>
+            <input id="file-in" type="file" accept=".txt,.md,.csv,.json,text/plain" />
+          </div>
+          <div class="fld">
+            <label for="style-sel2" class="eyebrow">Style</label>
+            <select id="style-sel2" aria-label="Response style"></select>
+          </div>
+          <altcha-widget id="captcha" style="display:block;margin:0 0 16px"></altcha-widget>
+          <p class="form-error" id="tool-error" role="alert"></p>
+          <button class="btn" id="tool-run" type="submit">Generate</button>
+        </form>
+
+        <div class="tool-out" id="tool-out" hidden>
+          <div class="answer-card" id="out-body" aria-live="polite"></div>
+          <div class="out-actions" id="out-actions" hidden>
+            <button type="button" class="btn btn-ghost" id="act-copy">Copy</button>
+            <button type="button" class="btn btn-ghost" id="act-share">Share</button>
+            <button type="button" class="btn btn-ghost" id="act-dl">Download</button>
+            <button type="button" class="btn btn-ghost" id="act-again">Regenerate</button>
+          </div>
+          <div id="out-sources-wrap" hidden>
+            <p class="eyebrow">Sources</p>
+            <ul class="src-list" id="out-sources"></ul>
+          </div>
+          <div id="out-follow" class="chips-row"></div>
+          <form id="refine-form" class="refine" hidden>
+            <label for="refine-in" class="eyebrow">Follow up or refine</label>
+            <div class="row">
+              <input id="refine-in" type="text" maxlength="400" placeholder="e.g. make it shorter, add an example" />
+              <button class="btn" type="submit">Send</button>
+            </div>
+          </form>
+          <div id="out-feedback" class="feedback" hidden>
+            <span>Was this useful?</span>
+            <button type="button" class="btn btn-ghost" data-rate="up">Yes</button>
+            <button type="button" class="btn btn-ghost" data-rate="down">No</button>
+            <span class="fb-msg muted" role="status"></span>
+          </div>
+        </div>
+      </section>
+      <div class="ad-box" data-ad-box hidden style="margin:28px 0 0;text-align:center;overflow:hidden"></div>
+    </main>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+    <script src="md.js"></script>
+    <script>
+      (function () {
+        var a = document.getElementById("style-sel"), b = document.getElementById("style-sel2");
+        a.querySelectorAll("option").forEach(function (o) { b.appendChild(o.cloneNode(true)); });
+        function sync(v) { a.value = v; b.value = v; window.SynMD.setStyle(v); }
+        a.addEventListener("change", function () { sync(a.value); });
+        b.addEventListener("change", function () { sync(b.value); });
+        b.value = window.SynMD.getStyle();
+      })();
+    </script>
+    <script src="tools.js"></script>
+  </body>
+</html>
