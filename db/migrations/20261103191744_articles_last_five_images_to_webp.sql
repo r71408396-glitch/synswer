@@ -1,0 +1,1 @@
+update articles set image_url = regexp_replace(image_url, '\.jpg$', '.webp') where id in ('bc7a3c18-90ef-424d-8fc7-d64b84865ed4','ffefd12f-50c3-43d7-b9af-5d9a54da8d34','beffd7ce-67d0-4764-9355-3bd8a3fc4d73','a3617a19-15cf-4a9c-98ed-5799d5cfe149','285a689b-d45e-4caf-a3df-2ec786aab6b3');
