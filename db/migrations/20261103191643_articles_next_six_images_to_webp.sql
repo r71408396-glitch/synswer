@@ -1,0 +1,1 @@
+update articles set image_url = regexp_replace(image_url, '\.(png|jpg)$', '.webp') where slug in ('artificial-intelligence','how-does-a-solar-eclipse-happen','what-is-a-supernova','what-is-the-milky-way','what-is-the-cosmic-microwave-background','how-the-sun-works');
