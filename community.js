@@ -202,7 +202,8 @@
       if (navigator.share) navigator.share({ title: "Post on Synswer", text: (p.content || "").slice(0, 100), url: url }).catch(function () {});
       else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { toast("Link copied"); }, function () { toast(url); });
     };
-    [like, cmt, rep, bm, sh].forEach(function (b) { bar.appendChild(b); });
+    var aib = actBtn("ai", P.ai, "AI", "Ask Synswer AI about this post"); aib.onclick = function () { if (window.CMX) window.CMX.aiPost(p); };
+    [like, cmt, rep, bm, aib, sh].forEach(function (b) { bar.appendChild(b); });
     if (me.id === p.user_id) {
       if (!p.repost_of) { var ed = actBtn("edit", P.edit, "", "Edit post"); ed.onclick = function () { editPost(p); }; bar.appendChild(ed); }
       var del = actBtn("del", P.trash, "", "Delete post");
@@ -429,7 +430,10 @@
         var info = el("div", "cm-pi"), row = el("div", "row"), av = avatar(uid, "lg"); av.onclick = null; row.appendChild(av);
         var followRow = (r[2].d.rows || [])[0];
         if (uid === me.id) { var e = el("button", "cm-btn ghost sm", "Edit profile"); e.type = "button"; e.onclick = editProfile; row.appendChild(e); }
-        else row.appendChild(followBtn(uid, followRow, function () { openProfile(uid); }));
+        else {
+          row.appendChild(followBtn(uid, followRow, function () { openProfile(uid); }));
+          var mb = el("button", "cm-btn ghost sm", "Message"); mb.type = "button"; mb.onclick = function () { if (window.CMX) window.CMX.openMessages(uid); }; row.appendChild(mb);
+        }
         info.appendChild(row); info.appendChild(el("h2", "", dname(uid))); info.appendChild(el("p", "", "@" + uname(uid)));
         if (p.bio) info.appendChild(el("p", "", p.bio));
         var st = el("p", "stats"); st.innerHTML = "<b></b> followers &nbsp; <b></b> following"; st.children[0].textContent = ((r[0].d.rows || [])[0] || {}).count || 0; st.children[1].textContent = ((r[1].d.rows || [])[0] || {}).count || 0;
@@ -548,7 +552,6 @@
   };
   $("img-clear").onclick = function () { imgUrl = null; $("img-preview").hidden = true; };
   $("post-text").addEventListener("input", function () { $("count").textContent = this.value.length + " / 500"; });
-  $("ai-improve").hidden = true; $("ai-ideas").hidden = true; $("btn-msgs").hidden = true;
 
   $("composer").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -639,6 +642,13 @@
       });
     });
   }
+
+  // Bridge for community-extra.js (messaging and Synswer AI helpers)
+  window.CM = {
+    api: api, el: el, toast: toast, dialog: dialog, loadProfiles: loadProfiles, prof: prof, avatar: avatar, dname: dname, uname: uname, ago: ago,
+    canAct: canAct, violates: violates, spam: spam, MSG: MSG, openProfile: openProfile,
+    me: function () { return me; }, standing: function () { return standing; }
+  };
 
   // ---------- start ----------
   fetch("api/auth/me", { credentials: "include" }).then(function (r) { return r.json(); }).then(function (d) {
