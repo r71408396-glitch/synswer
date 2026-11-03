@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <!-- Google tag (gtag.js) -->
@@ -19,44 +19,74 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
-    <script>try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}</script>
+    <link rel="stylesheet" href="community.css" />
+    <script>try { var t = localStorage.getItem("synswer-theme"); if (t) document.documentElement.setAttribute("data-theme", t); if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}</script>
   </head>
-  <body style="display:none">
-    <div class="glow" aria-hidden="true"></div>
-    <main class="community">
-      <nav class="c-nav" aria-label="Community">
-        <a class="brand" href="index.html">Synswer Community</a>
-        <div class="me">
-          <a class="btn btn-ghost" id="admin-link" href="admin.html" hidden>Admin</a>
-          <span>Signed in as <b id="me-id">...</b></span>
-          <button type="button" class="btn btn-ghost" id="signout">Sign out</button>
-        </div>
-      </nav>
-      <form class="composer" id="composer" autocomplete="off">
-        <label for="post-text" class="eyebrow">Share a text post</label>
-        <textarea id="post-text" maxlength="280" placeholder="What is on your mind?" required></textarea>
-        <div class="row">
-          <span class="count" id="count">0 / 280</span>
-          <button class="btn" id="post-btn" type="submit">Post</button>
-        </div>
-        <p class="form-error" id="post-error" role="alert"></p>
-        <p class="note">Posts appear straight away. Use the flag on any post to report it to the admins.</p>
-        <p class="form-error" id="ban-note" hidden>Your account has been banned from posting, replying and voting.</p>
+  <body class="cm-body" style="display:none">
+    <header class="cm-top">
+      <a class="cm-brand" href="index.html">SYNSWER<span> <b>Community</b></span></a>
+      <form class="cm-search" id="search-form" role="search">
+        <input id="search-q" type="search" maxlength="60" placeholder="Search posts, people or #topics" autocomplete="off" aria-label="Search the community" />
       </form>
-      <div class="ad-box" data-ad-box hidden style="margin:16px 0;text-align:center;overflow:hidden"></div>
-      <ul class="feed" id="feed"><li class="empty">Loading posts...</li></ul>
-    </main>
-    <p class="toast" id="toast" role="status" hidden></p>
-    <dialog class="dlg" id="confirm-dlg">
-      <h2 id="confirm-title">Delete?</h2>
-      <p id="confirm-text"></p>
-      <div class="row">
-        <button type="button" class="btn btn-ghost" id="confirm-no">Cancel</button>
-        <button type="button" class="btn" id="confirm-yes">Delete</button>
+      <div class="cm-icons">
+        <button type="button" class="cm-ic" id="btn-notes" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><span class="cm-badge" id="badge-notes" hidden>0</span></button>
+        <button type="button" class="cm-ic" id="btn-msgs" aria-label="Messages" title="Messages"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 7 9-7"/></svg><span class="cm-badge" id="badge-msgs" hidden>0</span></button>
+        <button type="button" class="cm-ic" id="btn-theme" aria-label="Switch light or dark mode" title="Light or dark"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button>
+        <a class="cm-ic" id="admin-link" href="admin.html" aria-label="Admin" title="Admin" hidden><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.200 8-8 9-4.800-1-8-4.500-8-9V6z"/></svg></a>
+        <button type="button" class="cm-ic" id="btn-out" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/></svg></button>
       </div>
-    </dialog>
+    </header>
+
+    <div class="cm-wrap">
+      <nav class="cm-nav" id="nav" aria-label="Community sections"></nav>
+
+      <main class="cm-main" id="main">
+        <div id="banner"></div>
+        <div id="profile-slot"></div>
+        <div class="cm-comp" id="comp-wrap">
+          <div class="cm-av" id="comp-av" aria-hidden="true">?</div>
+          <form id="composer" autocomplete="off">
+            <label for="post-text" class="sr" style="position:absolute;left:-9999px">Write a post</label>
+            <textarea id="post-text" maxlength="500" placeholder="Share something with the community. Use #topics and @mentions."></textarea>
+            <div class="cm-preview" id="img-preview" hidden><img alt="Selected image" /><button type="button" class="cm-btn sm danger" id="img-clear">Remove</button></div>
+            <div class="cm-pollbox" id="poll-box" hidden></div>
+            <div class="cm-tools">
+              <select id="post-cat" aria-label="Topic category">
+                <option value="general">General</option>
+                <option value="question">Question</option>
+                <option value="ai_tech">AI and Technology</option>
+                <option value="education">Education and Learning</option>
+              </select>
+              <label class="cm-tool" for="img-file" style="cursor:pointer">Image</label>
+              <input id="img-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <button type="button" class="cm-tool" id="poll-toggle">Poll</button>
+              <button type="button" class="cm-tool ai" id="ai-improve">AI: improve writing</button>
+              <button type="button" class="cm-tool ai" id="ai-ideas">AI: ideas</button>
+              <span class="cm-count" id="count">0 / 500</span>
+              <button class="cm-btn" id="post-btn" type="submit">Post</button>
+            </div>
+            <div id="comp-ai"></div>
+            <p class="cm-err" id="post-error" role="alert"></p>
+          </form>
+        </div>
+        <div class="cm-tabs" id="tabs" role="tablist" aria-label="Feeds"></div>
+        <ul class="cm-feed" id="feed">
+          <li class="cm-skel"><i class="c"></i><div style="flex:1"><i style="width:35%"></i><i></i><i style="width:70%"></i></div></li>
+          <li class="cm-skel"><i class="c"></i><div style="flex:1"><i style="width:35%"></i><i></i><i style="width:60%"></i></div></li>
+        </ul>
+        <button type="button" class="cm-btn ghost cm-more" id="more" hidden>Load more</button>
+      </main>
+
+      <aside class="cm-side" aria-label="Discover">
+        <section class="cm-box"><h3>Trending topics</h3><div id="trending"><p class="cm-empty" style="padding:10px;border:0">Loading...</p></div></section>
+        <section class="cm-box"><h3>Who to follow</h3><div id="suggest"><p class="cm-empty" style="padding:10px;border:0">Loading...</p></div></section>
+      </aside>
+    </div>
+
+    <nav class="cm-tab-bar" id="tabbar" aria-label="Community"></nav>
+    <p class="cm-toast" id="toast" role="status" hidden></p>
     {footer}
     {cookie}
     <script src="app.js"></script>
