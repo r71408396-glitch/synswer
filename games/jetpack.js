@@ -2,19 +2,24 @@
   var E = Eng, W = E.W, H = E.H, PX = 110;
   var y, vy, heat, locked, wx, sp, thrust, ph, setHeat;
 
-  function center(x) { return H / 2 + Math.sin((x + wx) * 0.011 + ph) * 62 + Math.sin((x + wx) * 0.027) * 28; }
-  function half() { return Math.max(60, 98 - wx * 0.012); }
+  var t0 = 0;
+  // The first few seconds are easy: a flat, wide corridor that gradually becomes the normal winding one.
+  function ramp(d) { return E.clamp((d - 400) / 1600, 0, 1); }
+  function center(x) { var d = x + wx; return H / 2 + (Math.sin(d * 0.011 + ph) * 62 + Math.sin(d * 0.027) * 28) * ramp(d); }
+  function half() { return Math.max(60, 98 + 70 * (1 - ramp(wx + PX)) - wx * 0.012); }
 
   E.game({
-    reset: function () { y = H / 2; vy = 0; heat = 0; locked = false; wx = 0; sp = 180; thrust = false; ph = E.rnd(0, 6); E.score(0); },
+    reset: function () { y = H / 2; vy = 0; heat = 0; locked = false; wx = 0; sp = 140; t0 = 0; thrust = false; ph = E.rnd(0, 6); E.score(0); },
     update: function (dt) {
+      t0 += dt;
       sp = Math.min(330, sp + dt * 4); wx += sp * dt;
       E.score(Math.floor(wx / 10));
       var on = thrust && !locked;
-      vy += (on ? -1500 : 900) * dt;
-      vy = E.clamp(vy, -300, 320);
+      var soft = t0 < 4 ? 0.55 + 0.45 * (t0 / 4) : 1;
+      vy += (on ? -1500 * soft : 900 * soft) * dt;
+      vy = E.clamp(vy, -300 * soft, 320 * soft);
       y += vy * dt;
-      heat += (on ? 38 : -30) * dt;
+      heat += (on ? 38 * (t0 < 4 ? 0.5 : 1) : -30) * dt;
       heat = E.clamp(heat, 0, 100);
       if (heat >= 100) locked = true;
       if (locked && heat <= 40) locked = false;

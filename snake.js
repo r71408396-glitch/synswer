@@ -68,10 +68,24 @@
     ctx.shadowBlur = 12;
     ctx.fillRect(food.x * C + 5, food.y * C + 5, C - 10, C - 10);
     ctx.shadowBlur = 0;
-    snake.forEach(function (s, i) {
-      ctx.fillStyle = i === 0 ? "#c4b5fd" : "#8b5cf6";
-      ctx.fillRect(s.x * C + 1, s.y * C + 1, C - 2, C - 2);
+    for (var i = snake.length - 1; i >= 0; i--) {
+      var s = snake[i], r = (C / 2 - 1) * (i === 0 ? 1.05 : Math.max(0.55, 1 - i / (snake.length * 1.6)));
+      ctx.beginPath();
+      ctx.arc(s.x * C + C / 2, s.y * C + C / 2, r, 0, Math.PI * 2);
+      ctx.fillStyle = i === 0 ? "#4ade80" : (Math.floor(i / 2) % 2 ? "#065f46" : "#22c55e");
+      ctx.fill();
+    }
+    var hx = snake[0].x * C + C / 2, hy = snake[0].y * C + C / 2, px = -dir.y, py = dir.x;
+    ctx.fillStyle = "#fefce8";
+    [-1, 1].forEach(function (sd) {
+      ctx.beginPath(); ctx.arc(hx + dir.x * 3 + px * 5 * sd, hy + dir.y * 3 + py * 5 * sd, 3, 0, Math.PI * 2); ctx.fill();
     });
+    ctx.fillStyle = "#050505";
+    [-1, 1].forEach(function (sd) {
+      ctx.beginPath(); ctx.arc(hx + dir.x * 4 + px * 5 * sd, hy + dir.y * 4 + py * 5 * sd, 1.5, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(hx + dir.x * 9, hy + dir.y * 9); ctx.lineTo(hx + dir.x * 15, hy + dir.y * 15); ctx.stroke();
   }
 
   function begin() {
