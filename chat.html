@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M10YFWM4RX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-M10YFWM4RX');
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Chat - Synswer</title>
+    <meta name="description" content="Chat with Synswer: modes for study, writing, coding, research and more, with saved conversations." />
+    <link rel="canonical" href="https://synswer.com/chat.html" />
+    <meta name="theme-color" content="#07070b" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="chat.css" />
+    <script>try { var t = localStorage.getItem("synswer-theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+  </head>
+  <body class="chat-body" style="display:none">
+    <div class="chat-app">
+      <aside class="c-side" id="side" aria-label="Conversations">
+        <div class="c-side-top">
+          <a class="c-brand" href="index.html">SYNSWER</a>
+          <button type="button" class="c-btn primary" id="new-chat">+ New chat</button>
+          <input class="c-search" id="conv-search" type="search" placeholder="Search conversations" aria-label="Search conversations" autocomplete="off" />
+        </div>
+        <ul class="c-list" id="conv-list"><li class="c-empty">Loading...</li></ul>
+        <div class="c-side-bot">
+          <button type="button" class="c-btn small" id="mem-btn">Memory</button>
+          <button type="button" class="c-btn small" id="theme-btn">Theme</button>
+          <a href="tools.html">AI Tools</a>
+          <a href="index.html">Home</a>
+          <button type="button" class="c-btn small" id="signout">Sign out</button>
+        </div>
+      </aside>
+      <div class="c-scrim" id="scrim"></div>
+      <main class="c-main">
+        <div class="c-bar">
+          <button type="button" class="c-toggle" id="toggle" aria-expanded="false" aria-controls="side" aria-label="Open menu"><span></span><span></span><span></span></button>
+          <h1 id="conv-title">New chat</h1>
+          <label class="c-pill" for="mode">Mode</label>
+          <select class="c-select" id="mode" aria-label="Mode">
+            <option value="general">General</option>
+            <option value="study">Study</option>
+            <option value="writing">Writing</option>
+            <option value="coding">Coding</option>
+            <option value="research">Research (web)</option>
+            <option value="deep">Deep Research (web)</option>
+            <option value="math">Math</option>
+            <option value="data">Data Analyst</option>
+            <option value="creative">Creative</option>
+            <option value="business">Business</option>
+          </select>
+          <select class="c-select" id="style" aria-label="Response style">
+            <option value="simple">Simple</option>
+            <option value="detailed">Detailed</option>
+            <option value="professional">Professional</option>
+            <option value="creative">Creative</option>
+          </select>
+        </div>
+        <div class="c-scroll" id="scroll">
+          <div class="c-thread" id="thread" aria-live="polite">
+            <div class="c-welcome" id="welcome">
+              <h2>What can I help with?</h2>
+              <p>Ask anything, pick a mode, attach a photo or text file, search the web, or create an image. Conversations save automatically.</p>
+              <div class="c-starters" id="starters"></div>
+            </div>
+          </div>
+        </div>
+        <form class="c-compose" id="form">
+          <div class="c-box">
+            <div class="c-attach" id="attach-info" hidden></div>
+            <textarea class="c-input" id="input" rows="1" placeholder="Message Synswer" aria-label="Message"></textarea>
+            <div class="c-row">
+              <button type="button" class="c-chip" id="file-btn">Attach</button>
+              <button type="button" class="c-chip" id="web-btn" aria-pressed="false">Web search</button>
+              <button type="button" class="c-chip" id="img-btn" aria-pressed="false">Create image</button>
+              <button type="button" class="c-chip" id="mic-btn">Speak</button>
+              <span class="sp"></span>
+              <button type="button" class="c-chip" id="stop-btn" hidden>Stop</button>
+              <button type="submit" class="c-send" id="send">Send</button>
+            </div>
+            <input type="file" id="file" hidden accept="image/png,image/jpeg,image/webp,image/gif,.txt,.md,.csv,.json,text/plain,text/csv,application/json" />
+          </div>
+          <p class="c-note">Synswer can make mistakes. Check important facts and the sources.</p>
+        </form>
+      </main>
+    </div>
+    <dialog class="c-dlg" id="dlg"></dialog>
+    <script src="md.js"></script>
+    <script src="chat.js"></script>
+  </body>
+</html>
