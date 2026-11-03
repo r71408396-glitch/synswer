@@ -382,8 +382,10 @@
   }
   var shareBtn = document.createElement("button");
   shareBtn.type = "button";
-  shareBtn.className = "btn btn-ghost fb-share-big";
-  shareBtn.innerHTML = FB + " Share on Facebook";
+  shareBtn.className = "fb-share fb-share-big";
+  shareBtn.setAttribute("aria-label", "Share your score on Facebook");
+  shareBtn.title = "Share on Facebook";
+  shareBtn.innerHTML = FB;
   shareBtn.hidden = true;
   $("save").after(shareBtn);
   shareBtn.addEventListener("click", function () {

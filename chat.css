@@ -1,5 +1,6 @@
 :root { --c-bg:#07070b; --c-side:#0d0d14; --c-card:#12121b; --c-line:#24243a; --c-text:#e8e8f2; --c-mute:#8d8da8; --c-acc:#8b5cf6; --c-acc2:#60a5fa; --c-user:#1b1633; }
 html[data-theme="light"] { --c-bg:#f7f7fb; --c-side:#ffffff; --c-card:#ffffff; --c-line:#dcdcea; --c-text:#14141f; --c-mute:#5f5f78; --c-user:#ece7fe; }
+html { background:#07070b; color-scheme:dark; }
 body.chat-body { margin:0; background:var(--c-bg); color:var(--c-text); font-family:Inter,system-ui,sans-serif; }
 .chat-app { display:flex; height:100dvh; overflow:hidden; }
 .c-side { width:288px; flex:0 0 288px; background:var(--c-side); border-right:1px solid var(--c-line); display:flex; flex-direction:column; transition:transform .25s ease; z-index:30; }

@@ -458,8 +458,18 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     home.hidden = true;
     answerView.hidden = false;
     window.scrollTo({ top: 0 });
+    // Give the answer its own history entry so the phone's Back button returns home instead of leaving the site.
+    try { if (!(history.state && history.state.view === "answer")) history.pushState({ view: "answer" }, "", location.href); } catch (_) {}
     document.dispatchEvent(new CustomEvent("synswer:view"));
   }
+  function goHome() {
+    answerView.hidden = true;
+    home.hidden = false;
+    document.dispatchEvent(new CustomEvent("synswer:home"));
+  }
+  window.addEventListener("popstate", function () {
+    if (!answerView.hidden) goHome();
+  });
 
   // ----- small safe markdown renderer (escapes first, then formats) -----
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
@@ -723,9 +733,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
   });
 
   againBtn.addEventListener("click", function () {
-    answerView.hidden = true;
-    home.hidden = false;
-    document.dispatchEvent(new CustomEvent("synswer:home"));
+    if (history.state && history.state.view === "answer") { history.back(); } else { goHome(); }
     input.focus();
   });
 })();

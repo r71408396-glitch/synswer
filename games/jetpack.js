@@ -6,18 +6,6 @@
   var setHeatStat = E.stat("Heat", "0%");
   var S = (window.JetState = { W: W, H: H, PX: PX, render3d: false, y: H / 2, wx: 0, heat: 0, locked: false, thrust: false, center: null, half: null });
 
-  // 3D layer: a WebGL canvas over the 2D one, drawn by games/jetpack3d.js
-  var wrap = document.getElementById("wrap");
-  if (wrap) {
-    var c3 = document.createElement("canvas");
-    c3.id = "jet3d";
-    c3.className = "brick3d";
-    wrap.insertBefore(c3, document.getElementById("overlay"));
-    var ms = document.createElement("script");
-    ms.type = "module";
-    ms.src = "games/jetpack3d.js";
-    document.body.appendChild(ms);
-  }
   // The first few seconds are easy: a flat, wide corridor that gradually becomes the normal winding one.
   function ramp(d) { return E.clamp((d - 400) / 1600, 0, 1); }
   function center(x) { var d = x + wx; return H / 2 + (Math.sin(d * 0.011 + ph) * 62 + Math.sin(d * 0.027) * 28) * ramp(d); }

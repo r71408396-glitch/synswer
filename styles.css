@@ -14,7 +14,8 @@
 
 * { box-sizing: border-box; }
 
-html { min-height: 100%; color-scheme: dark; }
+html { min-height: 100%; color-scheme: dark; background: #07070b; }
+body { background-color: #07070b; }
 
 body {
   margin: 0;
