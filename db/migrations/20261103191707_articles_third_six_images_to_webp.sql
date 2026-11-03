@@ -1,0 +1,1 @@
+update articles set image_url = replace(image_url, '.jpg', '.webp') where slug in ('what-are-saturns-rings-made-of','argentina','antigua-and-barbuda','andorra','algeria','albania');
