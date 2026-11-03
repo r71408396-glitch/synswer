@@ -459,7 +459,14 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     answerView.hidden = false;
     window.scrollTo({ top: 0 });
     // Give the answer its own history entry so the phone's Back button returns home instead of leaving the site.
-    try { if (!(history.state && history.state.view === "answer")) history.pushState({ view: "answer" }, "", location.href); } catch (_) {}
+    // NOTE: a local variable named "history" holds the chat turns in this file, so use window.history explicitly.
+    try {
+      var st = window.history.state;
+      if (!(st && st.view === "answer")) {
+        if (!st) window.history.replaceState({ view: "home" }, "", location.href);
+        window.history.pushState({ view: "answer" }, "", location.href);
+      }
+    } catch (_) {}
     document.dispatchEvent(new CustomEvent("synswer:view"));
   }
   function goHome() {
@@ -733,7 +740,8 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
   });
 
   againBtn.addEventListener("click", function () {
-    if (history.state && history.state.view === "answer") { history.back(); } else { goHome(); }
+    var st2 = window.history.state;
+    if (st2 && st2.view === "answer") { window.history.back(); } else { goHome(); }
     input.focus();
   });
 })();

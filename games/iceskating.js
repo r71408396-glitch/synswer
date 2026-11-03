@@ -1,6 +1,6 @@
 (function () {
   var E = Eng, N = 6, cs = E.W / N, TOTAL = 75;
-  var rock, star, start, cabin, path, level, stars, left, skate, setTime;
+  var rock, star, start, cabin, path, level, stars, left, skate, setTime, cd = 0;
   setTime = E.stat("Time", String(TOTAL));
 
   function nbrs(i) {
@@ -64,21 +64,22 @@
   function ctr(i) { return [(i % N + 0.5) * cs, (Math.floor(i / N) + 0.5) * cs]; }
 
   E.game({
-    reset: function () { level = 0; stars = 0; left = TOTAL; setTime(TOTAL); E.score(0); gen(); },
+    reset: function () { level = 0; stars = 0; left = TOTAL; setTime(TOTAL); E.score(0); gen(); cd = 3; },
     update: function (dt) {
+      if (cd > 0) { var before = Math.ceil(cd); cd -= dt; if (Math.ceil(cd) !== before && cd > 0) E.snd("tick"); return; }
       if (skate) { skate.t += dt * 9; if (skate.t >= skate.path.length - 1 + 0.5) gen(); return; }
       left -= dt; setTime(Math.max(0, Math.ceil(left)));
       if (left <= 0) E.over(level * 3 + stars);
     },
     down: function (x, y) {
-      if (skate) return;
+      if (skate || cd > 0) return;
       var i = cell(x, y);
       if (i < 0) return;
       if (i === start) path = [start];
       else if (path.indexOf(i) >= 0) path.length = path.indexOf(i) + 1;
     },
     move: function (x, y, pressed) {
-      if (!pressed || skate) return;
+      if (!pressed || skate || cd > 0) return;
       var i = cell(x, y);
       if (i >= 0) walkTo(i);
     },
@@ -109,6 +110,11 @@
       c.beginPath(); c.arc(sp[0], sp[1], cs * 0.22, 0, Math.PI * 2); c.fillStyle = "#6d28d9"; c.fill();
       c.strokeStyle = "#fff"; c.lineWidth = 3; c.stroke();
       E.text(c, "Cabins " + level + "  Stars " + stars, E.W / 2, 14, 13, "#0f172a");
+      if (cd > 0) {
+        c.fillStyle = "rgba(7,12,20,.55)"; c.fillRect(0, 0, E.W, E.H);
+        E.text(c, String(Math.ceil(cd)), E.W / 2, E.H / 2, 96, "#fff");
+        E.text(c, "Get ready", E.W / 2, E.H / 2 + 70, 18, "#bae6fd");
+      }
     }
   });
 })();
