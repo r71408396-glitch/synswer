@@ -102,4 +102,25 @@ body.chat-body { margin:0; background:var(--c-bg); color:var(--c-text); font-fam
   .c-select { max-width:130px; }
   .msg .body { font-size:15.5px; }
 }
+/* Phase 1 polish: thinking skeleton, source cards, interactive tables */
+.skel { display:flex; flex-direction:column; gap:9px; margin-top:8px; max-width:520px; }
+.skel i { display:block; height:11px; border-radius:6px; background:linear-gradient(90deg,var(--c-card) 25%,var(--c-line) 50%,var(--c-card) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite linear; }
+@keyframes shimmer { from { background-position:200% 0; } to { background-position:-200% 0; } }
+.srcs { gap:8px; }
+.src-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px; }
+.msg .src-card { display:flex; flex-direction:column; gap:5px; padding:11px 12px; background:var(--c-card); border:1px solid var(--c-line); border-radius:12px; text-decoration:none; color:var(--c-text); transition:border-color .2s, transform .2s; min-width:0; }
+.msg .src-card:hover { border-color:var(--c-acc); transform:translateY(-2px); }
+.src-top { display:flex; align-items:center; gap:7px; color:var(--c-mute); font-size:12px; }
+.src-top img { border-radius:4px; flex:none; }
+.src-dom { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.src-title { font-size:13.5px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.src-snip { font-size:12.5px; color:var(--c-mute); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.tbl-tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 6px; }
+.tbl-tools .c-search { max-width:240px; }
+.msg .body th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+.msg .body th.sortable:hover { color:var(--c-acc2); }
+.msg .body th.sortable::after { content:" \2195"; opacity:.35; font-size:11px; }
+.msg .body th[data-dir="asc"]::after { content:" \25B2"; opacity:1; }
+.msg .body th[data-dir="desc"]::after { content:" \25BC"; opacity:1; }
+@media (prefers-reduced-motion: reduce) { .skel i { animation:none; } }
 @media (prefers-reduced-motion: reduce) { .msg, .typing i { animation:none; } .c-side, .c-toggle span { transition:none; } }

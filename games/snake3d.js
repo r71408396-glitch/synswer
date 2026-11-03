@@ -1,7 +1,7 @@
 import { createScene } from "@kreova/scene";
 
 try {
-  let T, body, dummy, col, foodMesh, headEyes = [], pupils = [], tongue = [], cap = 900;
+  let T, body, dummy, col, foodMesh, headEyes = [], pupils = [], cap = 900;
 
   createScene({
     canvas: "#game3d",
@@ -56,11 +56,6 @@ try {
         const e = new THREE.Mesh(eyeGeo, eyeMat); scene.add(e); headEyes.push(e);
         const p = new THREE.Mesh(pupilGeo, pupilMat); scene.add(p); pupils.push(p);
       }
-      const tMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d, roughness: 0.4 });
-      const stem = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.06), tMat);
-      const f1 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.05), tMat);
-      const f2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.05), tMat);
-      [stem, f1, f2].forEach((m) => { scene.add(m); tongue.push(m); });
 
       foodMesh = new THREE.Mesh(
         new THREE.OctahedronGeometry(0.5),
@@ -121,16 +116,6 @@ try {
           headEyes[k].position.set(head[0] + dx * 0.28 + px * 0.3 * side, head[1] + dy * 0.28 + py * 0.3 * side, 0.46);
           pupils[k].position.set(head[0] + dx * 0.36 + px * 0.3 * side, head[1] + dy * 0.36 + py * 0.3 * side, 0.55);
         });
-        const flick = Math.max(0, Math.sin(elapsed * 6)) * 0.35 + 0.15;
-        const tx = head[0] + dx * (0.7 + flick), ty = head[1] + dy * (0.7 + flick);
-        tongue[0].position.set(tx, ty, 0.1);
-        tongue[0].rotation.z = hd;
-        const ex = tx + dx * 0.28, ey = ty + dy * 0.28;
-        tongue[1].position.set(ex, ey + 0.0 + px * 0.06 * 0, 0.1);
-        tongue[1].position.set(ex + px * 0.07, ey + py * 0.07, 0.1);
-        tongue[1].rotation.z = hd + 0.5;
-        tongue[2].position.set(ex - px * 0.07, ey - py * 0.07, 0.1);
-        tongue[2].rotation.z = hd - 0.5;
       }
 
       const f = S.food();

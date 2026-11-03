@@ -130,16 +130,14 @@
     n.appendChild(el("div", "who", m.role === "user" ? "You" : "Synswer"));
     var body = el("div", "body");
     var text = m.content || "", ups = [];
-    if (m.role === "assistant") { var sp = MD.splitFollowUps(text); text = sp.body; ups = sp.followUps; body.innerHTML = MD.render(text); }
+    if (m.role === "assistant") { var sp = MD.splitFollowUps(text); text = sp.body; ups = sp.followUps; body.innerHTML = MD.render(text); enhanceTables(body); }
     else body.textContent = text;
     n.appendChild(body);
     if (m.image_url) {
       var im = el("img", m.role === "assistant" ? "gen" : "att"); im.src = m.image_url; im.alt = m.role === "assistant" ? "Generated image" : "Uploaded image"; im.loading = "lazy"; n.appendChild(im);
     }
     if (m.sources && m.sources.length) {
-      var sr = el("div", "srcs"); sr.appendChild(el("span", "who", "Sources"));
-      m.sources.forEach(function (s) { if (!/^https?:\/\//i.test(s.url || "")) return; var a = el("a", null, s.title || s.url); a.href = s.url; a.target = "_blank"; a.rel = "noopener noreferrer"; sr.appendChild(a); });
-      n.appendChild(sr);
+      n.appendChild(sourceCards(m.sources));
     }
     var acts = el("div", "acts");
     acts.appendChild(actBtn("Copy", function () { (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { toast("Copied"); }, function () { toast("Copy not available in this browser."); }); }));
@@ -148,7 +146,8 @@
     } else {
       if (m.image_url) { var dl = el("a", null, "Download"); dl.href = m.image_url; dl.download = "synswer-image.png"; acts.appendChild(dl); }
       else {
-        acts.appendChild(actBtn("Download", function () { var bl = new Blob([text], { type: "text/markdown" }), a = el("a"); a.href = URL.createObjectURL(bl); a.download = "synswer-answer.md"; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); }));
+        acts.appendChild(actBtn("Download .md", function () { downloadMarkdown(text, m); }));
+        acts.appendChild(actBtn("Save as PDF", function () { printPdf(body.innerHTML, m); }));
       }
       acts.appendChild(actBtn("Share", function () {
         if (navigator.share) navigator.share({ title: "Synswer", text: text }).catch(function () {});
@@ -172,10 +171,90 @@
     }
     return n;
   }
+  // ---- Phase 1 polish: source cards, export, sortable tables, thinking indicator ----
+  function domainOf(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return u; } }
+  // Each source becomes a clickable card: favicon, title, snippet (or the domain when there is none).
+  function sourceCards(list) {
+    var wrap = el("div", "srcs"); wrap.appendChild(el("span", "who", "Sources"));
+    var grid = el("div", "src-grid");
+    list.forEach(function (s) {
+      if (!/^https?:\/\//i.test(s.url || "")) return;
+      var dom = domainOf(s.url);
+      var a = el("a", "src-card"); a.href = s.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+      var top = el("div", "src-top");
+      var fav = el("img"); fav.width = 16; fav.height = 16; fav.alt = ""; fav.loading = "lazy";
+      fav.src = "https://www.google.com/s2/favicons?sz=32&domain=" + encodeURIComponent(dom);
+      fav.addEventListener("error", function () { fav.style.visibility = "hidden"; });
+      top.appendChild(fav); top.appendChild(el("span", "src-dom", dom)); a.appendChild(top);
+      a.appendChild(el("strong", "src-title", s.title || dom));
+      a.appendChild(el("span", "src-snip", s.snippet || dom));
+      grid.appendChild(a);
+    });
+    wrap.appendChild(grid); return wrap;
+  }
+  function stamp(m) { var d = m && m.created_at ? new Date(m.created_at) : new Date(); return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }); }
+  function titleOf(text) { var l = text.split("\n").filter(function (x) { return x.trim(); })[0] || "Answer"; return l.replace(/^#+\s*/, "").replace(/[*`]/g, "").slice(0, 80); }
+  // Styled Markdown: brand heading, date line, the answer, and a source list.
+  function downloadMarkdown(text, m) {
+    var out = "# Synswer\n*" + stamp(m) + "*\n\n---\n\n" + text.trim() + "\n";
+    if (m.sources && m.sources.length) out += "\n---\n\n## Sources\n" + m.sources.map(function (s) { return "- [" + (s.title || s.url) + "](" + s.url + ")"; }).join("\n") + "\n";
+    var bl = new Blob([out], { type: "text/markdown" }), a = el("a"); a.href = URL.createObjectURL(bl);
+    a.download = "synswer-" + titleOf(text).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) + ".md";
+    a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  // PDF: opens a clean A4 print layout with a Synswer header; choose "Save as PDF" in the print dialog.
+  function printPdf(html, m) {
+    var w = window.open("", "_blank");
+    if (!w) { toast("Allow pop-ups to save as PDF."); return; }
+    var css = "@page{size:A4;margin:22mm 20mm}body{font:12pt/1.6 Georgia,'Times New Roman',serif;color:#111;margin:0}" +
+      ".hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:18px;font-family:Arial,sans-serif}" +
+      ".hd b{font-size:15pt;letter-spacing:.02em;color:#2563eb}.hd span{font-size:9pt;color:#666}" +
+      "h3{font-family:Arial,sans-serif;margin:1.2em 0 .3em}table{border-collapse:collapse;width:100%;margin:10px 0;font-size:10.5pt}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left}th{background:#f1f5f9}" +
+      "pre{background:#f4f4f5;padding:10px;white-space:pre-wrap;font-size:9.5pt}code{font-family:Consolas,monospace}.tbl-tools{display:none}";
+    w.document.open();
+    w.document.write("<!doctype html><html><head><meta charset='utf-8'><title>Synswer answer</title><style>" + css + "</style></head><body><div class='hd'><b>Synswer</b><span>" + stamp(m) + "</span></div>" + html + "</body></html>");
+    w.document.close(); w.focus(); setTimeout(function () { w.print(); }, 350);
+  }
+  // Makes every answer table sortable (click a header), filterable and exportable to CSV.
+  function enhanceTables(root) {
+    root.querySelectorAll("table").forEach(function (tbl) {
+      var rows = [].slice.call(tbl.tBodies[0] ? tbl.tBodies[0].rows : []);
+      if (rows.length < 2) return;
+      var heads = [].slice.call(tbl.tHead.rows[0].cells), dir = 1, last = -1;
+      var tools = el("div", "tbl-tools");
+      var f = el("input", "c-search"); f.type = "search"; f.placeholder = "Filter rows"; f.setAttribute("aria-label", "Filter table rows");
+      f.addEventListener("input", function () { var q = f.value.toLowerCase(); rows.forEach(function (r) { r.hidden = q && r.textContent.toLowerCase().indexOf(q) < 0; }); });
+      var ex = el("button", "c-btn small", "Export table to CSV"); ex.type = "button";
+      ex.addEventListener("click", function () {
+        var all = [heads].concat(rows.filter(function (r) { return !r.hidden; }).map(function (r) { return [].slice.call(r.cells); }));
+        var csv = all.map(function (r) { return r.map(function (c) { return '"' + c.textContent.replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+        var a = el("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "synswer-table.csv"; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      });
+      tools.appendChild(f); tools.appendChild(ex);
+      var wrapEl = tbl.parentNode; wrapEl.parentNode.insertBefore(tools, wrapEl);
+      heads.forEach(function (h, ci) {
+        h.tabIndex = 0; h.className = "sortable"; h.setAttribute("role", "button");
+        var go = function () {
+          dir = last === ci ? -dir : 1; last = ci;
+          var num = rows.every(function (r) { return r.cells[ci] && r.cells[ci].textContent.trim() !== "" && !isNaN(parseFloat(r.cells[ci].textContent.replace(/[,$%\s]/g, ""))); });
+          rows.sort(function (a, b) {
+            var x = a.cells[ci].textContent.trim(), y = b.cells[ci].textContent.trim();
+            return (num ? parseFloat(x.replace(/[,$%\s]/g, "")) - parseFloat(y.replace(/[,$%\s]/g, "")) : x.localeCompare(y, undefined, { numeric: true })) * dir;
+          });
+          rows.forEach(function (r) { tbl.tBodies[0].appendChild(r); });
+          heads.forEach(function (x) { x.removeAttribute("data-dir"); }); h.setAttribute("data-dir", dir > 0 ? "asc" : "desc");
+        };
+        h.addEventListener("click", go); h.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+      });
+    });
+  }
+
+  // Thinking indicator: animated dots, a label, and shimmering skeleton lines while we wait.
   function pending(label) {
     var n = el("article", "msg assistant"); n.appendChild(el("div", "who", "Synswer"));
     var b = el("div", "body"); var ty = el("span", "typing"); ty.appendChild(el("i")); ty.appendChild(el("i")); ty.appendChild(el("i")); b.appendChild(ty);
-    if (label) b.appendChild(el("span", "c-pill", label));
+    b.appendChild(el("span", "c-pill", label || "Thinking..."));
+    var sk = el("div", "skel"); sk.setAttribute("aria-hidden", "true"); ["92%", "78%", "55%"].forEach(function (w) { var l = el("i"); l.style.width = w; sk.appendChild(l); }); b.appendChild(sk);
     n.appendChild(b); $("thread").appendChild(n); scrollDown(); return n;
   }
   function setBusy(v) { busy = v; $("send").disabled = v; $("stop-btn").hidden = !v; }
@@ -229,7 +308,7 @@
         if (!r.ok) throw new Error(aiError(r));
         var row = { conversation_id: cur.id, user_id: me.id, role: "assistant", content: "" };
         if (wantImage) { row.image_url = r.data.url; row.content = "Here is your image."; }
-        else { row.content = r.data.text || "I could not produce an answer."; if (r.data.sources && r.data.sources.length) row.sources = r.data.sources.slice(0, 8).map(function (s) { return { title: String(s.title || s.url).slice(0, 160), url: s.url }; }); }
+        else { row.content = r.data.text || "I could not produce an answer."; if (r.data.sources && r.data.sources.length) row.sources = r.data.sources.slice(0, 8).map(function (s) { return { title: String(s.title || s.url).slice(0, 160), url: s.url, snippet: String(s.snippet || s.description || s.text || "").slice(0, 160) }; }); }
         return api("api/rows/chat_messages", "POST", { values: row }).then(function (s) {
           msgs.push(s.ok && s.data.row ? s.data.row : row); wait.remove(); renderThread(); touchConv();
         });

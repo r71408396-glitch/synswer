@@ -3,10 +3,27 @@
   var y, vy, heat, locked, wx, sp, thrust, ph, setHeat;
 
   var t0 = 0;
+  var setHeatStat = E.stat("Heat", "0%");
+  var S = (window.JetState = { W: W, H: H, PX: PX, render3d: false, y: H / 2, wx: 0, heat: 0, locked: false, thrust: false, center: null, half: null });
+
+  // 3D layer: a WebGL canvas over the 2D one, drawn by games/jetpack3d.js
+  var wrap = document.getElementById("wrap");
+  if (wrap) {
+    var c3 = document.createElement("canvas");
+    c3.id = "jet3d";
+    c3.className = "brick3d";
+    wrap.insertBefore(c3, document.getElementById("overlay"));
+    var ms = document.createElement("script");
+    ms.type = "module";
+    ms.src = "games/jetpack3d.js";
+    document.body.appendChild(ms);
+  }
   // The first few seconds are easy: a flat, wide corridor that gradually becomes the normal winding one.
   function ramp(d) { return E.clamp((d - 400) / 1600, 0, 1); }
   function center(x) { var d = x + wx; return H / 2 + (Math.sin(d * 0.011 + ph) * 62 + Math.sin(d * 0.027) * 28) * ramp(d); }
   function half() { return Math.max(60, 98 + 70 * (1 - ramp(wx + PX)) - wx * 0.012); }
+
+  S.center = center; S.half = half;
 
   E.game({
     reset: function () { y = H / 2; vy = 0; heat = 0; locked = false; wx = 0; sp = 140; t0 = 0; thrust = false; ph = E.rnd(0, 6); E.score(0); },
@@ -24,6 +41,8 @@
       if (heat >= 100) locked = true;
       if (locked && heat <= 40) locked = false;
       var c = center(PX), h = half();
+      S.y = y; S.wx = wx; S.heat = heat; S.locked = locked; S.thrust = thrust;
+      setHeatStat(locked ? "OVERHEATED" : Math.round(heat) + "%");
       if (y - 10 < c - h || y + 10 > c + h) { E.snd("hurt"); E.over(Math.floor(wx / 10)); }
     },
     down: function () { thrust = true; },
@@ -31,7 +50,7 @@
     key: function (k, down) { if (k === " " || k === "arrowup" || k === "w") thrust = down; },
     draw: function (c) {
       c.fillStyle = "#0a0a14"; c.fillRect(0, 0, W, H);
-      if (y == null) return;
+      if (y == null || S.render3d) return;
       var h = half();
       c.fillStyle = "#3b2a6b";
       for (var x = 0; x < W; x += 6) {

@@ -2,6 +2,21 @@
   var E = Eng, W = E.W, H = E.H, BH = 24, BASE = H - 60;
   var blocks, mx, mw, dir, sp, cam, score, flash;
 
+  var S = (window.TowerState = { W: W, H: H, BH: BH, BASE: BASE, render3d: false, get: function () { return { blocks: blocks, mx: mx, mw: mw, cam: cam, flash: flash }; } });
+
+  // 3D layer: a WebGL canvas over the 2D one, drawn by games/towerstacker3d.js
+  var wrap = document.getElementById("wrap");
+  if (wrap) {
+    var c3 = document.createElement("canvas");
+    c3.id = "tower3d";
+    c3.className = "brick3d";
+    wrap.insertBefore(c3, document.getElementById("overlay"));
+    var ms = document.createElement("script");
+    ms.type = "module";
+    ms.src = "games/towerstacker3d.js";
+    document.body.appendChild(ms);
+  }
+
   function spawn() { mw = blocks[blocks.length - 1].w; dir = blocks.length % 2 ? 1 : -1; mx = dir > 0 ? -mw : W; }
   function drop() {
     var top = blocks[blocks.length - 1];
@@ -28,7 +43,7 @@
     key: function (k, down) { if (down && k === " ") drop(); },
     draw: function (c) {
       c.fillStyle = "#0d0d16"; c.fillRect(0, 0, W, H);
-      if (!blocks) return;
+      if (!blocks || S.render3d) return;
       blocks.forEach(function (b, i) {
         c.fillStyle = b.c; c.fillRect(b.x, BASE - i * BH + cam, b.w, BH - 2);
         c.fillStyle = "rgba(255,255,255,.18)"; c.fillRect(b.x, BASE - i * BH + cam, b.w, 4);
