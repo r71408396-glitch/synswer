@@ -654,8 +654,16 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     var news = found[1];
     var leads = found[2].concat(found[3], found[4], found[6]);
     var memories = found[5];
-    var timely = !!lq && isTimely(q) && !(att && att.text != null);
-    var sources = timely ? [] : wiki.concat(news, leads);
+    var sch = [];
+    if (lq && window.SynswerScholar && SynswerScholar.isScholarly(q) && !(att && att.text != null)) {
+      setBody("Searching scholarly databases...", true);
+      try { sch = (await SynswerScholar.search(lq, {})).papers || []; } catch (_) { sch = []; }
+    }
+    var timely = !!lq && isTimely(q) && !(att && att.text != null) && !sch.length;
+    var schSources = sch.map(function (p) {
+      return { kind: "paper", title: p.title, publisher: SynswerScholar.typeLabel(p) + (p.venue ? ", " + p.venue : ""), date: String(p.year || ""), url: p.doi ? "https://doi.org/" + p.doi : p.url };
+    });
+    var sources = timely ? [] : wiki.concat(news, leads, schSources);
     renderSources(sources);
     setBody(timely ? "Searching the web live..." : "Cross-checking sources...", true);
 
@@ -680,6 +688,10 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
       reference += (reference ? "\n\n" : "") + "OTHER RELEVANT SOURCES (titles only, the content was not read):\n" +
         leads.map(function (n, i) { return "[" + (n0 + i + 1) + "] " + n.publisher + (n.date ? ", " + n.date : "") + ": " + n.title; }).join("\n");
     }
+    if (sch.length && !timely) {
+      var base = n0 + leads.length;
+      reference += (reference ? "\n\n" : "") + SynswerScholar.block(sch, function (i) { return "[" + (base + i + 1) + "]"; });
+    }
     if (imageNotes) reference = imageNotes + (reference ? "\n\n" + reference : "");
 
     var numbered = att && att.text != null ? att.text.replace(/\r/g, "").split("\n").map(function (ln, i) { return "L" + (i + 1) + ": " + ln; }).join("\n") : "";
@@ -699,7 +711,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
         credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          prompt: SYSTEM,
+          prompt: SYSTEM + (sch.length && !timely ? " " + SynswerScholar.rules + " In this answer the scholarly records carry plain numbers in REFERENCE; cite them as [n]. They include abstracts, so unlike other titles they may be summarised from the abstract shown." : ""),
           input: inputText,
           maxTokens: 1000,
           images: imagePath ? [imagePath] : undefined,
