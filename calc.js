@@ -92,7 +92,7 @@
   box.innerHTML =
     '<div class="calc">' +
     '<div class="calc-top"><button type="button" class="calc-mode" id="c-mode" aria-label="Toggle degrees and radians">DEG</button><span class="calc-mem" id="c-mem"></span></div>' +
-    '<input id="c-in" class="calc-in" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Expression" />' +
+    '<input id="c-in" class="calc-in" type="text" inputmode="none" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="0" aria-label="Expression" />' +
     '<div class="calc-out" id="c-out" role="status" aria-live="polite">&nbsp;</div>' +
     '<div class="calc-keys" id="c-keys"></div>' +
     '<div class="calc-hist"><p class="eyebrow">History</p><ul id="c-hist"></ul></div>' +
