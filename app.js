@@ -461,7 +461,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
       a.href = s.url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.textContent = "[" + (idx + 1) + "] " + (s.kind
+      a.textContent = (s.kind === "web" ? "" : "[" + (idx + 1) + "] ") + (s.kind
         ? s.publisher + (s.date ? ", " + s.date : "") + ": " + (s.title.length > 70 ? s.title.slice(0, 67) + "..." : s.title)
         : s.title + " (Wikipedia)");
       li.appendChild(a);
@@ -570,9 +570,9 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     "LENGTH: Scale to the question. A simple lookup gets a direct answer of one to three sentences. A complex or structural problem gets a visible trade-off analysis (options, pros and cons) followed by a single actionable recommendation. Never exceed about 350 words, except when asked to draft a document. " +
     "FILES: If an ATTACHED FILE is provided, analyze its actual contents: summarize, extract key insights, and for spreadsheets check for errors such as blanks, duplicates, inconsistent formats and outliers, citing row numbers. If the file text is marked as truncated, say so. Each file line is prefixed with its line number (L1:, L2:); for a CSV, line 1 is the header, so data row N is line N+1. Answer the question from the file first, quoting exact values. If an image is attached, look at it carefully: read any visible text exactly, identify the main subject (and brand, model, species or place only when clearly recognisable), answer the question directly, then add real information about the subject from REFERENCE with citations. Say plainly when something in the image is unclear, and never identify a real person from their face. " +
     "DOCUMENTS: When asked to draft a contract, blog post, email, report or code, write the complete document in markdown (code inside fenced code blocks), with no commentary around it, and note briefly that contracts are drafts needing professional legal review. For data to chart or export, give a markdown table. " +
-    "LIVE WEB: When web search is available for this question, live web results come first. Base the answer on what the web search finds, attribute news to its publisher and date, and cite those pages as [1], [2], [3] in the order you used them (the visitor sees them as a numbered list of links under the answer). Wikipedia in REFERENCE is only background for context and definitions: never let it override a newer live result, and never cite it. Never say you cannot see live news or current information. " +
+    "LIVE WEB: When web search is available for this question, live web results come first. Base the answer on what the web search finds, attribute news to its publisher and date, and mention the publisher or site by name in the sentence when it helps, but NEVER write bracketed numbers like [1] or [2] in the text (the visitor sees the links under the answer, and numbers would not match). Wikipedia in REFERENCE is only background for context and definitions: never let it override a newer live result, and never cite it. Never say you cannot see live news or current information. " +
     "SOURCES: REFERENCE holds Wikipedia excerpts: use the relevant parts, ignore the rest, and explain in your own words, never copying sentences. Wikipedia is only one input: when it is missing or off-topic, answer from solid general knowledge across all fields (not just encyclopedic topics) and say what could not be verified. Titles from Hacker News, Stack Overflow and scholarly papers were not read: use them only to confirm a topic or finding is real and discussed. Prefer claims that more than one source supports, and say briefly when sources disagree or only one supports a point. " +
-    "MEMORY: SESSION CONVERSATION holds earlier turns of this visit: use it so follow-up questions keep their context. SAVED MEMORY holds notes about this user from earlier visits: use it to personalise, but never recite it back unprompted. " +
+    "MEMORY: SESSION CONVERSATION holds earlier turns of this visit: use it so follow-up questions keep their context. SAVED MEMORY holds notes about this user from earlier visits: use it to personalise quietly, but never recite it back, and never mention, hint at or refer to saved notes, memory or earlier visits in the answer. " +
     "HONESTY: If something cannot be verified from the sources or from solid knowledge, say so neutrally and state what to check, instead of assuming. Never invent sources, links or quotes. Never tell the visitor you cannot see live news or current events. " +
     "PRIVACY: Never disclose or confirm credentials, passwords, API keys, government or financial identifiers, or private records about a person. If asked to verify or reveal such a string, decline neutrally without repeating it back.";
 
@@ -733,7 +733,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
         credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          prompt: SYSTEM + (sch.length && !timely ? " " + SynswerScholar.rules + " In this answer the scholarly records carry plain numbers in REFERENCE; cite them as [n]. They include abstracts, so unlike other titles they may be summarised from the abstract shown." : ""),
+          prompt: SYSTEM + (timely ? " LIVE WEB ANSWER RULE: do not write any [1], [2] style numbers anywhere in this answer." : "") + (sch.length && !timely ? " " + SynswerScholar.rules + " In this answer the scholarly records carry plain numbers in REFERENCE; cite them as [n]. They include abstracts, so unlike other titles they may be summarised from the abstract shown." : ""),
           input: inputText,
           maxTokens: 1000,
           images: imagePath ? [imagePath] : undefined,
@@ -756,6 +756,11 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
           }));
         }
         var answer = data.text || "No answer came back. Please try again.";
+        if (timely && data.text) {
+          answer = answer.replace(/[ \t]*\[\d{1,2}\](?:\s*\[\d{1,2}\])*/g, "").replace(/[ \t]+([.,;:!?])/g, "$1");
+        }
+        // An answer that says nothing was found is not worth remembering.
+        var notFound = /\b(i (could not|couldn't|can't|cannot|was unable to|wasn't able to|did not|didn't) (find|locate|verify|confirm)|(could not|couldn't|unable to|cannot|can't) (be )?(find|found|locate|verify|confirm)|no (relevant|reliable|clear|verifiable|specific) (results?|information|sources?|records?|details|data)|nothing (relevant|reliable) (was )?found|not (able|enough information) to (find|verify))\b/i.test(answer);
         if (data.text) bodyEl.setAttribute("data-ok", "1");
         setBody(answer, false);
         lastAnswer = answer;
@@ -765,7 +770,7 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
         input.value = "";
         if (data.text) {
           history.push({ q: q, a: answer });
-          saveMemory(q, answer);
+          if (!notFound) saveMemory(q, answer);
         }
       }
     } catch (_) {
