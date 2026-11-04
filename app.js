@@ -403,6 +403,24 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     return /\b(latest|today|tonight|yesterday|this (week|month|year)|news|recent|recently|current|currently|now|breaking|update|updates|price|prices|score|scores|won|wins|winner|election|results?|happening|20(2[5-9]|3\d))\b/i.test(q);
   }
 
+  // Does the question name a specific business, person, place or product? Looks at the shape of the
+  // question (capitalised names, quotes, "who is", "opening hours", "reviews of"...), not a topic list.
+  function looksNamed(q) {
+    if (/\b(who is|who's|who was|who are|where is|where's|address of|phone number|opening hours|open hours|hours of|reviews? of|near me|near by|nearby|contact details|website of|ceo of|founder of|owner of|how much (is|does|are)|price of|cost of|is .{2,40} (open|closed|legit|worth it))\b/i.test(q)) return true;
+    if (/["\u201c][^"\u201d]{2,60}["\u201d]/.test(q)) return true;
+    if (/^\s*(how (do|to|can|would)|write|code|fix|debug|explain|solve|calculate|translate|convert|summari[sz]e|draft|create|make|define|what is the (difference|meaning))\b/i.test(q)) return false;
+    var COMMON = "I I'm I'll I've I'd AI OK The A An And Or What Why How When Where Who Which Is Are Can Could Should Would Do Does Did Tell Give Show Please Hi Hello Monday Tuesday Wednesday Thursday Friday Saturday Sunday January February March April May June July August September October November December".split(" ");
+    var words = q.trim().split(/\s+/).slice(1);
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i].replace(/^[("'\u201c]+|[)"',.?!:;\u201d]+$/g, "");
+      if (/^[A-Z][A-Za-z0-9&'.\-]+$/.test(w) && COMMON.indexOf(w) < 0) return true;
+    }
+    // A capitalised name right at the start of a short question ("Tesla stock", "Nike Air Max")
+    var first = q.trim().split(/\s+/)[0].replace(/[^A-Za-z0-9]/g, "");
+    if (first && /^[A-Z]/.test(first) && COMMON.indexOf(first) < 0 && q.trim().split(/\s+/).length <= 6 && /^(?!what|why|how|when|where|who|which|can|could|should|would|do|does|did|is|are|tell|give|show|please)/i.test(first)) return true;
+    return false;
+  }
+
   // Long-term memory: notes this signed-in user saved earlier, found by meaning.
   async function recallMemory(q) {
     if (!window.synswerUser) return [];
@@ -659,11 +677,15 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
       setBody("Searching scholarly databases...", true);
       try { sch = (await SynswerScholar.search(lq, {})).papers || []; } catch (_) { sch = []; }
     }
-    var timely = !!lq && isTimely(q) && !(att && att.text != null) && !sch.length;
     var schSources = sch.map(function (p) {
       return { kind: "paper", title: p.title, publisher: SynswerScholar.typeLabel(p) + (p.venue ? ", " + p.venue : ""), date: String(p.year || ""), url: p.doi ? "https://doi.org/" + p.doi : p.url };
     });
-    var sources = timely ? [] : wiki.concat(news, leads, schSources);
+    // Live web search runs for time-sensitive questions, questions about a named business, person, place
+    // or product, and whenever the other sources found nothing relevant. Scholarly evidence questions keep their papers.
+    var nothingFound = !wiki.length && !news.length && !leads.length;
+    var timely = !!lq && !(att && att.text != null) && !sch.length && (isTimely(q) || looksNamed(q) || nothingFound);
+    var fallbackSources = wiki.concat(news, leads, schSources);
+    var sources = timely ? [] : fallbackSources;
     renderSources(sources);
     setBody(timely ? "Searching the web live..." : "Cross-checking sources...", true);
 
@@ -723,6 +745,9 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
       if (!res.ok) {
         setBody(data.error || "Synswer could not answer right now. Please try again in a moment.", false);
       } else {
+        if (timely && !(data.sources && data.sources.length) && fallbackSources.length) {
+          renderSources(fallbackSources);
+        }
         if (timely && data.sources && data.sources.length) {
           renderSources(data.sources.filter(function (s) { return s && s.url; }).slice(0, 12).map(function (s) {
             var host = "";
