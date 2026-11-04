@@ -96,15 +96,83 @@
 
   // ----- tool grid -----
   var ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>';
-  TOOLS.forEach(function (t) {
+  var CATS = ["Writing", "Education", "Mathematics", "Programming", "Creativity", "Business", "Documents", "Research", "Productivity"];
+  var CAT_OF = { writing: "Writing", email: "Writing", content: "Writing", translate: "Writing",
+    homework: "Education", notes: "Education", quiz: "Education",
+    calculator: "Mathematics", math: "Mathematics", coding: "Programming",
+    bizidea: "Business", names: "Business", resume: "Documents", summarize: "Documents",
+    research: "Research", travel: "Productivity" };
+  var TAG_OF = { calculator: "Runs in your browser", research: "Live web", travel: "Live web", quiz: "Interactive", homework: "Photo input", math: "Photo input", summarize: "File input", notes: "File input" };
+  TOOLS.forEach(function (t) { t.cat = CAT_OF[t.id] || "Productivity"; t.tag = TAG_OF[t.id] || "AI"; });
+  var favs = [], pop = {}, activeCat = "All", query = "";
+  try { favs = JSON.parse(localStorage.getItem("synswer-fav-tools") || "[]"); } catch (_) {}
+  function toggleFav(id) {
+    favs = favs.indexOf(id) >= 0 ? favs.filter(function (x) { return x !== id; }) : favs.concat(id);
+    try { localStorage.setItem("synswer-fav-tools", JSON.stringify(favs)); } catch (_) {}
+    renderHub(); renderRecent();
+  }
+  function chip(t) {
     var a = document.createElement("a");
-    a.className = "tool-card";
-    a.href = "tools.html#" + t.id;
-    a.innerHTML = ICON + "<h3></h3><p></p>";
+    a.className = "chip-link"; a.href = "tools.html#" + t.id; a.textContent = t.name;
+    return a;
+  }
+  function card(t) {
+    var w = document.createElement("div");
+    w.className = "tool-card"; w.setAttribute("data-cat", t.cat);
+    var a = document.createElement("a");
+    a.href = "tools.html#" + t.id; a.className = "tool-link";
+    a.innerHTML = '<span class="tool-ico">' + ICON + '</span><h3></h3><p></p><span class="tool-tag"></span>';
     a.querySelector("h3").textContent = t.name;
     a.querySelector("p").textContent = t.desc;
-    grid.appendChild(a);
-  });
+    a.querySelector(".tool-tag").textContent = t.tag;
+    var f = document.createElement("button");
+    f.type = "button"; f.className = "fav-btn" + (favs.indexOf(t.id) >= 0 ? " is-on" : "");
+    f.setAttribute("aria-pressed", favs.indexOf(t.id) >= 0 ? "true" : "false");
+    f.setAttribute("aria-label", (favs.indexOf(t.id) >= 0 ? "Remove " : "Add ") + t.name + (favs.indexOf(t.id) >= 0 ? " from favorites" : " to favorites"));
+    f.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="' + (favs.indexOf(t.id) >= 0 ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8z"/></svg>';
+    f.addEventListener("click", function () { toggleFav(t.id); });
+    w.appendChild(a); w.appendChild(f);
+    return w;
+  }
+  function renderHub() {
+    var tabs = $("cat-tabs"), box = $("tool-sections"), q = query.toLowerCase();
+    tabs.innerHTML = "";
+    ["All"].concat(CATS).forEach(function (c) {
+      var n = TOOLS.filter(function (t) { return c === "All" || t.cat === c; }).length;
+      if (!n) return;
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "cat-tab" + (c === activeCat ? " is-on" : "");
+      b.textContent = c + " " + n; b.setAttribute("aria-pressed", c === activeCat ? "true" : "false");
+      b.addEventListener("click", function () { activeCat = c; renderHub(); });
+      tabs.appendChild(b);
+    });
+    box.innerHTML = "";
+    var shown = 0;
+    CATS.forEach(function (c) {
+      if (activeCat !== "All" && activeCat !== c) return;
+      var list = TOOLS.filter(function (t) { return t.cat === c && (!q || (t.name + " " + t.desc + " " + t.cat + " " + t.tag).toLowerCase().indexOf(q) >= 0); });
+      if (!list.length) return;
+      shown += list.length;
+      var sec = document.createElement("section"); sec.className = "cat-sec";
+      var h = document.createElement("h2"); h.textContent = c; sec.appendChild(h);
+      var g = document.createElement("div"); g.className = "tool-grid";
+      list.forEach(function (t) { g.appendChild(card(t)); });
+      sec.appendChild(g); box.appendChild(sec);
+    });
+    $("hub-empty").hidden = shown > 0;
+    var fb = $("fav-tools"); fb.innerHTML = "";
+    favs.forEach(function (id) { var t = TOOLS.filter(function (x) { return x.id === id; })[0]; if (t) fb.appendChild(chip(t)); });
+    $("fav-wrap").hidden = !fb.children.length;
+  }
+  $("tool-search").addEventListener("input", function () { query = this.value.trim(); renderHub(); });
+  $("hub-clear").addEventListener("click", function () { query = ""; activeCat = "All"; $("tool-search").value = ""; renderHub(); });
+  fetch("api/rows/tool_runs/aggregate?agg=count&group=tool&status=eq.ok&sort=-count&limit=5")
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      var pb = $("pop-tools");
+      (d.rows || []).forEach(function (r) { var t = TOOLS.filter(function (x) { return x.id === r.tool; })[0]; if (t) pb.appendChild(chip(t)); });
+      $("pop-wrap").hidden = !pb.children.length;
+    }).catch(function () {});
   function renderRecent() {
     var box = $("recent-tools");
     try {
@@ -233,6 +301,7 @@
     var a = solution();
     if (!window.synswerUser && !a) throw new Error("Finishing the security check, try again in a second.");
     body.altcha = window.synswerUser ? undefined : a;
+    usedSol = a || usedSol;
     try {
       var res = await fetch("api/ai/complete", { method: "POST", credentials: "include", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       var data = await res.json().catch(function () { return {}; });
@@ -241,6 +310,22 @@
     } finally { armCaptcha(); }
   }
   armCaptcha();
+
+  // Usage tracking for the admin dashboard: one row per run, with failures.
+  var usedSol = "";
+  async function fresh() {
+    for (var i = 0; i < 40; i++) { var s = solution(); if (s && s !== usedSol) return s; await new Promise(function (r) { setTimeout(r, 250); }); }
+    return "";
+  }
+  async function track(tool, status, err, ms) {
+    try {
+      await window.synswerUserReady;
+      var body = { values: { tool: tool, status: status, signed_in: !!window.synswerUser, error: err ? String(err).slice(0, 200) : null, duration_ms: ms } };
+      if (!window.synswerUser) { var a = await fresh(); if (!a) return; usedSol = a; body.altcha = a; }
+      await fetch("api/rows/tool_runs", { method: "POST", credentials: "include", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      if (!window.synswerUser) armCaptcha();
+    } catch (_) {}
+  }
 
   function values() {
     var v = {};
@@ -276,6 +361,7 @@
     });
     outBox.hidden = false;
     outActions.hidden = false;
+    $("act-chat").href = "chat.html?q=" + encodeURIComponent("Continue from my " + cur.name + " result:\n\n" + lastText.slice(0, 1200));
     refineForm.hidden = false;
     fbBox.hidden = false;
     fbBox.querySelector(".fb-msg").textContent = "";
@@ -328,6 +414,7 @@
     var missing = cur.fields.filter(function (f) { return f.req && !v[f.id]; })[0];
     if (missing && !(cur.image && imgBlob)) { errEl.textContent = "Please fill in: " + missing.label + "."; $("f-" + missing.id).focus(); return; }
     runBtn.disabled = true; runBtn.textContent = "Working...";
+    var t0 = Date.now(), failed = null;
     outBox.hidden = false; outActions.hidden = true; refineForm.hidden = true; fbBox.hidden = true; followEl.innerHTML = "";
     outBody.innerHTML = '<p class="muted">' + (cur.web ? "Searching the web and writing..." : "Writing...") + "</p>";
     try {
@@ -355,8 +442,12 @@
     } catch (err) {
       outBody.innerHTML = "";
       outBox.hidden = true;
-      errEl.textContent = err.message || "Something went wrong.";
-    } finally { runBtn.disabled = false; runBtn.textContent = "Generate"; }
+      failed = err.message || "Something went wrong.";
+      errEl.textContent = failed;
+    } finally {
+      runBtn.disabled = false; runBtn.textContent = "Generate";
+      track(cur.id, failed ? "error" : "ok", failed, Date.now() - t0);
+    }
   });
 
   // ----- refine / follow-up -----
@@ -390,12 +481,38 @@
     if (navigator.share) { navigator.share({ title: cur.name + " - Synswer", text: lastText.slice(0, 1500), url: location.href.split("#")[0] }).catch(function () {}); return; }
     (navigator.clipboard ? navigator.clipboard.writeText(lastText) : Promise.reject()).then(function () { flash(b, "Copied to share"); }, function () { flash(b, "Share unavailable"); });
   });
-  $("act-dl").addEventListener("click", function () {
+  function plain(t) { return t.replace(/^#{1,6}\s*/gm, "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/`/g, ""); }
+  function saveFile(name, mime, text) {
     var a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([lastText], { type: "text/markdown" }));
-    a.download = "synswer-" + cur.id + ".md";
+    a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+    a.download = name;
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function csvOf() {
+    var rows = quizData ? quizData.questions.map(function (q) { return [q.q, q.options[q.answer], q.why]; }) : [[lastText]];
+    var head = quizData ? [["Question", "Correct answer", "Explanation"]] : [["Result"]];
+    return head.concat(rows).map(function (r) { return r.map(function (c) { c = String(c).replace(/"/g, '""'); return /^[=+\-@]/.test(c) ? '"\'' + c + '"' : '"' + c + '"'; }).join(","); }).join("\r\n");
+  }
+  $("act-dl").addEventListener("click", async function () {
+    var fmt = $("dl-fmt").value, b = this;
+    if (fmt === "txt") return saveFile("synswer-" + cur.id + ".txt", "text/plain", plain(lastText));
+    if (fmt === "md") return saveFile("synswer-" + cur.id + ".md", "text/markdown", lastText);
+    if (fmt === "csv") return saveFile("synswer-" + cur.id + ".csv", "text/csv", csvOf());
+    await window.synswerUserReady;
+    if (!window.synswerUser) { errEl.innerHTML = 'Sign in to export PDF, Word or PowerPoint. <a href="login.html?next=tools.html">Sign in</a>'; return; }
+    b.disabled = true; b.textContent = "Preparing...";
+    try {
+      var res = await fetch("api/rows/tool_results", { method: "POST", credentials: "include", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ values: { user_id: window.synswerUser.id, tool: cur.id, title: cur.name, content: plain(lastText).slice(0, 19000) } }) });
+      var d = await res.json().catch(function () { return {}; });
+      if (!res.ok || !d.row) throw new Error(d.error || "Could not prepare the file.");
+      var a = document.createElement("a");
+      a.href = "api/documents/tool_result." + fmt + "?id=" + encodeURIComponent(d.row.id);
+      a.download = "synswer-" + cur.id + "." + fmt;
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (err) { errEl.textContent = err.message; }
+    finally { b.disabled = false; b.textContent = "Download"; }
   });
   $("act-again").addEventListener("click", function () { form.requestSubmit(); });
   fbBox.addEventListener("click", async function (e) {
@@ -413,6 +530,7 @@
     armCaptcha();
   });
 
+  renderHub();
   renderRecent();
   open(location.hash.slice(1));
 })();

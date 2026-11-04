@@ -37,7 +37,7 @@
 
       <section id="tool-list-view">
         <h1>AI Tools</h1>
-        <p class="lead">Sixteen focused tools, including a scientific calculator. Pick one, fill in a short form and get a result you can copy, refine, share or download.</p>
+        <p class="lead">Professional tools for writing, learning, maths, code, business and research. Pick one, fill in a short form and get a result you can copy, refine, download as TXT, PDF, DOCX or PPTX, or continue in Synswer chat.</p>
         <div class="style-row">
           <label for="style-sel" class="eyebrow">Response style</label>
           <select id="style-sel">
@@ -47,11 +47,16 @@
             <option value="creative">Creative</option>
           </select>
         </div>
-        <div id="recent-wrap" hidden>
-          <p class="eyebrow">Recently used</p>
-          <div class="chips-row" id="recent-tools"></div>
+        <div class="hub-search">
+          <input id="tool-search" type="search" placeholder="Search tools, e.g. translate, quiz, calculator" autocomplete="off" aria-label="Search tools" />
         </div>
-        <div class="tool-grid" id="tool-grid"></div>
+        <div class="cat-tabs" id="cat-tabs" role="tablist" aria-label="Tool categories"></div>
+        <div id="fav-wrap" class="hub-row" hidden><p class="eyebrow">Favorites</p><div class="chips-row" id="fav-tools"></div></div>
+        <div id="recent-wrap" class="hub-row" hidden><p class="eyebrow">Recently used</p><div class="chips-row" id="recent-tools"></div></div>
+        <div id="pop-wrap" class="hub-row" hidden><p class="eyebrow">Popular</p><div class="chips-row" id="pop-tools"></div></div>
+        <div id="tool-sections"></div>
+        <p class="muted hub-empty" id="hub-empty" hidden>No tools match that search. <button type="button" class="link-btn" id="hub-clear">Show all tools</button></p>
+        <div class="tool-grid" id="tool-grid" hidden></div>
       </section>
 
       <section id="tool-panel" hidden>
@@ -84,7 +89,12 @@
           <div class="out-actions" id="out-actions" hidden>
             <button type="button" class="btn btn-ghost" id="act-copy">Copy</button>
             <button type="button" class="btn btn-ghost" id="act-share">Share</button>
+            <select id="dl-fmt" aria-label="Download format">
+              <option value="txt">TXT</option><option value="md">Markdown</option><option value="csv">CSV</option>
+              <option value="pdf">PDF (sign in)</option><option value="docx">Word DOCX (sign in)</option><option value="pptx">PowerPoint PPTX (sign in)</option>
+            </select>
             <button type="button" class="btn btn-ghost" id="act-dl">Download</button>
+            <a class="btn btn-ghost" id="act-chat" href="chat.html" target="_blank" rel="noopener">Continue in Synswer chat</a>
             <button type="button" class="btn btn-ghost" id="act-again">Regenerate</button>
           </div>
           <div id="out-sources-wrap" hidden>
