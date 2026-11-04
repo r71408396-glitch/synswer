@@ -173,12 +173,12 @@
   function openMessages(startWith) {
     C.dialog(function (d) {
       d.className += " cm-msgs";
-      d.style.cssText = "width:min(560px,96vw);max-height:90vh;display:flex;flex-direction:column";
+      d.style.cssText = "width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;padding:12px 16px";
       var head = el("div", "row"); head.style.cssText = "justify-content:space-between;align-items:center";
       var title = el("h2", "", "Messages"); title.style.margin = "0";
       var close = el("button", "cm-btn ghost sm", "Close"); close.type = "button"; close.onclick = function () { d.close(); };
       head.appendChild(title); head.appendChild(close); d.appendChild(head);
-      var pane = el("div"); pane.style.cssText = "overflow:auto;flex:1;min-height:260px;margin-top:10px"; d.appendChild(pane);
+      var pane = el("div"); pane.style.cssText = "overflow:auto;flex:1;min-height:0;margin-top:10px;display:flex;flex-direction:column;width:100%;max-width:820px;margin-left:auto;margin-right:auto;box-sizing:border-box"; d.appendChild(pane);
       d.addEventListener("close", function () { clearInterval(pollT); badge(); });
 
       function listView() {
@@ -214,7 +214,7 @@
       function thread(uid) {
         pane.textContent = ""; title.textContent = "@" + C.uname(uid);
         var back = el("button", "cm-btn ghost sm", "All messages"); back.type = "button"; back.onclick = listView; pane.appendChild(back);
-        var log = el("div"); log.style.cssText = "display:flex;flex-direction:column;gap:6px;margin:10px 0;max-height:46vh;overflow:auto"; pane.appendChild(log);
+        var log = el("div"); log.style.cssText = "display:flex;flex-direction:column;gap:6px;margin:10px 0;flex:1;min-height:0;overflow:auto"; pane.appendChild(log);
         var form = el("form", "cm-rform"), inp = el("input"), send = el("button", "cm-btn sm", "Send"), er = el("p", "cm-err");
         inp.maxLength = 1000; inp.placeholder = "Write a message"; inp.setAttribute("aria-label", "Message"); send.type = "submit";
         form.appendChild(inp); form.appendChild(send); pane.appendChild(form); pane.appendChild(er);

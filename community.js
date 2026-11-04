@@ -405,7 +405,7 @@
     var t = $("tabs"), n = $("nav"), bar = $("tabbar"); t.textContent = ""; n.textContent = ""; bar.textContent = "";
     TABS.forEach(function (x) {
       var b = el("button", tab === x[0] && !view.tag && !view.user && !view.search ? "on" : "", x[1]); b.type = "button"; b.setAttribute("role", "tab");
-      b.onclick = function () { tab = x[0]; $("search-q").value = ""; view = {}; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true); };
+      b.onclick = function () { tab = x[0]; $("search-q").value = ""; view = {}; $("profile-slot").textContent = ""; try { history.pushState({ tab: tab }, ""); } catch (e) {} renderTabs(); loadFeed(true); };
       t.appendChild(b);
       var nb = b.cloneNode(true); nb.onclick = b.onclick; n.appendChild(nb);
     });
@@ -420,7 +420,28 @@
   }
 
   // ---------- profile ----------
-  function openProfile(uid) {
+  function peopleList(uid, kind) {
+    dialog(function (d) {
+      d.appendChild(el("h2", "", kind === "followers" ? "Followers" : "Following"));
+      var list = el("div", "list"); list.textContent = "Loading..."; d.appendChild(list);
+      var r = el("div", "row"), cl = el("button", "cm-btn sm", "Close"); cl.type = "button"; cl.onclick = function () { d.close(); }; r.appendChild(cl); d.appendChild(r);
+      var q = kind === "followers" ? "followee_id=eq." + uid : "follower_id=eq." + uid;
+      api("api/rows/follows?" + q + "&sort=-created_at&limit=100").then(function (res) {
+        var ids = (res.d.rows || []).map(function (f) { return kind === "followers" ? f.follower_id : f.followee_id; });
+        return loadProfiles(ids).then(function () {
+          list.textContent = "";
+          if (!ids.length) { list.appendChild(el("p", "cm-meta", "Nobody here yet.")); return; }
+          ids.forEach(function (id) {
+            var row = el("div", "cm-person"); row.appendChild(avatar(id, "sm"));
+            var w = el("button", "who"); w.type = "button"; w.appendChild(el("b", "", dname(id))); w.appendChild(el("span", "", "@" + uname(id)));
+            w.onclick = function () { d.close(); openProfile(id); }; row.appendChild(w); list.appendChild(row);
+          });
+        });
+      });
+    });
+  }
+  function openProfile(uid, noPush) {
+    if (!noPush) { try { history.pushState({ user: uid, tab: tab }, ""); } catch (e) {} }
     view = { user: uid }; renderTabs(); var slot = $("profile-slot"); slot.textContent = "";
     loadProfiles([uid]).then(function () {
       Promise.all([api("api/rows/follows/aggregate?agg=count&followee_id=eq." + uid), api("api/rows/follows/aggregate?agg=count&follower_id=eq." + uid), api("api/rows/follows?follower_id=eq." + me.id + "&followee_id=eq." + uid)]).then(function (r) {
@@ -436,9 +457,17 @@
         }
         info.appendChild(row); info.appendChild(el("h2", "", dname(uid))); info.appendChild(el("p", "", "@" + uname(uid)));
         if (p.bio) info.appendChild(el("p", "", p.bio));
-        var st = el("p", "stats"); st.innerHTML = "<b></b> followers &nbsp; <b></b> following"; st.children[0].textContent = ((r[0].d.rows || [])[0] || {}).count || 0; st.children[1].textContent = ((r[1].d.rows || [])[0] || {}).count || 0;
+        var st = el("p", "stats");
+        if (p.follows_private && uid !== me.id) { st.textContent = "Followers and following are private."; }
+        else {
+          [["followers", ((r[0].d.rows || [])[0] || {}).count || 0], ["following", ((r[1].d.rows || [])[0] || {}).count || 0]].forEach(function (x, i) {
+            var b = el("button", "cm-link"); b.type = "button"; b.style.fontSize = "14px"; b.style.marginRight = "14px";
+            var n = el("b", "", String(x[1])); b.appendChild(n); b.appendChild(document.createTextNode(" " + x[0]));
+            b.onclick = function () { peopleList(uid, x[0]); }; st.appendChild(b);
+          });
+        }
         info.appendChild(st); card.appendChild(info); slot.appendChild(card);
-        var back = el("button", "cm-btn ghost sm", "Back to feed"); back.type = "button"; back.style.marginBottom = "12px"; back.onclick = function () { view = {}; slot.textContent = ""; renderTabs(); loadFeed(true); }; slot.appendChild(back);
+        var back = el("button", "cm-btn ghost sm", "Back"); back.type = "button"; back.style.marginBottom = "12px"; back.onclick = function () { if (history.state && history.state.user) history.back(); else { view = {}; slot.textContent = ""; renderTabs(); loadFeed(true); } }; slot.appendChild(back);
         window.scrollTo(0, 0);
       });
       loadFeed(true);
@@ -463,13 +492,14 @@
       var av = el("input"); av.type = "file"; av.accept = "image/*"; field("Profile picture", av);
       var cv = el("input"); cv.type = "file"; cv.accept = "image/*"; field("Cover photo", cv);
       var dm = el("select"); [["everyone", "Anyone can message me"], ["none", "Nobody can message me"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; dm.appendChild(op); }); dm.value = p.dm_policy || "everyone"; field("Messages", dm);
+      var fp = el("select"); [["false", "Public: anyone can see who I follow and my followers"], ["true", "Private: only I can see them"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; fp.appendChild(op); }); fp.value = p.follows_private ? "true" : "false"; field("Followers and following", fp);
       var er = el("p", "cm-err"); d.appendChild(er);
       var r = el("div", "row"), no = el("button", "cm-btn ghost", "Cancel"), yes = el("button", "cm-btn", "Save"); no.type = yes.type = "button";
       no.onclick = function () { d.close(); };
       yes.onclick = function () {
         if (violates(dn.value + " " + bio.value)) { er.textContent = MSG; return; }
         yes.disabled = true;
-        var vals = { display_name: dn.value.trim() || null, bio: bio.value.trim() || null, dm_policy: dm.value };
+        var vals = { display_name: dn.value.trim() || null, bio: bio.value.trim() || null, dm_policy: dm.value, follows_private: fp.value === "true" };
         upload(av.files[0]).then(function (u) { if (u) vals.avatar_url = u; return upload(cv.files[0]); }).then(function (u) {
           if (u) vals.cover_url = u;
           return api("api/rows/profiles/" + p.id, "PATCH", vals);
@@ -700,6 +730,14 @@
         if (profile) { prof[me.id] = profile; return; }
         return onboard();
       });
-    }).then(function () { setCompAv(); loadFeed(true); loadSide(); unread(); setInterval(unread, 60000); });
+    }).then(function () {
+      try { history.replaceState({ tab: tab }, ""); } catch (e) {}
+      window.addEventListener("popstate", function (e) {
+        var s = e.state || {};
+        if (s.user) { openProfile(s.user, true); return; }
+        view = {}; tab = s.tab || "foryou"; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true);
+      });
+      setCompAv(); loadFeed(true); loadSide(); unread(); setInterval(unread, 60000);
+    });
   }).catch(function () { location.replace("login.html?next=community.html"); });
 })();
