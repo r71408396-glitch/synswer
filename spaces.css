@@ -1,4 +1,4 @@
-.sp-wrap{max-width:1240px;margin:0 auto;padding:16px 16px 80px;position:relative}
+.sp-wrap{width:100%;box-sizing:border-box;max-width:1240px;margin:0 auto;padding:16px 16px 80px;position:relative}
 .sp-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .sp-top h1{font:800 clamp(22px,4vw,30px)/1.1 Sora,Inter,sans-serif;margin:0}
 .sp-top a.back{color:#c4b5fd;text-decoration:none}
@@ -54,5 +54,11 @@
 .sp-dlg input,.sp-dlg select,.sp-dlg textarea{width:100%;box-sizing:border-box;font:inherit;color:#fff;background:#07070b;border:1px solid #2a2a44;border-radius:10px;padding:10px 12px}
 .sp-dlg textarea{min-height:130px}
 .sp-empty{color:#8b8ba8;padding:20px;text-align:center}
+.cm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.cm-card .sp-title{display:block;margin-bottom:6px}
+.cm-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start;margin-top:16px}
+.cm-side{display:flex;flex-direction:column;gap:14px}
+.cm-side .sp-contrib li{align-items:center;flex-wrap:wrap}
+@media(max-width:800px){.cm-grid{grid-template-columns:1fr}}
 @media(max-width:1000px){.sp-grid{grid-template-columns:200px minmax(0,1fr)}.sp-right{grid-column:1/-1;position:static}}
 @media(max-width:700px){.sp-grid{grid-template-columns:1fr}.sp-left{position:static}.sp-spaces{max-height:180px}.sp-kids{margin-left:14px}}

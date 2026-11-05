@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Communities - Synswer</title>
+    <meta name="description" content="Join Synswer communities with their own rules, moderators and feeds." />
+    <link rel="canonical" href="https://synswer.com/communities.html" />
+    <meta name="theme-color" content="#07070b" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="spaces.css" />
+    <script>try { if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}</script>
+  </head>
+  <body>
+    {bg3d}
+    <div class="glow" aria-hidden="true"></div>
+    <main class="sp-wrap">
+      <div class="sp-top">
+        <div>
+          <a class="back" href="index.html">&larr; Back to Synswer</a>
+          <h1 id="page-title">Communities</h1>
+        </div>
+        <div class="sp-row" style="margin:0">
+          <a class="sp-btn ghost" href="spaces.html" style="text-decoration:none">Topic Spaces</a>
+          <a class="sp-btn ghost" href="community.html" style="text-decoration:none">Social feed</a>
+          <button type="button" class="sp-btn" id="new-community">Create community</button>
+        </div>
+      </div>
+      <div id="view"><p class="sp-empty">Loading communities...</p></div>
+    </main>
+    <dialog class="sp-dlg" id="dlg"></dialog>
+    {footer}
+    {cookie}
+    <script src="app.js"></script>
+    <script src="communities.js"></script>
+  </body>
+</html>

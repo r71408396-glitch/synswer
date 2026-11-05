@@ -535,7 +535,7 @@
               rec.forEach(function (id) { s3.appendChild(personRow(id)); });
               var s4 = section("Topics"), cc = {}; (r[6].d.rows || []).forEach(function (x) { cc[x.category] = Number(x.count); });
               Object.keys(C.cats).forEach(function (k) { s4.appendChild(catBtn(k, cc[k] || 0)); });
-              var s5 = section("Communities"); s5.appendChild(el("p", "cm-meta", "Interest communities are coming soon."));
+              var s5 = section("Communities"); var s5a = el("a", "cm-tag", "Browse communities"); s5a.href = "communities.html"; s5.appendChild(s5a);
             });
           });
         }).catch(function () { res.textContent = "Could not load Explore. Check your connection."; });
