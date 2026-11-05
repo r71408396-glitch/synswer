@@ -428,7 +428,7 @@
       .then(function (d) {
         var ids = (d.rows || []).map(function (x) { return x.user_id; }).filter(function (v, i, a) { return v && a.indexOf(v) === i; });
         if (!ids.length || !window.synswerUser) return { d: d, pm: {} };
-        return fetch("api/rows/profiles?user_id=in." + ids.join(",") + "&select=user_id,username,avatar_url&limit=20", { credentials: "include" })
+        return Promise.all([fetch("api/rows/profiles?user_id=in." + ids.join(",") + "&select=user_id,username&limit=20", { credentials: "include" }), fetch("api/rows/profile_photos?user_id=in." + ids.join(",") + "&select=user_id,avatar_url&limit=20", { credentials: "include" })]).then(function (rs) { return Promise.all(rs.map(function (r) { return r.json().catch(function () { return {}; }); })); }).then(function (ds) { var m = {}; (ds[1].rows || []).forEach(function (x) { m[x.user_id] = x.avatar_url; }); return new Response(JSON.stringify({ rows: (ds[0].rows || []).map(function (p) { p.avatar_url = m[p.user_id] || null; return p; }) })); })
           .then(function (r) { return r.json(); })
           .then(function (pd) { var pm = {}; (pd.rows || []).forEach(function (p) { pm[p.user_id] = p; }); return { d: d, pm: pm }; })
           .catch(function () { return { d: d, pm: {} }; });

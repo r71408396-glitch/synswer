@@ -88,9 +88,15 @@
   function loadProfiles(ids) {
     var need = ids.filter(function (i, n) { return i && !prof[i] && ids.indexOf(i) === n; });
     if (!need.length) return Promise.resolve();
-    return api("api/rows/profiles?user_id=in." + need.slice(0, 100).join(",") + "&limit=100").then(function (r) { (r.d.rows || []).forEach(function (p) { prof[p.user_id] = p; }); });
+    var q = need.slice(0, 100).join(",");
+    return Promise.all([api("api/rows/profiles?user_id=in." + q + "&limit=100"), api("api/rows/profile_photos?user_id=in." + q + "&limit=100")]).then(function (r) {
+      var ph = {}; (r[1].d.rows || []).forEach(function (x) { ph[x.user_id] = x; });
+      (r[0].d.rows || []).forEach(function (p) { p.avatar_url = ph[p.user_id] ? ph[p.user_id].avatar_url : null; p.cover_url = ph[p.user_id] ? ph[p.user_id].cover_url : null; p.photo_visibility = ph[p.user_id] ? ph[p.user_id].visibility : "everyone"; prof[p.user_id] = p; });
+    });
   }
   // Blocked and muted users: who I blocked, who blocked me, who I muted.
+  var FB = {};
+  function loadFollowedBy() { api("api/rows/follows?followee_id=eq." + me.id + "&select=follower_id&limit=200").then(function (r) { (r.d.rows || []).forEach(function (f) { FB[f.follower_id] = 1; }); }); }
   var H = { blocked: {}, blockedMe: {}, muted: {}, loaded: null };
   function loadHidden(force) {
     if (H.loaded && !force) return H.loaded;
@@ -115,7 +121,11 @@
 
   function notify(userId, type, postId) {
     if (!userId || userId === me.id || standing.status !== "active") return;
-    api("api/rows/notifications", "POST", { user_id: userId, type: type, post_id: postId || null });
+    var key = { like: "notify_likes", repost: "notify_likes", comment: "notify_comments", reply: "notify_comments", follow: "notify_follows", mention: "notify_mentions" }[type];
+    loadProfiles([userId]).then(function () {
+      if (key && prof[userId] && prof[userId][key] === false) return;
+      api("api/rows/notifications", "POST", { user_id: userId, type: type, post_id: postId || null });
+    });
   }
   function mentions(text, postId) {
     var names = (text.match(/@([A-Za-z0-9_]{3,20})/g) || []).map(function (m) { return m.slice(1).toLowerCase(); }).filter(function (n, i, a) { return a.indexOf(n) === i; }).slice(0, 3);
@@ -526,8 +536,9 @@
       var bio = el("textarea"); bio.maxLength = 200; bio.rows = 3; bio.value = p.bio || ""; field("Bio", bio);
       var av = el("input"); av.type = "file"; av.accept = "image/*"; field("Profile picture", av);
       var cv = el("input"); cv.type = "file"; cv.accept = "image/*"; field("Cover photo", cv);
-      var dm = el("select"); [["everyone", "Anyone can message me"], ["none", "Nobody can message me"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; dm.appendChild(op); }); dm.value = p.dm_policy || "everyone"; field("Messages", dm);
+      var dm = el("select"); [["everyone", "Anyone can message me"], ["followers", "Only people I follow can message me"], ["none", "Nobody can message me"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; dm.appendChild(op); }); dm.value = p.dm_policy || "everyone"; field("Messages", dm);
       var fp = el("select"); [["false", "Public: anyone can see who I follow and my followers"], ["true", "Private: only I can see them"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; fp.appendChild(op); }); fp.value = p.follows_private ? "true" : "false"; field("Followers and following", fp);
+      var pv = el("select"); [["everyone", "Everyone can see my photos"], ["followers", "Only my followers (recommended)"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; pv.appendChild(op); }); pv.value = p.photo_visibility || "everyone"; field("Who can see my profile picture and cover photo", pv);
       var er = el("p", "cm-err"); d.appendChild(er);
       var r = el("div", "row"), no = el("button", "cm-btn ghost", "Cancel"), yes = el("button", "cm-btn", "Save"); no.type = yes.type = "button";
       no.onclick = function () { d.close(); };
@@ -535,9 +546,16 @@
         if (violates(dn.value + " " + bio.value)) { er.textContent = MSG; return; }
         yes.disabled = true;
         var vals = { display_name: dn.value.trim() || null, bio: bio.value.trim() || null, dm_policy: dm.value, follows_private: fp.value === "true" };
-        upload(av.files[0]).then(function (u) { if (u) vals.avatar_url = u; return upload(cv.files[0]); }).then(function (u) {
-          if (u) vals.cover_url = u;
-          return api("api/rows/profiles/" + p.id, "PATCH", vals);
+        var pvals = { visibility: pv.value };
+        upload(av.files[0]).then(function (u) { if (u) pvals.avatar_url = u; return upload(cv.files[0]); }).then(function (u) {
+          if (u) pvals.cover_url = u;
+          return api("api/rows/profile_photos?user_id=eq." + me.id + "&limit=1").then(function (g) {
+            var row = (g.d.rows || [])[0];
+            return row ? api("api/rows/profile_photos/" + row.id, "PATCH", pvals) : api("api/rows/profile_photos", "POST", pvals);
+          });
+        }).then(function (ph) {
+          if (!ph.ok) throw new Error(ph.d.error || "Could not save photos.");
+          return api("api/rows/profiles/" + p.id, "PATCH", vals).then(function (x) { if (x.ok) { x.d.row.avatar_url = ph.d.row.avatar_url; x.d.row.cover_url = ph.d.row.cover_url; x.d.row.photo_visibility = ph.d.row.visibility; } return x; });
         }).then(function (x) {
           if (!x.ok) { er.textContent = x.d.error || "Could not save."; yes.disabled = false; return; }
           prof[me.id] = x.d.row; profile = x.d.row; d.close(); toast("Profile saved"); openProfile(me.id); setCompAv();
@@ -549,7 +567,7 @@
   function upload(file) {
     if (!file) return Promise.resolve(null);
     if (!/^image\//.test(file.type) || file.size > 5 * 1024 * 1024) return Promise.reject(new Error("Images only, up to 5 MB."));
-    var fd = new FormData(); fd.append("folder", "community"); fd.append("file", file);
+    var fd = new FormData(); fd.append("folder", "private/profile-photos"); fd.append("file", file);
     return fetch("api/storage/upload", { method: "POST", credentials: "include", body: fd }).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "Upload failed."); return d.url; }); });
   }
   function setCompAv() { var a = $("comp-av"); a.textContent = ""; if (profile && profile.avatar_url) { var i = el("img"); i.src = profile.avatar_url; i.alt = ""; a.appendChild(i); } else a.textContent = ((profile && profile.username) || "?").charAt(0).toUpperCase(); }
@@ -564,7 +582,7 @@
     });
     Promise.all([api("api/rows/profiles?sort=-created_at&limit=30"), api("api/rows/follows?follower_id=eq." + me.id + "&limit=200")]).then(function (r) {
       var fol = {}; (r[1].d.rows || []).forEach(function (f) { fol[f.followee_id] = 1; });
-      var list = (r[0].d.rows || []).filter(function (p) { return p.user_id !== me.id && !fol[p.user_id]; }).slice(0, 5), box = $("suggest"); box.textContent = "";
+      var list = (r[0].d.rows || []).filter(function (p) { return p.user_id !== me.id && !fol[p.user_id] && !p.hide_from_suggestions; }).slice(0, 5), box = $("suggest"); box.textContent = "";
       list.forEach(function (p) { prof[p.user_id] = p; });
       if (!list.length) { box.appendChild(el("p", "cm-meta", "You are following everyone for now.")); return; }
       list.forEach(function (p) {
@@ -675,9 +693,17 @@
       d.appendChild(el("h2", "", "Settings and security"));
       d.appendChild(el("p", "", "Signed in as " + (me.email || "your account") + (profile ? " - @" + profile.username : "")));
       var l = el("label", "", "Who can message me"); d.appendChild(l);
-      var dm = el("select"); [["everyone", "Anyone"], ["none", "Nobody"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; dm.appendChild(op); });
+      var dm = el("select"); [["everyone", "Anyone"], ["followers", "Only people I follow"], ["none", "Nobody"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; dm.appendChild(op); });
       dm.value = (profile && profile.dm_policy) || "everyone"; d.appendChild(dm);
       dm.onchange = function () { if (!profile) return; api("api/rows/profiles/" + profile.id, "PATCH", { dm_policy: dm.value }).then(function (x) { if (x.ok) { profile = x.d.row; prof[me.id] = profile; toast("Saved"); } else toast("Could not save."); }); };
+      d.appendChild(el("h2", "", "Preferences")).style.marginTop = "18px";
+      [["hide_from_suggestions", "Do not suggest my account to others", false], ["notify_likes", "Notify me about likes", true], ["notify_comments", "Notify me about comments and replies", true], ["notify_follows", "Notify me about new followers", true], ["notify_mentions", "Notify me when I am mentioned", true]].forEach(function (o) {
+        var lab = el("label", ""); lab.style.display = "flex"; lab.style.gap = "8px"; lab.style.alignItems = "center";
+        var cb = el("input"); cb.type = "checkbox"; cb.style.width = "auto"; cb.checked = profile ? profile[o[0]] !== false && (o[2] || !!profile[o[0]]) : o[2];
+        cb.onchange = function () { if (!profile) return; var v = {}; v[o[0]] = cb.checked; api("api/rows/profiles/" + profile.id, "PATCH", v).then(function (x) { if (x.ok) { profile[o[0]] = cb.checked; toast("Saved"); } else { cb.checked = !cb.checked; toast("Could not save."); } }); };
+        lab.appendChild(cb); lab.appendChild(document.createTextNode(o[1])); d.appendChild(lab);
+      });
+      var ep = el("button", "cm-btn ghost sm", "Edit profile and photo privacy"); ep.type = "button"; ep.style.marginTop = "10px"; ep.onclick = function () { d.close(); editProfile(); }; d.appendChild(ep);
       d.appendChild(el("h2", "", "Delete social profile")).style.marginTop = "18px";
       d.appendChild(el("p", "", "Removes your username, posts, comments, likes, saved posts and follows from the community. Your Synswer account and chat stay. This cannot be undone."));
       var er = el("p", "cm-err"); d.appendChild(er);
@@ -756,6 +782,7 @@
     toggleRel: toggleRel, rel: function (id) { return { blocked: !!H.blocked[id], blockedMe: !!H.blockedMe[id], muted: !!H.muted[id] }; },
     setView: setView, runSearch: runSearch, followBtn: followBtn, loadFeed: loadFeed, loadHidden: loadHidden, isBlocked: function (id) { return !!(H.blocked[id] || H.blockedMe[id]); },
     setTab: function (t) { tab = t; view = {}; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true); }, cats: CATS,
+    followedBy: function (id) { return !!FB[id]; },
     me: function () { return me; }, standing: function () { return standing; }
   };
 
@@ -772,7 +799,7 @@
         standing = row; if (row.status === "suspended" && row.until && new Date(row.until) < new Date()) standing = { status: "suspended", until: row.until, warnings: row.warnings };
         banner();
         profile = (r[1].d.rows || [])[0];
-        if (profile) { prof[me.id] = profile; return; }
+        if (profile) { return loadProfiles([me.id]).then(function () { profile = prof[me.id] || profile; }); }
         return onboard();
       });
     }).then(function () {
@@ -782,7 +809,7 @@
         if (s.user) { openProfile(s.user, true); return; }
         view = {}; tab = s.tab || "foryou"; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true);
       });
-      setCompAv(); loadFeed(true); loadSide(); unread(); setInterval(unread, 60000);
+      loadFollowedBy(); setCompAv(); loadFeed(true); loadSide(); unread(); setInterval(unread, 60000);
     });
   }).catch(function () { location.replace("login.html?next=community.html"); });
 })();

@@ -250,7 +250,7 @@
           send.disabled = true;
           api("api/rows/profiles?user_id=eq." + uid + "&limit=1").then(function (pr) {
             var p = (pr.d.rows || [])[0];
-            if (p && p.dm_policy === "none") { er.textContent = "This member is not accepting messages."; return null; }
+            if (p && (p.dm_policy === "none" || (p.dm_policy === "followers" && !window.CM.followedBy(p.user_id)))) { er.textContent = "This member is not accepting messages."; return null; }
             return api("api/rows/messages", "POST", { sender_id: me().id, recipient_id: uid, content: text }).then(function (x) {
               if (!x.ok) { er.textContent = x.d.error || "Could not send."; return; }
               inp.value = ""; lastCount = -1; refresh();
@@ -411,7 +411,7 @@
             if (r.blockedMe) { ser.textContent = "You cannot message this member."; return null; }
             return api("api/rows/profiles?user_id=eq." + uid + "&limit=1").then(function (pr) {
               var p = (pr.d.rows || [])[0];
-              if (p && p.dm_policy === "none") { ser.textContent = "This member is not accepting messages."; return null; }
+              if (p && (p.dm_policy === "none" || (p.dm_policy === "followers" && !window.CM.followedBy(p.user_id)))) { ser.textContent = "This member is not accepting messages."; return null; }
               var v = { sender_id: me().id, recipient_id: uid, content: text };
               if (pending) { v.image_url = pending.url; v.media_type = pending.type; }
               return api("api/rows/messages", "POST", v).then(function (x) {
