@@ -422,7 +422,8 @@
   function loadBoard() {
     var el = $("leaderboard");
     var extra = mode === "week" ? "&created_at=gte." + encodeURIComponent(weekStart()) : "";
-    fetch("api/rows/scores?game=eq." + game + extra + "&select=player,score,user_id&sort=-score&limit=10")
+    (window.synswerUserReady || Promise.resolve())
+      .then(function () { return fetch("api/rows/scores?game=eq." + game + extra + "&select=player,score,user_id&sort=-score&limit=10"); })
       .then(function (r) { return r.json(); })
       .then(function (d) {
         var ids = (d.rows || []).map(function (x) { return x.user_id; }).filter(function (v, i, a) { return v && a.indexOf(v) === i; });
@@ -519,10 +520,20 @@
     } catch (_) {}
   }
 
+  // Signed-in players with a social profile play under their profile name.
+  var socialName = "";
+  (window.synswerUserReady || Promise.resolve()).then(function (u) {
+    if (!u) return;
+    return fetch("api/rows/profiles?user_id=eq." + u.id + "&select=username,display_name&limit=1", { credentials: "include" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { var p = d.rows && d.rows[0]; if (p) socialName = (p.display_name || p.username || "").slice(0, 20); })
+      .catch(function () {});
+  });
+
   $("save").addEventListener("click", function () {
     $("score-line").textContent = "Score: " + lastScore;
     $("score-error").textContent = "";
-    try { $("player-name").value = (window.synswerUser && window.synswerUser.name) || localStorage.getItem("synswer-player") || ""; } catch (_) {}
+    try { $("player-name").value = socialName || (window.synswerUser && window.synswerUser.name) || localStorage.getItem("synswer-player") || ""; } catch (_) {}
     if (!$("player-name").value && window.synswerUser && window.synswerUser.name) $("player-name").value = window.synswerUser.name;
     var isNew = (window.GAME_META || []).some(function (m) { return m.id === game; });
     var locked = isNew && !window.synswerUser;
