@@ -449,6 +449,20 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; }
 .auth-card .alt a { color: var(--ink); }
 .auth-card .ok { color: #86efac; margin: 12px 0 0; }
 
+/* Top bar: brand and menu (every page) */
+.tm-brand { position: fixed; top: 14px; left: 16px; z-index: 40; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; text-decoration: none; font-family: "Sora", sans-serif; font-weight: 800; letter-spacing: .04em; font-size: 20px; color: #fff; }
+.tm-brand b { color: var(--accent); font-weight: 800; }
+.tm-toggle { position: fixed; top: 14px; right: 16px; z-index: 41; width: 48px; height: 48px; display: inline-flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; padding: 0; border-radius: 50%; border: 1.5px solid var(--accent); background: rgba(8, 20, 20, .75); color: #fff; box-shadow: 0 0 18px var(--accent-glow); }
+.tm-toggle span { display: block; width: 20px; height: 2px; border-radius: 2px; background: currentColor; transition: transform .25s ease, opacity .2s ease; }
+.tm-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.tm-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.tm-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.tm-menu { position: fixed; top: 72px; right: 16px; z-index: 40; width: min(260px, calc(100vw - 32px)); max-height: calc(100vh - 90px); overflow-y: auto; display: flex; flex-direction: column; padding: 8px; border-radius: 16px; border: 1px solid var(--accent); background: rgba(8, 16, 18, .96); box-shadow: 0 16px 48px rgba(0, 0, 0, .55), 0 0 24px var(--accent-glow); }
+.tm-menu a { display: block; padding: 11px 14px; border-radius: 10px; color: var(--ink); text-decoration: none; font-size: 16px; }
+.tm-menu a:hover, .tm-menu a.active { background: var(--surface-2); color: var(--accent); }
+.tm-menu a.tm-account { margin-top: 6px; border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; padding-top: 14px; font-weight: 500; }
+@media (prefers-reduced-motion: reduce) { .tm-toggle span { transition: none; } }
+
 /* Footer */
 .site-footer {
   position: relative;

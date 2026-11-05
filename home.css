@@ -1,0 +1,56 @@
+/* Home: teal assistant look */
+body.home {
+  --accent: #14e0cc; --accent-hover: #0fc4b2; --accent-glow: rgba(20, 224, 204, .35);
+  --line: #11574f; --surface: #06201f; --surface-2: #0a2c2a;
+  background: radial-gradient(70vmax 50vmax at 50% 35%, #06302d 0%, #031b1a 45%, #020f0f 100%);
+  overflow-x: hidden;
+}
+html:has(body.home) { background: #020f0f; }
+body.home .bg3d, body.home .glow { display: none; }
+body.home::before, body.home::after { content: ""; position: fixed; z-index: 0; pointer-events: none; border-radius: 50%; border: 2px solid rgba(20, 224, 204, .55); box-shadow: 0 0 40px rgba(20, 224, 204, .35), inset 0 0 60px rgba(20, 224, 204, .12); }
+body.home::before { width: 140vmax; height: 70vmax; left: -75vmax; top: -48vmax; transform: rotate(-12deg); }
+body.home::after { width: 150vmax; height: 80vmax; right: -70vmax; bottom: -58vmax; transform: rotate(-14deg); }
+body.home .tm-brand span { font-size: 22px; letter-spacing: .06em; }
+
+body.home .page { padding: 84px 20px 32px; justify-content: center; }
+body.home .stage { max-width: 560px; }
+
+.robot-float { width: 190px; margin: 0 auto 8px; position: relative; animation: robot-hover 3.6s ease-in-out infinite; }
+.robot-ring { width: 170px; height: 26px; margin: -6px auto 0; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 22px var(--accent), inset 0 0 14px rgba(20, 224, 204, .5); background: radial-gradient(closest-side, rgba(20, 224, 204, .35), transparent); animation: ring-pulse 3.6s ease-in-out infinite; }
+body.home .orb { width: 190px; height: 190px; margin: 0 auto; }
+body.home .orb svg { filter: drop-shadow(0 0 22px rgba(37, 99, 235, .55)); }
+body.home .robot-eye { fill: #22f0dd; filter: drop-shadow(0 0 7px #22f0dd); }
+@keyframes robot-hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+@keyframes ring-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.82); opacity: .6; } }
+
+body.home .hero-title { font-size: clamp(2.3rem, 9vw, 3.6rem); margin-top: 26px; }
+body.home .hero-title .grad { background: none; color: var(--accent); -webkit-text-fill-color: var(--accent); }
+body.home .hero-sub { margin: 16px auto 0; font-size: clamp(1.15rem, 4.5vw, 1.5rem); color: #cfdad9; max-width: 340px; line-height: 1.35; }
+
+body.home .ask { margin-top: 30px; }
+.ask-bar { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 18px; border-radius: 999px; border: 2px solid var(--accent); background: rgba(4, 20, 20, .8); box-shadow: 0 0 26px var(--accent-glow); }
+.ask-bar .bar-icon { flex: none; color: #9fb3b1; display: inline-flex; cursor: pointer; }
+.ask-bar input { flex: 1; min-width: 0; border: 0; background: transparent; box-shadow: none !important; padding: 12px 6px; font-size: 18px; border-radius: 0; }
+.ask-bar input:focus { box-shadow: none; }
+.ask-go { flex: none; width: 52px; height: 52px; border: 0; border-radius: 50%; background: var(--accent); color: #02201d; display: inline-flex; align-items: center; justify-content: center; transition: transform .2s ease; }
+.ask-go:hover { transform: scale(1.06); }
+.ask-go:disabled { opacity: .6; cursor: wait; }
+body.home .ask-tools { justify-content: center; margin-top: 14px; }
+body.home .tool-btn { background: rgba(4, 20, 20, .7); }
+
+.more-btn { display: flex; align-items: center; justify-content: center; gap: 14px; width: min(100%, 360px); min-height: 60px; margin: 22px auto 0; padding: 0 22px; border-radius: 999px; border: 2px solid var(--accent); background: rgba(4, 20, 20, .6); color: #fff; font-size: 18px; font-weight: 500; box-shadow: 0 0 20px rgba(20, 224, 204, .22); transition: background .2s ease, transform .2s ease; }
+.more-btn:hover { background: rgba(20, 224, 204, .12); transform: translateY(-2px); }
+.more-btn svg { flex: none; }
+.more-btn .chev { margin-left: auto; }
+
+body.home .btn, .tm-menu a.btn { color: #02201d; }
+body.home .btn-ghost { color: var(--ink); }
+body.home .welcome-back { color: #9fb3b1; }
+body.home .site-footer { margin-top: auto; }
+body.home .answer-body { background: rgba(4, 20, 20, .85); }
+
+@media (max-width: 640px) {
+  body.home .ask-row, body.home .ask-bar { flex-direction: row; }
+  body.home .page { justify-content: flex-start; padding-top: 80px; }
+}
+@media (prefers-reduced-motion: reduce) { .robot-float, .robot-ring { animation: none; } }

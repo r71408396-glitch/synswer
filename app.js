@@ -49,6 +49,21 @@ window.SynswerAds = (function () {
   });
 })();
 
+// Top-right menu (shared)
+(function () {
+  var t = document.getElementById("tm-toggle"), m = document.getElementById("tm-menu");
+  if (!t || !m) return;
+  function set(open) {
+    m.hidden = !open;
+    t.setAttribute("aria-expanded", open ? "true" : "false");
+    t.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  }
+  t.addEventListener("click", function (e) { e.stopPropagation(); set(m.hidden); });
+  document.addEventListener("click", function (e) { if (!m.hidden && !m.contains(e.target)) set(false); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") set(false); });
+  window.synswerOpenMenu = function () { set(true); };
+})();
+
 // Who is signed in (shared): updates the account link in the corner
 window.synswerUser = null;
 window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
