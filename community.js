@@ -90,6 +90,27 @@
     if (!need.length) return Promise.resolve();
     return api("api/rows/profiles?user_id=in." + need.slice(0, 100).join(",") + "&limit=100").then(function (r) { (r.d.rows || []).forEach(function (p) { prof[p.user_id] = p; }); });
   }
+  // Blocked and muted users: who I blocked, who blocked me, who I muted.
+  var H = { blocked: {}, blockedMe: {}, muted: {}, loaded: null };
+  function loadHidden(force) {
+    if (H.loaded && !force) return H.loaded;
+    H.loaded = Promise.all([api("api/rows/blocks?limit=200"), api("api/rows/mutes?muter_id=eq." + me.id + "&limit=200")]).then(function (r) {
+      H.blocked = {}; H.blockedMe = {}; H.muted = {};
+      (r[0].d.rows || []).forEach(function (b) { if (b.blocker_id === me.id) H.blocked[b.blocked_id] = b.id; else H.blockedMe[b.blocker_id] = b.id; });
+      (r[1].d.rows || []).forEach(function (m) { H.muted[m.muted_id] = m.id; });
+    }).catch(function () {});
+    return H.loaded;
+  }
+  function isHidden(id) {
+    if (H.blockedMe[id]) return true;
+    return view.user !== id && !!(H.blocked[id] || H.muted[id]);
+  }
+  function toggleRel(kind, uid) {
+    var isB = kind === "block", map = isB ? H.blocked : H.muted, path = isB ? "blocks" : "mutes";
+    if (map[uid]) return api("api/rows/" + path + "/" + map[uid], "DELETE").then(function (r) { if (!r.ok) toast("Could not update."); return loadHidden(true); });
+    var v = isB ? { blocker_id: me.id, blocked_id: uid } : { muter_id: me.id, muted_id: uid };
+    return api("api/rows/" + path, "POST", v).then(function (r) { if (!r.ok) toast(r.d.error || "Could not update."); return loadHidden(true); });
+  }
   function group(rows, key) { var m = {}; rows.forEach(function (r) { (m[r[key]] = m[r[key]] || []).push(r); }); return m; }
 
   function notify(userId, type, postId) {
@@ -157,6 +178,8 @@
     if (p.status && p.status !== "approved") body.appendChild(el("span", "cm-hidden", "Hidden by an admin - only you can see this"));
     if (p.repost_of) body.appendChild(el("div", "cm-meta", "Reposted"));
     if (p.content) { var t = el("p", "cm-text"); t.appendChild(richText(p.content)); body.appendChild(t); }
+    var acc = null;
+    if (!embedded) { acc = el("div", "cm-insights"); acc.hidden = true; body.appendChild(acc); }
     if (p.image_url) body.appendChild(window.MediaSafe ? window.MediaSafe.node(p.image_url, p.media_type) : el("img", "cm-img"));
     if (p.repost_of) {
       var o = ctx.orig[p.repost_of];
@@ -202,7 +225,11 @@
       if (navigator.share) navigator.share({ title: "Post on Synswer", text: (p.content || "").slice(0, 100), url: url }).catch(function () {});
       else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { toast("Link copied"); }, function () { toast(url); });
     };
-    var aib = actBtn("ai", P.ai, "AI", "Ask Synswer AI about this post"); aib.onclick = function () { if (window.CMX) window.CMX.aiPost(p); };
+    var aib = actBtn("ai", P.ai, "AI", "Ask Synswer AI about this post"); aib.setAttribute("aria-expanded", "false"); aib.onclick = function () {
+      if (!canAct() || !window.CMX) return;
+      acc.hidden = !acc.hidden; aib.setAttribute("aria-expanded", String(!acc.hidden)); aib.classList.toggle("open", !acc.hidden);
+      if (!acc.hidden && !acc.dataset.init) { acc.dataset.init = "1"; window.CMX.insights(p, acc); }
+    };
     [like, cmt, rep, bm, aib, sh].forEach(function (b) { bar.appendChild(b); });
     if (me.id === p.user_id) {
       if (!p.repost_of) { var ed = actBtn("edit", P.edit, "", "Edit post"); ed.onclick = function () { editPost(p); }; bar.appendChild(ed); }
@@ -356,12 +383,14 @@
   function loadFeed(reset) {
     if (reset) { offset = 0; skeleton(); }
     var feed = $("feed"), more = $("more"); more.hidden = true;
-    fetchPosts().then(function (res) {
-      var rows = res.d.rows || [];
+    Promise.all([fetchPosts(), loadHidden()]).then(function (pair) {
+      var res = pair[0];
+      var rows = (res.d.rows || []).filter(function (p) { return !isHidden(p.user_id); });
       if (res.ok === false) throw new Error("x");
       var reposts = rows.filter(function (p) { return p.repost_of; }).map(function (p) { return p.repost_of; });
       return (reposts.length ? api("api/rows/posts?id=in." + reposts.join(",") + "&limit=100") : Promise.resolve({ d: { rows: [] } })).then(function (o) {
         var orig = {}; (o.d.rows || []).forEach(function (x) { orig[x.id] = x; });
+        rows = rows.filter(function (p) { return !(p.repost_of && orig[p.repost_of] && isHidden(orig[p.repost_of].user_id)); });
         var all = rows.concat(Object.keys(orig).map(function (k) { return orig[k]; }));
         var ids = rows.map(function (p) { return p.id; }), idStr = ids.join(",");
         return Promise.all([
@@ -410,10 +439,11 @@
       var nb = b.cloneNode(true); nb.onclick = b.onclick; n.appendChild(nb);
     });
     n.appendChild(document.createElement("hr"));
+    var xb = el("button", "", "Explore"); xb.type = "button"; xb.onclick = function () { if (window.CMX) window.CMX.explore(); }; n.appendChild(xb);
     var pb = el("button", "", "My profile"); pb.type = "button"; pb.onclick = function () { openProfile(me.id); }; n.appendChild(pb);
-    [["foryou", "Home", P.home], ["trending", "Trending", P.fire], ["question", "Questions", P.q], ["saved", "Saved", P.bm]].forEach(function (x) {
+    [["foryou", "Home", P.home], ["trending", "Trending", P.fire], ["explore", "Explore", "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5"], ["saved", "Saved", P.bm]].forEach(function (x) {
       var b = el("button", tab === x[0] && !view.user ? "on" : ""); b.type = "button"; b.innerHTML = svg(x[2]) + "<span>" + x[1] + "</span>";
-      b.onclick = function () { tab = x[0]; view = {}; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true); window.scrollTo(0, 0); };
+      b.onclick = function () { if (x[0] === "explore") { if (window.CMX) window.CMX.explore(); return; } tab = x[0]; view = {}; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true); window.scrollTo(0, 0); };
       bar.appendChild(b);
     });
     var me2 = el("button", ""); me2.type = "button"; me2.innerHTML = svg("M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0") + "<span>Profile</span>"; me2.onclick = function () { openProfile(me.id); }; bar.appendChild(me2);
@@ -444,7 +474,7 @@
     if (!noPush) { try { history.pushState({ user: uid, tab: tab }, ""); } catch (e) {} }
     view = { user: uid }; renderTabs(); var slot = $("profile-slot"); slot.textContent = "";
     loadProfiles([uid]).then(function () {
-      Promise.all([api("api/rows/follows/aggregate?agg=count&followee_id=eq." + uid), api("api/rows/follows/aggregate?agg=count&follower_id=eq." + uid), api("api/rows/follows?follower_id=eq." + me.id + "&followee_id=eq." + uid)]).then(function (r) {
+      Promise.all([api("api/rows/follows/aggregate?agg=count&followee_id=eq." + uid), api("api/rows/follows/aggregate?agg=count&follower_id=eq." + uid), api("api/rows/follows?follower_id=eq." + me.id + "&followee_id=eq." + uid), loadHidden()]).then(function (r) {
         var p = prof[uid] || {}, card = el("div", "cm-prof"), cover = el("div", "cm-cover");
         if (p.cover_url) cover.style.backgroundImage = "url('" + p.cover_url.replace(/'/g, "%27") + "')";
         card.appendChild(cover);
@@ -454,6 +484,11 @@
         else {
           row.appendChild(followBtn(uid, followRow, function () { openProfile(uid); }));
           var mb = el("button", "cm-btn ghost sm", "Message"); mb.type = "button"; mb.onclick = function () { if (window.CMX) window.CMX.openMessages(uid); }; row.appendChild(mb);
+          var mu = el("button", "cm-btn ghost sm", H.muted[uid] ? "Unmute" : "Mute"); mu.type = "button";
+          mu.onclick = function () { mu.disabled = true; toggleRel("mute", uid).then(function () { toast(H.muted[uid] ? "Muted. Their posts are hidden from your feed." : "Unmuted"); openProfile(uid, true); }); };
+          var bk = el("button", "cm-btn ghost sm", H.blocked[uid] ? "Unblock" : "Block"); bk.type = "button";
+          bk.onclick = function () { bk.disabled = true; toggleRel("block", uid).then(function () { toast(H.blocked[uid] ? "Blocked. You will not see each other's posts and cannot message." : "Unblocked"); openProfile(uid, true); }); };
+          row.appendChild(mu); row.appendChild(bk);
         }
         info.appendChild(row); info.appendChild(el("h2", "", dname(uid))); info.appendChild(el("p", "", "@" + uname(uid)));
         if (p.bio) info.appendChild(el("p", "", p.bio));
@@ -718,6 +753,9 @@
   window.CM = {
     api: api, el: el, toast: toast, dialog: dialog, loadProfiles: loadProfiles, prof: prof, avatar: avatar, dname: dname, uname: uname, ago: ago,
     canAct: canAct, violates: violates, spam: spam, MSG: MSG, openProfile: openProfile,
+    toggleRel: toggleRel, rel: function (id) { return { blocked: !!H.blocked[id], blockedMe: !!H.blockedMe[id], muted: !!H.muted[id] }; },
+    setView: setView, runSearch: runSearch, followBtn: followBtn, loadFeed: loadFeed, loadHidden: loadHidden, isBlocked: function (id) { return !!(H.blocked[id] || H.blockedMe[id]); },
+    setTab: function (t) { tab = t; view = {}; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true); }, cats: CATS,
     me: function () { return me; }, standing: function () { return standing; }
   };
 

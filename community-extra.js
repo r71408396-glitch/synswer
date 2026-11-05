@@ -170,7 +170,7 @@
     });
   }
 
-  function openMessages(startWith) {
+  function legacyMessages(startWith) {
     C.dialog(function (d) {
       d.className += " cm-msgs";
       d.style.cssText = "position:fixed;left:0;top:0;right:auto;bottom:auto;width:100vw;max-width:100vw;height:100dvh;max-height:none;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;padding:12px 16px;overflow:hidden;box-sizing:border-box";
@@ -266,7 +266,311 @@
     });
   }
 
-  window.CMX = { openMessages: openMessages, aiPost: aiPost };
+  // ======================= Two-pane messenger =======================
+  var listT = null;
+  function preview(m) {
+    var t = m.content ? String(m.content).slice(0, 60) : (m.media_type === "video" ? "Video" : "Photo");
+    return (m.sender_id === me().id ? "You: " : "") + t;
+  }
+  function openMessages(startWith) {
+    C.dialog(function (d) {
+      d.className += " cm-msgs mm";
+      d.setAttribute("data-view", "list");
+      d.style.cssText = "position:fixed;left:0;top:0;right:auto;bottom:auto;width:100vw;max-width:100vw;height:100dvh;max-height:none;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;padding:0;overflow:hidden;box-sizing:border-box";
+      var vv = window.visualViewport;
+      function fit() { if (!vv) return; d.style.height = vv.height + "px"; d.style.top = vv.offsetTop + "px"; }
+      if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); fit(); }
+      var cur = null, pending = null;
+      d.addEventListener("close", function () {
+        clearInterval(pollT); clearInterval(listT); badge();
+        if (vv) { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); }
+      });
+
+      var head = el("div", "mm-head"), title = el("h2", "", "Messages");
+      var close = el("button", "cm-btn ghost sm", "Close"); close.type = "button"; close.onclick = function () { d.close(); };
+      head.appendChild(title); head.appendChild(close); d.appendChild(head);
+      var wrap = el("div", "mm-wrap"), side = el("div", "mm-side"), main = el("div", "mm-main");
+      wrap.appendChild(side); wrap.appendChild(main); d.appendChild(wrap);
+
+      // ----- left: new message + conversations -----
+      var f = el("form", "mm-new"), inp = el("input"), go = el("button", "cm-btn sm", "New"), er = el("p", "cm-err");
+      inp.placeholder = "Find a username"; inp.maxLength = 20; inp.setAttribute("aria-label", "Username to message"); go.type = "submit";
+      f.appendChild(inp); f.appendChild(go); side.appendChild(f); side.appendChild(er);
+      var listEl = el("div", "mm-list"); side.appendChild(listEl);
+      f.onsubmit = function (e) {
+        e.preventDefault(); var n = inp.value.trim().replace(/^@/, "").toLowerCase(); er.textContent = "";
+        if (!n) return;
+        api("api/rows/profiles?username=like." + encodeURIComponent(n) + "&limit=10").then(function (r) {
+          var p = (r.d.rows || []).filter(function (x) { return x.username.toLowerCase() === n; })[0];
+          if (!p) { er.textContent = "No member with that username."; return; }
+          if (p.user_id === me().id) { er.textContent = "That is you."; return; }
+          C.prof[p.user_id] = p; inp.value = ""; thread(p.user_id);
+        });
+      };
+      function markActive() { Array.prototype.forEach.call(listEl.children, function (n) { n.classList.toggle("active", n.getAttribute("data-uid") === cur); }); }
+      function refreshList() {
+        return loadConvs().then(function (cs) {
+          listEl.textContent = "";
+          if (!cs.length) { listEl.appendChild(el("p", "cm-meta", "No conversations yet. Find a username above, or press Message on someone's profile.")); return; }
+          cs.forEach(function (c) {
+            var it = el("button", "cm-item" + (c.unread ? " unread" : "")); it.type = "button"; it.setAttribute("data-uid", c.id);
+            it.appendChild(C.avatar(c.id, "sm"));
+            var t = el("div", "t"); t.appendChild(el("b", "", C.dname(c.id)));
+            t.appendChild(document.createTextNode(" " + preview(c.last)));
+            t.appendChild(el("span", "", C.ago(c.last.created_at) + (c.unread ? " - " + c.unread + " new" : "")));
+            it.appendChild(t); it.onclick = function () { thread(c.id); }; listEl.appendChild(it);
+          });
+          markActive();
+        }).catch(function () { listEl.textContent = "Could not load messages."; });
+      }
+      listEl.textContent = "Loading...";
+      refreshList(); clearInterval(listT); listT = setInterval(refreshList, 10000);
+
+      // ----- right: the open conversation -----
+      function empty() {
+        main.textContent = ""; cur = null; d.setAttribute("data-view", "list"); markActive();
+        var e = el("div", "mm-empty"); e.appendChild(el("b", "", "Your messages")); e.appendChild(el("p", "cm-meta", "Pick a conversation on the left, or start a new one. Your latest chats stay visible while you do."));
+        main.appendChild(e);
+      }
+      function thread(uid) {
+        cur = uid; clearInterval(pollT); d.setAttribute("data-view", "thread"); main.textContent = ""; pending = null; markActive();
+        C.loadProfiles([uid]);
+        var th = el("div", "mm-th");
+        var back = el("button", "cm-btn ghost sm mm-back", "Back"); back.type = "button"; back.onclick = empty;
+        var who = el("button", "mm-who"); who.type = "button"; who.appendChild(C.avatar(uid, "sm")); who.appendChild(el("b", "", "@" + C.uname(uid)));
+        who.onclick = function () { d.close(); C.openProfile(uid); };
+        var mute = el("button", "cm-btn ghost sm"), block = el("button", "cm-btn ghost sm"); mute.type = block.type = "button";
+        th.appendChild(back); th.appendChild(who); th.appendChild(mute); th.appendChild(block); main.appendChild(th);
+        var note = el("p", "cm-meta mm-note"); note.hidden = true; main.appendChild(note);
+        var log = el("div", "mm-log"); main.appendChild(log);
+        var prev = el("div", "mm-prev"); prev.hidden = true; main.appendChild(prev);
+        var form = el("form", "mm-form"), file = el("input"), att = el("button", "cm-btn ghost sm mm-att", "Photo / video"), msg = el("input"), send = el("button", "cm-btn sm", "Send"), ser = el("p", "cm-err");
+        file.type = "file"; file.accept = window.MediaSafe ? window.MediaSafe.ACCEPT : "image/*"; file.hidden = true;
+        att.type = "button"; att.setAttribute("aria-label", "Attach a photo or video"); att.onclick = function () { file.click(); };
+        msg.maxLength = 1000; msg.placeholder = "Write a message"; msg.setAttribute("aria-label", "Message"); send.type = "submit";
+        form.appendChild(file); form.appendChild(att); form.appendChild(msg); form.appendChild(send); main.appendChild(form); main.appendChild(ser);
+        var lastSig = "";
+
+        function paintRel() {
+          return C.loadHidden(true).then(function () {
+            var r = C.rel(uid);
+            mute.textContent = r.muted ? "Unmute posts" : "Mute posts"; block.textContent = r.blocked ? "Unblock" : "Block";
+            note.hidden = !(r.blocked || r.blockedMe);
+            note.textContent = r.blocked ? "You blocked this member. Unblock them to send messages." : r.blockedMe ? "You cannot message this member." : "";
+            form.style.opacity = (r.blocked || r.blockedMe) ? ".5" : "";
+          });
+        }
+        paintRel();
+        mute.onclick = function () { mute.disabled = true; C.toggleRel("mute", uid).then(paintRel).then(function () { mute.disabled = false; C.toast(C.rel(uid).muted ? "Muted. Their posts are hidden from your feed." : "Unmuted"); }); };
+        block.onclick = function () { block.disabled = true; C.toggleRel("block", uid).then(paintRel).then(function () { block.disabled = false; C.toast(C.rel(uid).blocked ? "Blocked" : "Unblocked"); }); };
+
+        file.onchange = function () {
+          var fl = file.files[0]; if (!fl) return;
+          ser.textContent = "Checking and uploading..."; att.disabled = true;
+          window.MediaSafe.upload(fl, function (m) { ser.textContent = m; }).then(function (u) {
+            pending = u; prev.textContent = ""; prev.appendChild(window.MediaSafe.node(u.url, u.type, ""));
+            var x = el("button", "cm-btn ghost sm", "Remove"); x.type = "button"; x.onclick = function () { pending = null; prev.hidden = true; }; prev.appendChild(x); prev.hidden = false; ser.textContent = "";
+          }).catch(function (e) { ser.textContent = e.message; }).then(function () { att.disabled = false; });
+          file.value = "";
+        };
+
+        function refresh() {
+          Promise.all([api("api/rows/messages?sender_id=eq." + uid + "&sort=created_at&limit=200"), api("api/rows/messages?sender_id=eq." + me().id + "&recipient_id=eq." + uid + "&sort=created_at&limit=200")]).then(function (r) {
+            if (cur !== uid) return;
+            var rows = (r[0].d.rows || []).filter(function (m) { return m.recipient_id === me().id; }).concat(r[1].d.rows || []);
+            rows.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+            var sig = rows.length + ":" + rows.filter(function (m) { return m.read; }).length;
+            if (sig !== lastSig) {
+              lastSig = sig; log.textContent = "";
+              if (!rows.length) log.appendChild(el("p", "cm-meta", "Say hello. Messages are private between the two of you."));
+              var lastMine = null;
+              rows.forEach(function (m) { if (m.sender_id === me().id) lastMine = m; });
+              rows.forEach(function (m) {
+                var mine = m.sender_id === me().id, b = el("div", "mm-b " + (mine ? "mine" : "theirs"));
+                if (m.image_url && window.MediaSafe) b.appendChild(window.MediaSafe.node(m.image_url, m.media_type, ""));
+                if (m.content) b.appendChild(el("span", "", m.content));
+                b.title = C.ago(m.created_at); log.appendChild(b);
+                if (m === lastMine) log.appendChild(el("span", "mm-seen", m.read ? "Seen" : "Delivered"));
+              });
+              log.scrollTop = log.scrollHeight;
+            }
+            var ups = rows.filter(function (m) { return m.recipient_id === me().id && !m.read; }).map(function (m) { return { id: m.id, values: { read: true } }; });
+            if (ups.length) fetch("api/rows/messages/bulk", { method: "PATCH", credentials: "include", headers: JSON_H, body: JSON.stringify({ updates: ups }) }).then(function () { badge(); refreshList(); });
+          });
+        }
+        refresh(); pollT = setInterval(refresh, 6000);
+
+        form.onsubmit = function (e) {
+          e.preventDefault(); ser.textContent = ""; var text = msg.value.trim();
+          if ((!text && !pending) || !C.canAct()) return;
+          if (text && (C.violates(text) || C.spam(text))) { ser.textContent = C.MSG.replace("post", "message"); return; }
+          send.disabled = true;
+          C.loadHidden(true).then(function () {
+            var r = C.rel(uid);
+            if (r.blocked) { ser.textContent = "You blocked this member. Unblock them to send messages."; return null; }
+            if (r.blockedMe) { ser.textContent = "You cannot message this member."; return null; }
+            return api("api/rows/profiles?user_id=eq." + uid + "&limit=1").then(function (pr) {
+              var p = (pr.d.rows || [])[0];
+              if (p && p.dm_policy === "none") { ser.textContent = "This member is not accepting messages."; return null; }
+              var v = { sender_id: me().id, recipient_id: uid, content: text };
+              if (pending) { v.image_url = pending.url; v.media_type = pending.type; }
+              return api("api/rows/messages", "POST", v).then(function (x) {
+                if (!x.ok) { ser.textContent = x.d.error || "Could not send."; return; }
+                msg.value = ""; pending = null; prev.hidden = true; lastSig = ""; refresh(); refreshList();
+              });
+            });
+          }).catch(function () { ser.textContent = "Could not connect."; }).then(function () { send.disabled = false; });
+        };
+        if (window.matchMedia("(min-width: 761px)").matches) setTimeout(function () { msg.focus(); }, 50);
+      }
+
+      empty();
+      if (startWith) C.loadProfiles([startWith]).then(function () { thread(startWith); });
+    });
+  }
+
+  // ======================= Inline AI Insights =======================
+  var LANGS = [["English", "en"], ["Spanish", "es"], ["French", "fr"], ["Portuguese", "pt"], ["German", "de"], ["Arabic", "ar"], ["Hindi", "hi"], ["Chinese", "zh"]];
+  function insights(p, box) {
+    box.textContent = "";
+    if (!p.content) { box.appendChild(el("p", "cm-meta", "This post has no text for AI to work on.")); return; }
+    var row = el("div", "mm-chips"), out = el("div"), running = false;
+    var sel = el("select"); sel.setAttribute("aria-label", "Translate into");
+    var nav = (navigator.language || "en").slice(0, 2);
+    LANGS.forEach(function (l) { var o = el("option", "", l[0]); o.value = l[0]; if (l[1] === nav) o.selected = true; sel.appendChild(o); });
+    function run(label, job) {
+      if (running) return; running = true; out.textContent = "";
+      var ui = aiBox(out); ui.body.textContent = label + "..."; ui.body.style.opacity = ".7";
+      job().then(function (res) { ui.body.style.opacity = ""; show(ui, res.text || "No answer came back.", res.sources, res.arts); })
+        .catch(function (e) { ui.body.style.opacity = ""; ui.body.textContent = e.message; })
+        .then(function () { running = false; });
+    }
+    function chip(label, job) { var b = el("button", "cm-tool", label); b.type = "button"; b.onclick = function () { run(label, job); }; row.appendChild(b); return b; }
+    var summary = function () {
+      return api("api/rows/post_replies?post_id=eq." + p.id + "&sort=created_at&limit=30").then(function (r) {
+        var rows = r.d.rows || [], extra = rows.length ? "\n\nCOMMENTS:\n" + rows.map(function (x, i) { return (i + 1) + ". " + x.content; }).join("\n").slice(0, 4000) : "";
+        return ask("Write an AI summary of this community post in one or two plain sentences. If comments are included, add one short sentence on how people are responding. Under 80 words, no headings.", "POST:\n" + p.content + extra).then(function (d) { return { text: d.text }; });
+      });
+    };
+    var first = chip("AI summary", summary);
+    chip("Explain", function () { return ask("Explain what this post means in simple language with any needed background. Under 120 words.", "POST:\n" + p.content).then(function (d) { return { text: d.text }; }); });
+    row.appendChild(sel);
+    chip("Translate", function () { return ask("Translate this post into " + sel.value + ". Keep #hashtags and @mentions unchanged. Return only the translation, then on a new line the original language in brackets.", p.content).then(function (d) { return { text: d.text }; }); });
+    box.appendChild(row); box.appendChild(out);
+    first.click();
+  }
+
+  // ======================= Explore =======================
+  function explore() {
+    C.dialog(function (d) {
+      d.className += " cm-msgs mm";
+      d.style.cssText = "position:fixed;left:0;top:0;right:auto;bottom:auto;width:100vw;max-width:100vw;height:100dvh;max-height:none;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;padding:0;overflow:hidden;box-sizing:border-box";
+      var head = el("div", "mm-head"), cl = el("button", "cm-btn ghost sm", "Close"); cl.type = "button"; cl.onclick = function () { d.close(); };
+      head.appendChild(el("h2", "", "Explore")); head.appendChild(cl); d.appendChild(head);
+      var body = el("div", "ex-body"); d.appendChild(body);
+      var f = el("form", "mm-new"), q = el("input"), go = el("button", "cm-btn sm", "Search"); q.type = "search"; q.placeholder = "Search Synswer"; q.maxLength = 60; q.setAttribute("aria-label", "Search"); go.type = "submit";
+      f.appendChild(q); f.appendChild(go); body.appendChild(f);
+      var filter = "all", fr = el("div", "mm-chips"), fb = {};
+      [["all", "All"], ["people", "People"], ["posts", "Posts"], ["tags", "Hashtags"], ["topics", "Topics"]].forEach(function (x) {
+        var b = el("button", "cm-tool" + (x[0] === "all" ? " on" : ""), x[1]); b.type = "button"; fb[x[0]] = b;
+        b.onclick = function () { filter = x[0]; Object.keys(fb).forEach(function (k) { fb[k].classList.toggle("on", k === filter); }); go_(); }; fr.appendChild(b);
+      });
+      body.appendChild(fr);
+      var res = el("div", "ex-res"); body.appendChild(res);
+      f.onsubmit = function (e) { e.preventDefault(); go_(); };
+
+      function section(t) { var s = el("section", "ex-sec"); s.appendChild(el("h3", "", t)); res.appendChild(s); return s; }
+      function personRow(uid) {
+        var row = el("div", "cm-person"); row.appendChild(C.avatar(uid, "sm"));
+        var w = el("button", "who"); w.type = "button"; w.appendChild(el("b", "", C.dname(uid))); w.appendChild(el("span", "", "@" + C.uname(uid)));
+        w.onclick = function () { d.close(); C.openProfile(uid); }; row.appendChild(w);
+        if (uid !== me().id) row.appendChild(C.followBtn(uid, null, function () { row.querySelector(".cm-btn").textContent = "Following"; row.querySelector(".cm-btn").disabled = true; }));
+        return row;
+      }
+      function postRow(p, extra, term) {
+        var b = el("button", "ex-post"); b.type = "button";
+        b.appendChild(el("b", "", C.dname(p.user_id) + " @" + C.uname(p.user_id)));
+        b.appendChild(el("span", "", String(p.content || "(media post)").slice(0, 160)));
+        if (extra) b.appendChild(el("small", "", extra));
+        b.onclick = function () { d.close(); if (term) C.runSearch(term); else { location.hash = "post-" + p.id; C.setTab("latest"); } };
+        return b;
+      }
+      function tagBtn(t, n) { var b = el("button", "cm-tag"); b.type = "button"; b.appendChild(el("b", "", "#" + t)); b.appendChild(el("span", "", n + " post" + (n === 1 ? "" : "s"))); b.onclick = function () { d.close(); C.setView({ tag: t }, "#" + t); }; return b; }
+      function catBtn(k, n) { var b = el("button", "cm-tag"); b.type = "button"; b.appendChild(el("b", "", C.cats[k])); b.appendChild(el("span", "", (n == null ? "" : n + " posts"))); b.onclick = function () { d.close(); C.setTab(k); }; return b; }
+      function tagCounts(like) {
+        var since = new Date(Date.now() - 30 * 86400000).toISOString();
+        return api("api/rows/post_tags/aggregate?agg=count&group=tag&sort=-count&limit=12&created_at=gte." + since + (like ? "&tag=like." + encodeURIComponent(like) : "")).then(function (r) { return r.d.rows || []; });
+      }
+
+      function home() {
+        res.textContent = "Loading...";
+        var since = new Date(Date.now() - 14 * 86400000).toISOString();
+        Promise.all([
+          C.loadHidden(), tagCounts(""),
+          api("api/rows/post_replies/aggregate?agg=count&group=post_id&sort=-count&limit=8&created_at=gte." + since),
+          api("api/rows/follows/aggregate?agg=count&group=followee_id&sort=-count&limit=20"),
+          api("api/rows/follows?follower_id=eq." + me().id + "&limit=200"),
+          api("api/rows/profiles?sort=-created_at&limit=30"),
+          api("api/rows/posts/aggregate?agg=count&group=category")
+        ]).then(function (r) {
+          var pop = (r[2].d.rows || []).map(function (x) { return x.post_id; });
+          return (pop.length ? api("api/rows/posts?id=in." + pop.join(",") + "&limit=8") : Promise.resolve({ d: { rows: [] } })).then(function (pp) {
+            var posts = (pp.d.rows || []).filter(function (p) { return !C.isBlocked(p.user_id); });
+            var counts = {}; (r[2].d.rows || []).forEach(function (x) { counts[x.post_id] = Number(x.count); });
+            posts.sort(function (a, b) { return (counts[b.id] || 0) - (counts[a.id] || 0); });
+            var fol = {}; (r[4].d.rows || []).forEach(function (x) { fol[x.followee_id] = 1; });
+            var order = (r[3].d.rows || []).map(function (x) { return x.followee_id; }).concat((r[5].d.rows || []).map(function (p) { return p.user_id; }));
+            var rec = order.filter(function (id, i) { return id !== me().id && !fol[id] && !C.isBlocked(id) && order.indexOf(id) === i; }).slice(0, 6);
+            (r[5].d.rows || []).forEach(function (p) { C.prof[p.user_id] = p; });
+            return C.loadProfiles(posts.map(function (p) { return p.user_id; }).concat(rec)).then(function () {
+              res.textContent = "";
+              var s1 = section("Trending hashtags"), tg = r[1];
+              if (!tg.length) s1.appendChild(el("p", "cm-meta", "No hashtags yet. Add a #hashtag to a post."));
+              tg.forEach(function (t) { s1.appendChild(tagBtn(t.tag, Number(t.count))); });
+              var s2 = section("Popular discussions");
+              if (!posts.length) s2.appendChild(el("p", "cm-meta", "No discussions yet. Comment on a post to start one."));
+              posts.forEach(function (p) { s2.appendChild(postRow(p, (counts[p.id] || 0) + " comment" + (counts[p.id] === 1 ? "" : "s"))); });
+              var s3 = section("Recommended accounts");
+              if (!rec.length) s3.appendChild(el("p", "cm-meta", "You are following everyone for now."));
+              rec.forEach(function (id) { s3.appendChild(personRow(id)); });
+              var s4 = section("Topics"), cc = {}; (r[6].d.rows || []).forEach(function (x) { cc[x.category] = Number(x.count); });
+              Object.keys(C.cats).forEach(function (k) { s4.appendChild(catBtn(k, cc[k] || 0)); });
+              var s5 = section("Communities"); s5.appendChild(el("p", "cm-meta", "Interest communities are coming soon."));
+            });
+          });
+        }).catch(function () { res.textContent = "Could not load Explore. Check your connection."; });
+      }
+
+      function go_() {
+        var term = q.value.trim(); if (!term) { home(); return; }
+        var like = encodeURIComponent(term.replace(/^[#@]/, "")), want = function (k) { return filter === "all" || filter === k; };
+        res.textContent = "Searching...";
+        Promise.all([
+          C.loadHidden(),
+          want("people") ? api("api/rows/profiles?or=(username.like." + like + ",display_name.like." + like + ")&limit=10") : { d: {} },
+          want("posts") ? api("api/rows/posts?content=like." + like + "&sort=-created_at&limit=10") : { d: {} },
+          want("tags") ? tagCounts(term.replace(/^#/, "").toLowerCase()) : []
+        ]).then(function (r) {
+          var people = (r[1].d.rows || []).filter(function (p) { return !C.isBlocked(p.user_id); }), posts = (r[2].d.rows || []).filter(function (p) { return !C.isBlocked(p.user_id); });
+          people.forEach(function (p) { C.prof[p.user_id] = p; });
+          return C.loadProfiles(posts.map(function (p) { return p.user_id; })).then(function () {
+            res.textContent = ""; var any = false;
+            if (want("people") && people.length) { any = true; var a = section("People"); people.forEach(function (p) { a.appendChild(personRow(p.user_id)); }); }
+            if (want("posts") && posts.length) { any = true; var b = section("Posts"); posts.forEach(function (p) { b.appendChild(postRow(p, "", term)); }); }
+            if (want("tags") && r[3].length) { any = true; var c = section("Hashtags"); r[3].forEach(function (t) { c.appendChild(tagBtn(t.tag, Number(t.count))); }); }
+            if (want("topics")) {
+              var ks = Object.keys(C.cats).filter(function (k) { return C.cats[k].toLowerCase().indexOf(term.toLowerCase().replace(/^[#@]/, "")) >= 0; });
+              if (ks.length) { any = true; var e = section("Topics"); ks.forEach(function (k) { e.appendChild(catBtn(k)); }); }
+            }
+            if (!any) res.appendChild(el("p", "cm-meta", "Nothing found for \"" + term + "\"."));
+          });
+        }).catch(function () { res.textContent = "Search failed. Try again."; });
+      }
+      home();
+    });
+  }
+
+  window.CMX = { openMessages: openMessages, aiPost: aiPost, insights: insights, explore: explore };
   $("btn-msgs").onclick = function () { openMessages(); };
 
   var tries = 0, wait = setInterval(function () {
