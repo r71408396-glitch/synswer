@@ -25,7 +25,7 @@
   function $(id) { return document.getElementById(id); }
   var JSON_H = { "content-type": "application/json" };
   var me = null, profile = null, standing = { status: "active", warnings: 0 }, prof = {};
-  var tab = "foryou", view = {}, offset = 0, PAGE = 25, pollOn = false, imgUrl = null;
+  var tab = "foryou", view = {}, offset = 0, PAGE = 25, pollOn = false, imgUrl = null, imgType = null;
   var CATS = { general: "General", question: "Question", ai_tech: "AI and Tech", education: "Education" };
   var TABS = [["foryou", "For You"], ["following", "Following"], ["trending", "Trending"], ["latest", "Latest"], ["question", "Questions"], ["ai_tech", "AI and Technology"], ["education", "Education and Learning"], ["saved", "Saved"]];
   var P = {
@@ -157,7 +157,7 @@
     if (p.status && p.status !== "approved") body.appendChild(el("span", "cm-hidden", "Hidden by an admin - only you can see this"));
     if (p.repost_of) body.appendChild(el("div", "cm-meta", "Reposted"));
     if (p.content) { var t = el("p", "cm-text"); t.appendChild(richText(p.content)); body.appendChild(t); }
-    if (p.image_url) { var im = el("img", "cm-img"); im.src = p.image_url; im.alt = "Image shared in a post"; im.loading = "lazy"; body.appendChild(im); }
+    if (p.image_url) body.appendChild(window.MediaSafe ? window.MediaSafe.node(p.image_url, p.media_type) : el("img", "cm-img"));
     if (p.repost_of) {
       var o = ctx.orig[p.repost_of];
       body.appendChild(o ? buildPost(o, ctx, true) : el("div", "cm-quote", "The original post is no longer available."));
@@ -577,7 +577,11 @@
   $("img-file").onchange = function () {
     var f = this.files[0]; if (!f) return;
     $("post-error").textContent = "Uploading image...";
-    upload(f).then(function (u) { imgUrl = u; $("img-preview").hidden = false; $("img-preview").querySelector("img").src = u; $("post-error").textContent = ""; }).catch(function (e) { $("post-error").textContent = e.message; });
+    var inp = this; inp.disabled = true;
+    window.MediaSafe.upload(f, function (m) { $("post-error").textContent = m; }).then(function (u) {
+      imgUrl = u.url; imgType = u.type; var pv = $("img-preview"), old = pv.querySelector("img,video"); if (old) old.remove();
+      pv.insertBefore(window.MediaSafe.node(u.url, u.type, ""), pv.firstChild); pv.hidden = false; $("post-error").textContent = "";
+    }).catch(function (e) { $("post-error").textContent = e.message; }).then(function () { inp.disabled = false; });
     this.value = "";
   };
   $("img-clear").onclick = function () { imgUrl = null; $("img-preview").hidden = true; };
@@ -599,13 +603,13 @@
       if (!m.ok) { err.textContent = m.msg; return null; }
       err.textContent = "";
       var v = { content: text, category: $("post-cat").value };
-      if (imgUrl) v.image_url = imgUrl; if (poll) v.poll_options = poll;
+      if (imgUrl) { v.image_url = imgUrl; v.media_type = imgType || "image"; } if (poll) v.poll_options = poll;
       return api("api/rows/posts", "POST", v);
     }).then(function (res) {
       if (!res) return;
       if (!res.ok) { err.textContent = res.d.error || "Could not post. Please try again."; return; }
       var id = res.d.row.id; syncTags(id, text, false); mentions(text, id);
-      box.value = ""; $("count").textContent = "0 / 500"; imgUrl = null; $("img-preview").hidden = true; pollOn = false; $("poll-box").hidden = true; $("poll-toggle").textContent = "Poll";
+      box.value = ""; $("count").textContent = "0 / 500"; imgUrl = null; imgType = null; $("img-preview").hidden = true; pollOn = false; $("poll-box").hidden = true; $("poll-toggle").textContent = "Poll";
       toast("Posted"); view = {}; $("profile-slot").textContent = ""; if (tab === "following" || tab === "saved") tab = "latest"; renderTabs(); loadFeed(true); setTimeout(loadSide, 800);
     }).catch(function () { err.textContent = "Could not connect. Please try again."; }).then(function () { btn.disabled = false; });
   });
