@@ -422,9 +422,18 @@
   function loadBoard() {
     var el = $("leaderboard");
     var extra = mode === "week" ? "&created_at=gte." + encodeURIComponent(weekStart()) : "";
-    fetch("api/rows/scores?game=eq." + game + extra + "&select=player,score&sort=-score&limit=10")
+    fetch("api/rows/scores?game=eq." + game + extra + "&select=player,score,user_id&sort=-score&limit=10")
       .then(function (r) { return r.json(); })
       .then(function (d) {
+        var ids = (d.rows || []).map(function (x) { return x.user_id; }).filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+        if (!ids.length || !window.synswerUser) return { d: d, pm: {} };
+        return fetch("api/rows/profiles?user_id=in." + ids.join(",") + "&select=user_id,username,avatar_url&limit=20", { credentials: "include" })
+          .then(function (r) { return r.json(); })
+          .then(function (pd) { var pm = {}; (pd.rows || []).forEach(function (p) { pm[p.user_id] = p; }); return { d: d, pm: pm }; })
+          .catch(function () { return { d: d, pm: {} }; });
+      })
+      .then(function (res) {
+        var d = res.d, pm = res.pm;
         el.innerHTML = "";
         var rows = d.rows || [];
         if (!rows.length) {
@@ -460,6 +469,14 @@
           sh.addEventListener("click", function () {
             fbShare(row.player + " scored " + row.score + " in " + gameName() + " on Synswer. Can you beat it?");
           });
+          var pr = row.user_id && pm[row.user_id];
+          if (pr) {
+            var av = document.createElement("span");
+            av.className = "lb-av";
+            if (pr.avatar_url) { var im = document.createElement("img"); im.src = pr.avatar_url; im.alt = ""; im.width = 24; im.height = 24; av.appendChild(im); }
+            else av.textContent = (pr.username || row.player || "?").charAt(0).toUpperCase();
+            li.appendChild(av);
+          }
           li.appendChild(nm);
           li.appendChild(sc);
           li.appendChild(sh);
@@ -469,6 +486,11 @@
       .catch(function () {});
   }
   loadBoard();
+  (function () {
+    var st = document.createElement("style");
+    st.textContent = ".lb-av{flex:0 0 24px;width:24px;height:24px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:#4630d2;color:#fff;font:700 12px Inter,sans-serif;margin-right:8px;box-shadow:0 0 0 2px rgba(70,48,210,.55)}.lb-av img{width:100%;height:100%;object-fit:cover}";
+    document.head.appendChild(st);
+  })();
 
   // ----- save score dialog -----
   var dlg = document.createElement("dialog");
@@ -529,7 +551,7 @@
       var res = await fetch("api/rows/scores", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ values: { game: game, player: name, score: lastScore }, altcha: altcha })
+        body: JSON.stringify({ values: (function () { var v = { game: game, player: name, score: lastScore }; if (window.synswerUser && window.synswerUser.id) v.user_id = window.synswerUser.id; return v; })(), altcha: altcha })
       });
       var data = await res.json().catch(function () { return {}; });
       if (!res.ok) {

@@ -173,7 +173,10 @@
   function openMessages(startWith) {
     C.dialog(function (d) {
       d.className += " cm-msgs";
-      d.style.cssText = "width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;padding:12px 16px";
+      d.style.cssText = "position:fixed;left:0;top:0;right:auto;bottom:auto;width:100vw;max-width:100vw;height:100dvh;max-height:none;margin:0;border-radius:0;border:0;display:flex;flex-direction:column;padding:12px 16px;overflow:hidden;box-sizing:border-box";
+      var vv = window.visualViewport;
+      function fit() { if (!vv) return; d.style.height = vv.height + "px"; d.style.top = vv.offsetTop + "px"; }
+      if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); fit(); d.addEventListener("close", function () { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); }); }
       var head = el("div", "row"); head.style.cssText = "justify-content:space-between;align-items:center";
       var title = el("h2", "", "Messages"); title.style.margin = "0";
       var close = el("button", "cm-btn ghost sm", "Close"); close.type = "button"; close.onclick = function () { d.close(); };
