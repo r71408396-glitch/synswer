@@ -50,7 +50,10 @@
           <div class="cm-av" id="comp-av" aria-hidden="true">?</div>
           <form id="composer" autocomplete="off">
             <label for="post-text" class="sr" style="position:absolute;left:-9999px">Write a post</label>
-            <textarea id="post-text" maxlength="500" placeholder="Share something with the community. Use #topics and @mentions."></textarea>
+            <div class="cm-ta">
+              <textarea id="post-text" maxlength="500" placeholder="Share something with the community. Use #topics and @mentions."></textarea>
+              <span class="cm-count" id="count" aria-live="polite">0 / 500</span>
+            </div>
             <div class="cm-preview" id="img-preview" hidden><img alt="Selected image" /><button type="button" class="cm-btn sm danger" id="img-clear">Remove</button></div>
             <div class="cm-pollbox" id="poll-box" hidden></div>
             <div class="cm-tools">
@@ -65,7 +68,6 @@
               <button type="button" class="cm-tool" id="poll-toggle">Poll</button>
               <button type="button" class="cm-tool ai" id="ai-improve">AI: improve writing</button>
               <button type="button" class="cm-tool ai" id="ai-ideas">AI: ideas</button>
-              <span class="cm-count" id="count">0 / 500</span>
               <button class="cm-btn" id="post-btn" type="submit">Post</button>
             </div>
             <div id="comp-ai"></div>

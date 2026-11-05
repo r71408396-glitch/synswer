@@ -150,7 +150,7 @@
     if (!embedded) li.appendChild(avatar(p.user_id));
     var body = el("div", "cm-pb"), meta = el("div", "cm-meta");
     var nm = el("button", "nm", dname(p.user_id)); nm.type = "button"; nm.onclick = function () { openProfile(p.user_id); };
-    meta.appendChild(nm); meta.appendChild(el("span", "", "@" + uname(p.user_id))); meta.appendChild(el("span", "", ago(p.created_at)));
+    meta.appendChild(nm); meta.appendChild(el("span", "", "@" + uname(p.user_id))); var agoTxt = ago(p.created_at); meta.appendChild(el("span", "", "\u2022 " + (/^\d+[mhd]$/.test(agoTxt) ? agoTxt + " ago" : agoTxt)));
     if (p.edited_at) meta.appendChild(el("span", "", "edited"));
     if (p.category && p.category !== "general") meta.appendChild(el("span", "cm-cat", CATS[p.category] || p.category));
     body.appendChild(meta);
@@ -581,7 +581,10 @@
     this.value = "";
   };
   $("img-clear").onclick = function () { imgUrl = null; $("img-preview").hidden = true; };
-  $("post-text").addEventListener("input", function () { $("count").textContent = this.value.length + " / 500"; });
+  $("post-text").addEventListener("input", function () {
+    var n = this.value.length; $("count").textContent = n + " / 500"; $("count").classList.toggle("near", n >= 450);
+    this.style.height = "auto"; this.style.height = Math.min(320, Math.max(78, this.scrollHeight)) + "px";
+  });
 
   $("composer").addEventListener("submit", function (e) {
     e.preventDefault();
