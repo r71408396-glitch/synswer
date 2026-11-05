@@ -41,9 +41,9 @@
             <button class="orb" id="orb" type="button" aria-label="Ask a question" data-animate="hero">
               <svg viewBox="0 0 100 100" aria-hidden="true">
                 <defs>
-                  <linearGradient id="rb-head" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4b4d58"/><stop offset="1" stop-color="#2a2b33"/></linearGradient>
+                  <linearGradient id="rb-head" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3b43"/><stop offset="1" stop-color="#1c1d23"/></linearGradient>
                   <linearGradient id="rb-bolt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22e6ff"/><stop offset="1" stop-color="#1d6bff"/></linearGradient>
-                  <linearGradient id="rb-ear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3c46"/><stop offset="1" stop-color="#1f2027"/></linearGradient>
+                  <linearGradient id="rb-ear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2d34"/><stop offset="1" stop-color="#16171c"/></linearGradient>
                 </defs>
                 <rect x="4" y="46" width="17" height="30" rx="8" fill="url(#rb-ear)"/>
                 <rect x="79" y="46" width="17" height="30" rx="8" fill="url(#rb-ear)"/>
@@ -54,8 +54,8 @@
                 <rect x="18" y="30" width="64" height="58" rx="24" fill="url(#rb-head)"/>
                 <rect x="18" y="30" width="64" height="58" rx="24" fill="none" stroke="#5d606c" stroke-width="1" opacity=".6"/>
                 <rect x="24" y="40" width="52" height="38" rx="17" fill="#050507" stroke="#1d1f29" stroke-width="2"/>
-                <rect class="robot-eye" x="33" y="51" width="11" height="17" rx="5.5" fill="#4fe3ff"/>
-                <rect class="robot-eye" x="56" y="51" width="11" height="17" rx="5.5" fill="#4fe3ff"/>
+                <g id="robot-eyes"><rect class="robot-eye" x="33" y="51" width="11" height="17" rx="5.5" fill="#4fe3ff"/>
+                <rect class="robot-eye" x="56" y="51" width="11" height="17" rx="5.5" fill="#4fe3ff"/></g>
               </svg>
             </button>
             <div class="robot-ring" aria-hidden="true"></div>
@@ -132,6 +132,24 @@
         if (window.synswerOpenMenu) window.synswerOpenMenu();
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
+    </script>
+    <script>
+      // Eyes look toward the pointer or touch.
+      (function () {
+        var eyes = document.getElementById("robot-eyes"), orb = document.getElementById("orb");
+        if (!eyes || !orb) return;
+        eyes.style.transition = "transform .12s ease-out";
+        function look(x, y) {
+          var r = orb.getBoundingClientRect();
+          var dx = (x - (r.left + r.width / 2)) / (window.innerWidth / 2);
+          var dy = (y - (r.top + r.height / 2)) / (window.innerHeight / 2);
+          dx = Math.max(-1, Math.min(1, dx)); dy = Math.max(-1, Math.min(1, dy));
+          eyes.style.transform = "translate(" + (dx * 5).toFixed(2) + "px," + (dy * 4).toFixed(2) + "px)";
+        }
+        window.addEventListener("pointermove", function (e) { look(e.clientX, e.clientY); }, { passive: true });
+        window.addEventListener("pointerdown", function (e) { look(e.clientX, e.clientY); }, { passive: true });
+        window.addEventListener("pointerleave", function () { eyes.style.transform = ""; });
+      })();
     </script>
     <script type="module" src="motion.js"></script>
   </body>

@@ -58,10 +58,35 @@ window.SynswerAds = (function () {
     t.setAttribute("aria-expanded", open ? "true" : "false");
     t.setAttribute("aria-label", open ? "Close menu" : "Open menu");
   }
-  t.addEventListener("click", function (e) { e.stopPropagation(); set(m.hidden); });
-  document.addEventListener("click", function (e) { if (!m.hidden && !m.contains(e.target)) set(false); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") set(false); });
-  window.synswerOpenMenu = function () { set(true); };
+  // The open menu owns one history entry, so the phone's Back button closes the menu instead of leaving the page.
+  function open() {
+    if (!m.hidden) return;
+    set(true);
+    try { window.history.pushState({ synMenu: 1 }, "", location.href); } catch (_) {}
+  }
+  function close() {
+    if (m.hidden) return;
+    set(false);
+    try { if (window.history.state && window.history.state.synMenu) window.history.back(); } catch (_) {}
+  }
+  t.addEventListener("click", function (e) { e.stopPropagation(); if (m.hidden) open(); else close(); });
+  document.addEventListener("click", function (e) { if (!m.hidden && !m.contains(e.target)) close(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+  window.addEventListener("popstate", function () { if (!m.hidden) set(false); });
+  window.addEventListener("pageshow", function () { set(false); });
+  window.synswerOpenMenu = open;
+
+  // A page opened with no previous page (installed app, typed address) gets the homepage underneath it,
+  // so Back goes home instead of exiting the app.
+  try {
+    var here = location.pathname.split("/").pop();
+    var isHome = here === "" || here === "index.html";
+    if (!isHome && !document.referrer && window.history.length <= 2 && !(window.history.state && (window.history.state.synPage || window.history.state.synHome))) {
+      var cur = location.href;
+      window.history.replaceState({ synHome: 1 }, "", new URL("index.html", cur).href);
+      window.history.pushState({ synPage: 1 }, "", cur);
+    }
+  } catch (_) {}
 })();
 
 // Who is signed in (shared): updates the account link in the corner

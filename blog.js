@@ -179,13 +179,28 @@
       }
       var enc = encodeURIComponent;
       [["X", "https://twitter.com/intent/tweet?text=" + enc(r.title) + "&url=" + enc(url)],
-       ["Facebook", "https://www.facebook.com/sharer/sharer.php?u=" + enc(url)],
        ["WhatsApp", "https://wa.me/?text=" + enc(r.title + " " + url)],
        ["LinkedIn", "https://www.linkedin.com/sharing/share-offsite/?url=" + enc(url)]].forEach(function (s) {
         var a = el("a", "btn btn-ghost", s[0]);
         a.href = s[1]; a.target = "_blank"; a.rel = "noopener noreferrer";
         row.appendChild(a);
       });
+      var sb = el("button", "btn btn-ghost", "Synswer");
+      sb.type = "button";
+      sb.title = "Share on Synswer Social";
+      sb.insertAdjacentHTML("afterbegin", '<svg viewBox="0 0 40 40" width="16" height="16" aria-hidden="true" style="margin-right:6px;vertical-align:-3px"><path d="M27 4 L13 18 H21 L15 26 H8 L22 36 L26 22 H19 L27 4Z" fill="#2563eb"/><path d="M30 6 L18 20 H25 L12 36" fill="none" stroke="#14e0cc" stroke-width="2.5" stroke-linejoin="round"/></svg>');
+      sb.addEventListener("click", function () {
+        var u = window.synswerUser;
+        if (!u) { status.textContent = "Sign in to share on Synswer Social"; return; }
+        fetch("api/rows/profiles?user_id=eq." + u.id + "&select=id&limit=1", { credentials: "include" })
+          .then(function (x) { return x.json(); })
+          .then(function (d) {
+            if (!(d.rows && d.rows.length)) { status.textContent = "Create your Social profile first"; return; }
+            return fetch("api/rows/posts", { method: "POST", credentials: "include", headers: { "content-type": "application/json" }, body: JSON.stringify({ values: { content: (r.title + " " + url).slice(0, 500) } }) })
+              .then(function (x) { status.textContent = x.ok ? "Shared to Synswer Social" : "Could not share"; });
+          }).catch(function () { status.textContent = "Could not share"; });
+      });
+      row.appendChild(sb);
       var cb = el("button", "btn btn-ghost", "Copy link");
       cb.type = "button";
       cb.addEventListener("click", function () {

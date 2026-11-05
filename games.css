@@ -37,7 +37,7 @@
 .vol:focus { box-shadow: none; }
 .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 .tab { flex: 1; min-height: 36px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font-size: 14px; }
-.tab.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tab.is-on { background: var(--accent); border-color: var(--accent); color: #02201d; }
 .board-note { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
 .canvas-wrap { position: relative; width: 100%; max-width: var(--cw, 480px); margin: 0 auto; }
 .canvas-wrap canvas { display: block; width: 100%; height: auto; background: #05050a; border: 1px solid var(--line); border-radius: 12px; touch-action: none; }

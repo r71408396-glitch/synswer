@@ -175,7 +175,8 @@
       var i;
       for (i = 0; i < enemies.length; i++) {
         var e = enemies[i];
-        if (Math.abs(e.x - p.x) < (e.w + p.w) / 2 - 4 && Math.abs(e.y - p.y) < (e.h + p.h) / 2 - 4) {
+        // Full ship width counts, so the wingtips take hits too.
+        if (Math.abs(e.x - p.x) < (e.w + p.w) / 2 && Math.abs(e.y - p.y) < (e.h + p.h) / 2) {
           enemies.splice(i, 1);
           if (hurt()) return;
           break;
@@ -184,14 +185,15 @@
       if (inv <= 0) {
         for (i = 0; i < ebullets.length; i++) {
           var q = ebullets[i];
-          if (Math.abs(q.x - p.x) < p.w / 2 - 6 && Math.abs(q.y - p.y) < p.h / 2 - 2) {
+          var wing = q.y > p.y;
+          if (Math.abs(q.x - p.x) < p.w / 2 + 3 && Math.abs(q.y - p.y) < p.h / 2 + (wing ? 3 : 0)) {
             ebullets.splice(i, 1);
             if (hurt()) return;
             break;
           }
         }
       }
-      if (inv <= 0 && boss && Math.abs(boss.x - p.x) < (boss.w + p.w) / 2 - 8 && Math.abs(boss.y - p.y) < (boss.h + p.h) / 2 - 8) {
+      if (inv <= 0 && boss && Math.abs(boss.x - p.x) < (boss.w + p.w) / 2 && Math.abs(boss.y - p.y) < (boss.h + p.h) / 2) {
         if (hurt()) return;
       }
     }

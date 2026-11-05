@@ -369,22 +369,47 @@
 
   // ----- leaderboard -----
   var CROWN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="currentColor" stroke="rgba(0,0,0,.35)" stroke-width="1" stroke-linejoin="round"/><circle cx="3" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="21" cy="8" r="1.6" fill="currentColor"/></svg>';
-  var FB = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.5V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H7.9v3h2.6V21z"/></svg>';
+  var FB = '<svg viewBox="0 0 40 40" width="18" height="18" aria-hidden="true"><path d="M27 4 L13 18 H21 L15 26 H8 L22 36 L26 22 H19 L27 4Z" fill="#2563eb"/><path d="M30 6 L18 20 H25 L12 36" fill="none" stroke="#14e0cc" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+  var shareToast = null, shareToastT = 0;
+  function toastMsg(html) {
+    if (!shareToast) {
+      shareToast = document.createElement("p");
+      shareToast.setAttribute("role", "status");
+      shareToast.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;max-width:92vw;margin:0;padding:12px 18px;border-radius:14px;background:#06302d;color:#e6fffb;border:1px solid #14e0cc;box-shadow:0 8px 30px rgba(0,0,0,.5);font:500 14px Inter,sans-serif;text-align:center";
+      document.body.appendChild(shareToast);
+    }
+    shareToast.innerHTML = html;
+    shareToast.hidden = false;
+    clearTimeout(shareToastT);
+    shareToastT = setTimeout(function () { shareToast.hidden = true; }, 6000);
+  }
   function gameName() { var h = document.querySelector("h1"); return h ? h.textContent : "a game"; }
   function pageUrl() {
     var m = document.querySelector('meta[name="kreova-site-origin"]');
     var origin = ((m && m.content) || location.origin).replace(/\/$/, "");
     return origin + "/" + location.pathname.split("/").pop() + location.search;
   }
+  // Share a score to Synswer Social (needs a signed-in account with a social profile).
   function fbShare(text) {
-    var u = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(pageUrl()) + "&quote=" + encodeURIComponent(text);
-    window.open(u, "_blank", "noopener,width=620,height=560");
+    var u = window.synswerUser;
+    if (!u) { toastMsg('Sign in to share your score on Synswer Social. <a href="login.html?next=' + encodeURIComponent(location.pathname.split("/").pop() + location.search) + '" style="color:#14e0cc">Sign in</a>'); return; }
+    fetch("api/rows/profiles?user_id=eq." + u.id + "&select=id&limit=1", { credentials: "include" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!(d.rows && d.rows.length)) { toastMsg('Create your Synswer Social profile first, then you can share scores. <a href="community.html" style="color:#14e0cc">Open Social</a>'); return; }
+        return fetch("api/rows/posts", { method: "POST", credentials: "include", headers: { "content-type": "application/json" }, body: JSON.stringify({ values: { content: (text + " " + pageUrl()).slice(0, 500) } }) })
+          .then(function (r) {
+            if (r.ok) toastMsg('Shared to Synswer Social. <a href="community.html" style="color:#14e0cc">View post</a>');
+            else toastMsg("Could not share right now. Please try again.");
+          });
+      })
+      .catch(function () { toastMsg("Could not share right now. Please try again."); });
   }
   var shareBtn = document.createElement("button");
   shareBtn.type = "button";
   shareBtn.className = "fb-share fb-share-big";
-  shareBtn.setAttribute("aria-label", "Share your score on Facebook");
-  shareBtn.title = "Share on Facebook";
+  shareBtn.setAttribute("aria-label", "Share your score on Synswer");
+  shareBtn.title = "Share on Synswer";
   shareBtn.innerHTML = FB;
   shareBtn.hidden = true;
   $("save").after(shareBtn);
@@ -464,8 +489,8 @@
           var sh = document.createElement("button");
           sh.type = "button";
           sh.className = "fb-share";
-          sh.setAttribute("aria-label", "Share " + row.player + "'s score of " + row.score + " on Facebook");
-          sh.title = "Share on Facebook";
+          sh.setAttribute("aria-label", "Share " + row.player + "'s score of " + row.score + " on Synswer");
+          sh.title = "Share on Synswer";
           sh.innerHTML = FB;
           sh.addEventListener("click", function () {
             fbShare(row.player + " scored " + row.score + " in " + gameName() + " on Synswer. Can you beat it?");
