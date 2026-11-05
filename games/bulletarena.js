@@ -69,7 +69,7 @@
     key: function (k, down) { keys[k] = down; },
     draw: function (c) {
       c.fillStyle = "#0d0d16"; c.fillRect(0, 0, W, H);
-      c.strokeStyle = "#8b5cf6"; c.lineWidth = 3; c.strokeRect(2, 2, W - 4, H - 4);
+      c.strokeStyle = "#14e0cc"; c.lineWidth = 3; c.strokeRect(2, 2, W - 4, H - 4);
       if (px == null) return;
       en.forEach(function (e) { c.beginPath(); c.arc(e.x, e.y, 12, 0, Math.PI * 2); c.fillStyle = e.hp > 1 ? "#7c2d12" : "#dc2626"; c.fill(); c.strokeStyle = "#fecaca"; c.lineWidth = 2; c.stroke(); });
       eb.forEach(function (f) { c.beginPath(); c.arc(f.x, f.y, 5, 0, Math.PI * 2); c.fillStyle = "#fb923c"; c.fill(); });
@@ -77,7 +77,7 @@
       c.globalAlpha = inv > 0 && Math.floor(inv * 10) % 2 ? 0.4 : 1;
       c.beginPath(); c.arc(px, py, 10, 0, Math.PI * 2); c.fillStyle = "#3b82f6"; c.fill();
       c.strokeStyle = "#dbeafe"; c.lineWidth = 2; c.stroke(); c.globalAlpha = 1;
-      E.text(c, "Defeated " + score, W / 2, 18, 15, "#c4b5fd");
+      E.text(c, "Defeated " + score, W / 2, 18, 15, "#99f6e4");
     }
   });
 })();

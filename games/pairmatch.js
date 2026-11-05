@@ -54,7 +54,7 @@
       c.fillRect(0, 0, W, H);
       c.fillStyle = "#171726";
       c.fillRect(20, 20, W - 40, 12);
-      c.fillStyle = time < 6 ? "#ef4444" : "#8b5cf6";
+      c.fillStyle = time < 6 ? "#ef4444" : "#14e0cc";
       c.fillRect(20, 20, (W - 40) * E.clamp(time / 40, 0, 1), 12);
       (cards || []).forEach(function (k, i) {
         var x = X0 + (i % 4) * CS + 4, y = Y0 + Math.floor(i / 4) * CS + 4;

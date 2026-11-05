@@ -59,12 +59,12 @@
     draw: function (c) {
       c.fillStyle = "#0d0d16";
       c.fillRect(0, 0, W, H);
-      E.text(c, phase === "show" ? "Memorize the path" : "Trace it from the green cell", W / 2, 20, 17, "#c4b5fd");
+      E.text(c, phase === "show" ? "Memorize the path" : "Trace it from the green cell", W / 2, 20, 17, "#99f6e4");
       var i, p;
       for (i = 0; i < N * N; i++) {
         var x = (i % N) * CS, y = Y0 + Math.floor(i / N) * CS, idxp = path ? path.indexOf(i) : -1;
         var color = "#14142a";
-        if (phase === "show" && idxp >= 0) color = idxp === 0 ? "#16a34a" : "#6d28d9";
+        if (phase === "show" && idxp >= 0) color = idxp === 0 ? "#16a34a" : "#0e8f84";
         else if (phase === "input" && idxp >= 0 && idxp < pos) color = "#3b82f6";
         else if (phase === "input" && idxp === 0) color = "#16a34a55";
         E.rr(c, x + 3, y + 3, CS - 6, CS - 6, 10);

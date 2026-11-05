@@ -49,7 +49,7 @@
       c.fillStyle = "#3b82f6"; E.rr(c, PX - 10, py - 15, 20, 30, 6); c.fill();
       c.strokeStyle = "#dbeafe"; c.lineWidth = 2; c.stroke();
       if (flash > 0) { c.strokeStyle = "#facc15"; c.lineWidth = 4; c.beginPath(); c.arc(PX, py, 36, 0, Math.PI * 2); c.stroke(); }
-      E.text(c, "Boarders stopped " + score, W / 2, 20, 15, "#c4b5fd");
+      E.text(c, "Boarders stopped " + score, W / 2, 20, 15, "#99f6e4");
       E.text(c, "Tap a carriage, or press up and down, to jump", W / 2, H - 12, 12, "#8383a3");
     }
   });

@@ -76,7 +76,7 @@
   }
 
   function hurt() {
-    burst(p.x, p.y, "#c4b5fd");
+    burst(p.x, p.y, "#99f6e4");
     lives--;
     if (window.Sound) Sound.play("hurt");
     document.getElementById("lives").textContent = Math.max(0, lives);
@@ -205,11 +205,11 @@
     ctx.fillStyle = "#05050a";
     ctx.fillRect(0, 0, W, H);
     if (window.ShooterState && window.ShooterState.render3d) return;
-    ctx.fillStyle = "#a78bfa";
+    ctx.fillStyle = "#5eead4";
     stars.forEach(function (s) { ctx.globalAlpha = 0.3 + s.s / 3; ctx.fillRect(s.x, s.y, s.s, s.s); });
     ctx.globalAlpha = 1;
 
-    ctx.fillStyle = "#c4b5fd";
+    ctx.fillStyle = "#99f6e4";
     bullets.forEach(function (b) { ctx.fillRect(b.x - 2, b.y - 8, 4, 14); });
     ctx.fillStyle = "#fb923c";
     ebullets.forEach(function (b) { ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, Math.PI * 2); ctx.fill(); });
@@ -232,7 +232,7 @@
     }
 
     if (running && (inv <= 0 || Math.floor(inv * 10) % 2 === 0)) {
-      ctx.fillStyle = "#8b5cf6";
+      ctx.fillStyle = "#14e0cc";
       ctx.beginPath();
       ctx.moveTo(p.x, p.y - p.h / 2);
       ctx.lineTo(p.x + p.w / 2, p.y + p.h / 2);

@@ -26,9 +26,9 @@
     key: function (k, down) { if (down && (k === " " || k === "arrowup" || k === "w")) jump(); },
     draw: function (c) {
       c.fillStyle = "#0a0a14"; c.fillRect(0, 0, W, H);
-      c.strokeStyle = "rgba(139,92,246,.18)"; c.lineWidth = 1;
+      c.strokeStyle = "rgba(20,224,204,.18)"; c.lineWidth = 1;
       for (var g = 0; g < 12; g++) { var gx = ((g * 60 - (dist || 0) * 20) % (W + 60) + W + 60) % (W + 60); c.beginPath(); c.moveTo(gx, 0); c.lineTo(gx, GY); c.stroke(); }
-      c.fillStyle = "#8b5cf6"; c.fillRect(0, GY, W, 3);
+      c.fillStyle = "#14e0cc"; c.fillRect(0, GY, W, 3);
       c.fillStyle = "#14142a"; c.fillRect(0, GY + 3, W, H - GY);
       (obs || []).forEach(function (o) {
         c.fillStyle = "#ef4444";

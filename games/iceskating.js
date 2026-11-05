@@ -107,7 +107,7 @@
         var A = ctr(skate.path[a]), B = ctr(skate.path[b]);
         sp = [A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f];
       } else if (path.length === 1) sp = ctr(start);
-      c.beginPath(); c.arc(sp[0], sp[1], cs * 0.22, 0, Math.PI * 2); c.fillStyle = "#6d28d9"; c.fill();
+      c.beginPath(); c.arc(sp[0], sp[1], cs * 0.22, 0, Math.PI * 2); c.fillStyle = "#0e8f84"; c.fill();
       c.strokeStyle = "#fff"; c.lineWidth = 3; c.stroke();
       E.text(c, "Cabins " + level + "  Stars " + stars, E.W / 2, 14, 13, "#0f172a");
       if (cd > 0) {

@@ -46,7 +46,7 @@
       if (px == null) return;
       orbs.forEach(function (o) { c.beginPath(); c.arc(o.x, o.y, 7, 0, Math.PI * 2); c.fillStyle = "#facc15"; c.fill(); });
       sh.forEach(function (s) {
-        c.beginPath(); c.arc(s.x, s.y, 13, 0, Math.PI * 2); c.fillStyle = s.lit ? "#6d28d9" : "#2a1450"; c.fill();
+        c.beginPath(); c.arc(s.x, s.y, 13, 0, Math.PI * 2); c.fillStyle = s.lit ? "#0e8f84" : "#2a1450"; c.fill();
         c.fillStyle = "#f87171"; c.fillRect(s.x - 6, s.y - 3, 4, 4); c.fillRect(s.x + 2, s.y - 3, 4, 4);
       });
       c.fillStyle = "rgba(0,0,0,.95)";

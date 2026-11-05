@@ -45,7 +45,7 @@
     },
     draw: function (c) {
       c.fillStyle = "#0d0d16"; c.fillRect(0, 0, W, H);
-      E.text(c, combo > 0 ? "Chain x" + combo + " - next match +" + 10 * (combo + 1) : "Match pairs to start a chain", W / 2, 28, 18, combo > 1 ? "#86efac" : "#c4b5fd");
+      E.text(c, combo > 0 ? "Chain x" + combo + " - next match +" + 10 * (combo + 1) : "Match pairs to start a chain", W / 2, 28, 18, combo > 1 ? "#86efac" : "#99f6e4");
       (cards || []).forEach(function (k, i) {
         var x = X0 + (i % 4) * CS + 4, y = Y0 + Math.floor(i / 4) * CS + 4;
         E.rr(c, x, y, CS - 8, CS - 8, 12);

@@ -52,7 +52,7 @@
         var w = p.w || PW, y = p.y - cam;
         var f = p.t >= 0 ? p.t / 2 : 1;
         c.globalAlpha = 0.35 + 0.65 * f;
-        c.fillStyle = p.t >= 0 ? "#ef4444" : "#8b5cf6";
+        c.fillStyle = p.t >= 0 ? "#ef4444" : "#14e0cc";
         E.rr(c, p.x, y, w, PH, 5); c.fill();
         c.globalAlpha = 1;
         if (p.t >= 0) { c.fillStyle = "rgba(255,255,255,.8)"; c.fillRect(p.x, y + PH - 3, w * f, 3); }
@@ -63,7 +63,7 @@
       var g = c.createLinearGradient(0, ly, 0, ly + 80);
       g.addColorStop(0, "#f87171"); g.addColorStop(1, "#7f1d1d");
       c.fillStyle = g; c.fillRect(0, ly, W, H - ly + 80);
-      E.text(c, score + " m", W - 40, 18, 16, "#c4b5fd");
+      E.text(c, score + " m", W - 40, 18, 16, "#99f6e4");
     }
   });
 })();

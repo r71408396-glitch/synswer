@@ -59,7 +59,7 @@
       var cx = 60 + walk * 18 - off - 6;
       c.beginPath(); c.arc(cx, by - 12, 10, 0, Math.PI * 2); c.fillStyle = "#3b82f6"; c.fill();
       c.strokeStyle = "#dbeafe"; c.lineWidth = 2; c.stroke();
-      E.text(c, "Bridge: " + planks * 18 + " px   Words: " + score, W / 2, 30, 16, "#c4b5fd");
+      E.text(c, "Bridge: " + planks * 18 + " px   Words: " + score, W / 2, 30, 16, "#99f6e4");
       E.text(c, msg || "", W / 2, 64, 18, bad > 0 ? "#fca5a5" : flash > 0 ? "#86efac" : "#8383a3");
       var sh = bad > 0 ? Math.sin(bad * 60) * 4 : 0;
       for (i = 0; i < 3; i++) {

@@ -33,7 +33,7 @@
   E.game({
     reset: function () {
       nameN = E.ri(0, 11); crew = []; for (var i = 0; i < 4; i++) recruit(i);
-      ms = [mission(), mission(), mission()]; sel = -1; gold = 0; done = 0; msg = "Pick an adventurer, then a bounty"; msgC = "#c4b5fd"; setLeft(TOTAL); E.score(0);
+      ms = [mission(), mission(), mission()]; sel = -1; gold = 0; done = 0; msg = "Pick an adventurer, then a bounty"; msgC = "#99f6e4"; setLeft(TOTAL); E.score(0);
     },
     down: function (x, y) {
       if (y >= 50 && y <= 160) {
@@ -56,10 +56,10 @@
       crew.forEach(function (a, i) {
         var x = 8 + i * 98;
         E.rr(c, x, 50, 92, 110, 10); c.fillStyle = sel === i ? "#4c1d95" : "#26211a"; c.fill();
-        if (sel === i) { c.strokeStyle = "#c4b5fd"; c.lineWidth = 3; c.stroke(); }
+        if (sel === i) { c.strokeStyle = "#99f6e4"; c.lineWidth = 3; c.stroke(); }
         E.text(c, a.name, x + 46, 66, 14, a.dead ? "#6b7280" : "#fff");
         if (a.dead) { E.text(c, "Gone", x + 46, 110, 14, "#fca5a5"); E.text(c, "new in " + a.dead, x + 46, 130, 11, "#8383a3"); return; }
-        for (var k = 0; k < 3; k++) E.text(c, TK[k] + " " + a.s[k], x + 46, 88 + k * 17, 12, a.s[k] >= 65 ? "#86efac" : "#c4b5fd");
+        for (var k = 0; k < 3; k++) E.text(c, TK[k] + " " + a.s[k], x + 46, 88 + k * 17, 12, a.s[k] >= 65 ? "#86efac" : "#99f6e4");
         if (a.rest > 0) { E.text(c, "Resting " + a.rest, x + 46, 146, 11, "#fdba74"); }
       });
       E.text(c, "C combat, S stealth, M magic", W / 2, 178, 11, "#8383a3");
@@ -69,7 +69,7 @@
         c.strokeStyle = "#3a3226"; c.lineWidth = 2; c.stroke();
         c.textAlign = "left";
         E.text(c, m.name, 20, y + 20, 15, "#fff", "left");
-        E.text(c, TY[m.t] + "  Danger " + m.diff + "  Reward " + m.reward, 20, y + 44, 12, "#c4b5fd", "left");
+        E.text(c, TY[m.t] + "  Danger " + m.diff + "  Reward " + m.reward, 20, y + 44, 12, "#99f6e4", "left");
         if (sel >= 0 && crew[sel]) {
           var p = chance(crew[sel], m);
           E.text(c, p + "%", W - 50, y + 36, 26, p >= 70 ? "#86efac" : p >= 45 ? "#fde68a" : "#fca5a5", "center");

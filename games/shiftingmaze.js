@@ -61,7 +61,7 @@
       if (!g) return;
       for (var r = 0; r < N; r++) for (var q = 0; q < N; q++) {
         var x = q * cs, y = r * cs;
-        if (g[r][q]) { c.fillStyle = flash > 0 ? "#7c3aed" : "#3b3b5c"; c.fillRect(x, y, cs, cs); c.fillStyle = "rgba(255,255,255,.08)"; c.fillRect(x, y, cs, 4); }
+        if (g[r][q]) { c.fillStyle = flash > 0 ? "#0fc4b2" : "#3b3b5c"; c.fillRect(x, y, cs, cs); c.fillStyle = "rgba(255,255,255,.08)"; c.fillRect(x, y, cs, 4); }
         else { c.fillStyle = "#171726"; c.fillRect(x + 1, y + 1, cs - 2, cs - 2); }
       }
       E.text(c, "EXIT", (gc + 0.5) * cs, (gr + 0.5) * cs, 13, "#86efac");

@@ -47,10 +47,10 @@
         });
         var lp = a === 0 ? [158, 230] : a === 1 ? [242, 170] : a === 2 ? [170, 158] : [230, 242];
         c.beginPath(); c.arc(lp[0], lp[1], 7, 0, Math.PI * 2); c.fillStyle = green(a) ? "#22c55e" : "#ef4444"; c.fill();
-        E.text(c, String(lanes[a].length), lp[0] + (a === 0 ? -16 : a === 1 ? 16 : 0), lp[1] + (a === 2 ? -16 : a === 3 ? 16 : 0), 12, lanes[a].length >= 5 ? "#fca5a5" : "#c4b5fd");
+        E.text(c, String(lanes[a].length), lp[0] + (a === 0 ? -16 : a === 1 ? 16 : 0), lp[1] + (a === 2 ? -16 : a === 3 ? 16 : 0), 12, lanes[a].length >= 5 ? "#fca5a5" : "#99f6e4");
       }
       E.text(c, "Cars through " + score, W / 2, 20, 17, "#fff");
-      E.text(c, "Tap or press space to switch the lights. 7 queued cars is gridlock.", W / 2, H - 14, 12, "#c4b5fd");
+      E.text(c, "Tap or press space to switch the lights. 7 queued cars is gridlock.", W / 2, H - 14, 12, "#99f6e4");
     }
   });
 })();

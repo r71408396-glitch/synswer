@@ -54,7 +54,7 @@
       c.fillStyle = "#f8fafc"; c.beginPath(); c.moveTo(16, 0); c.lineTo(-14, -9); c.lineTo(-8, 0); c.lineTo(-14, 9); c.closePath(); c.fill();
       c.fillStyle = "#cbd5e1"; c.beginPath(); c.moveTo(16, 0); c.lineTo(-8, 0); c.lineTo(-14, 9); c.closePath(); c.fill();
       c.restore();
-      E.text(c, Math.floor(dist / 10) + " m", W - 44, 16, 15, "#c4b5fd");
+      E.text(c, Math.floor(dist / 10) + " m", W - 44, 16, 15, "#99f6e4");
     }
   });
 })();

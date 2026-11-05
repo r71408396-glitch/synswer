@@ -48,9 +48,9 @@
       c.fillRect(0, 0, W, H);
       c.fillStyle = "#171726";
       c.fillRect(20, 20, W - 40, 12);
-      c.fillStyle = "#8b5cf6";
+      c.fillStyle = "#14e0cc";
       c.fillRect(20, 20, (W - 40) * E.clamp(left / 30, 0, 1), 12);
-      E.text(c, "Net score " + score, W / 2, 55, 18, "#c4b5fd");
+      E.text(c, "Net score " + score, W / 2, 55, 18, "#99f6e4");
       for (var i = 0; i < 9; i++) {
         var x = X0 + (i % 3) * CS + 5, y = Y0 + Math.floor(i / 3) * CS + 5;
         E.rr(c, x, y, CS - 10, CS - 10, 16);

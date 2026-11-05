@@ -30,7 +30,7 @@
   }
 
   E.game({
-    reset: function () { blocks = [{ x: 100, w: 200, c: "#6d28d9" }]; sp = 150; cam = 0; score = 0; flash = 0; spawn(); E.score(0); },
+    reset: function () { blocks = [{ x: 100, w: 200, c: "#0e8f84" }]; sp = 150; cam = 0; score = 0; flash = 0; spawn(); E.score(0); },
     update: function (dt) {
       mx += dir * sp * dt;
       if (mx + mw > W + 40) dir = -1;

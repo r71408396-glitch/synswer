@@ -47,7 +47,7 @@
         c.beginPath(); c.arc(o.x, o.y, o.r, 0, Math.PI * 2); c.fillStyle = o.c; c.globalAlpha = big ? 0.55 : 1; c.fill(); c.globalAlpha = 1;
         if (big) { c.strokeStyle = "#ef4444"; c.lineWidth = 2; c.stroke(); }
       });
-      c.beginPath(); c.arc(bx, by, br, 0, Math.PI * 2); c.fillStyle = "#8b5cf6"; c.fill();
+      c.beginPath(); c.arc(bx, by, br, 0, Math.PI * 2); c.fillStyle = "#14e0cc"; c.fill();
       c.strokeStyle = "#e9d5ff"; c.lineWidth = 3; c.stroke();
       c.fillStyle = "rgba(255,255,255,.35)"; c.beginPath(); c.arc(bx - br * 0.3, by - br * 0.3, br * 0.25, 0, Math.PI * 2); c.fill();
       E.text(c, "Size " + sc(), W / 2, 16, 15, "#fff");

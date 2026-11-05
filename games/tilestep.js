@@ -56,7 +56,7 @@
         c.strokeStyle = "#1f1f33";
         c.lineWidth = 1;
         c.strokeRect(0, r.y, E.W, rh);
-        c.fillStyle = r.done ? "#2a2a40" : r === t ? "#8b5cf6" : "#4c1d95";
+        c.fillStyle = r.done ? "#11574f" : r === t ? "#14e0cc" : "#4c1d95";
         c.fillRect(r.col * cw + 3, r.y + 3, cw - 6, rh - 6);
       });
       c.strokeStyle = "#1f1f33";

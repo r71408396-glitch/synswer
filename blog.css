@@ -20,7 +20,7 @@
 .post-thumb-empty { aspect-ratio: 16 / 9; background: linear-gradient(135deg, #1b1233, #10101c); }
 .post-body { display: flex; flex-direction: column; gap: 8px; padding: 18px; flex: 1; }
 .post-meta { font-size: 13px; color: var(--muted); }
-.post-meta b { color: #c4b5fd; font-weight: 500; }
+.post-meta b { color: #99f6e4; font-weight: 500; }
 .post-card h2 { font-size: 1.2rem; margin: 0; color: var(--ink); }
 .post-card p { margin: 0; font-size: 15px; }
 .post-empty { color: var(--muted); }
@@ -41,7 +41,7 @@
 .article-content h2, .article-content h3 { margin: 1.6em 0 0.5em; color: var(--ink); }
 .article-content p, .article-content ul, .article-content ol { margin: 0 0 1.1em; }
 .article-content ul, .article-content ol { padding-left: 1.4em; }
-.article-content a { color: #c4b5fd; }
+.article-content a { color: #99f6e4; }
 .article-content img { max-width: 100%; height: auto; border-radius: 12px; }
 .article-content iframe { max-width: 100%; border: 0; border-radius: 12px; }
 .article-content blockquote { margin: 0 0 1.1em; padding: 4px 16px; border-left: 3px solid var(--accent); color: var(--muted); }

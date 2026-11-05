@@ -55,7 +55,7 @@
       if (phase !== "aim") { bx = W / 2 + (zone - 1) * (W - 60) / 3 * bt; by = H - 60 - (H - 60 - 150) * bt; }
       c.fillStyle = "#fff"; c.beginPath(); c.arc(bx, by, 14 - bt * 5, 0, Math.PI * 2); c.fill();
       c.strokeStyle = "#111"; c.lineWidth = 2; c.stroke();
-      E.text(c, msg || (phase === "aim" ? "Pick a side to shoot" : ""), W / 2, 250, msg ? 34 : 18, msg === "GOAL!" ? "#86efac" : msg ? "#fca5a5" : "#c4b5fd");
+      E.text(c, msg || (phase === "aim" ? "Pick a side to shoot" : ""), W / 2, 250, msg ? 34 : 18, msg === "GOAL!" ? "#86efac" : msg ? "#fca5a5" : "#99f6e4");
       if (phase === "aim") E.text(c, "Tap left, middle or right (or A, W, D)", W / 2, 285, 14, "#8383a3");
       E.text(c, "Goals " + goals, W / 2, 30, 20, "rgba(255,255,255,.85)");
     }

@@ -6,7 +6,7 @@
     slow: { c: "#06b6d4", l: "S", name: "Slow" },
     fire: { c: "#f97316", l: "F", name: "Fire" },
     life: { c: "#ef4444", l: "+", name: "Life" },
-    freeze: { c: "#a78bfa", l: "I", name: "Freeze" }
+    freeze: { c: "#5eead4", l: "I", name: "Freeze" }
   };
   var KEYS = Object.keys(TYPES);
   var S = (window.BrickState = { W: W, H: H, BW: BW, BH: BH, PY: PY, LINE: LINE, BR: BR, TYPES: TYPES, bricks: [], balls: [], pups: [], px: W / 2, pw: PW0, eff: { wide: 0, slow: 0, fire: 0, freeze: 0 }, render3d: false });
@@ -164,7 +164,7 @@
       });
       c.fillStyle = "#ef4444";
       c.fillRect(0, LINE, W, 2);
-      c.fillStyle = "#8b5cf6";
+      c.fillStyle = "#14e0cc";
       E.rr(c, S.px - S.pw / 2, PY, S.pw, 12, 6);
       c.fill();
       S.pups.forEach(function (p) {

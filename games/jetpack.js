@@ -49,7 +49,7 @@
       c.fillStyle = "#171726"; c.fillRect(20, 14, 160, 12);
       c.fillStyle = locked ? "#ef4444" : heat > 70 ? "#f97316" : "#22c55e";
       c.fillRect(20, 14, 160 * heat / 100, 12);
-      E.text(c, locked ? "OVERHEATED" : "Heat", 100, 38, 12, locked ? "#fecaca" : "#c4b5fd");
+      E.text(c, locked ? "OVERHEATED" : "Heat", 100, 38, 12, locked ? "#fecaca" : "#99f6e4");
       c.fillStyle = locked ? "#7f1d1d" : "#60a5fa";
       E.rr(c, PX - 10, y - 10, 20, 20, 5); c.fill();
       c.fillStyle = "#fff"; c.fillRect(PX + 1, y - 5, 5, 5);

@@ -90,7 +90,7 @@
     },
     draw: function (c) {
       c.fillStyle = "#0d0d16"; c.fillRect(0, 0, W, H);
-      E.text(c, "Swipe a row or column to slide it. Line up 3 or more.", W / 2, 30, 13, "#c4b5fd");
+      E.text(c, "Swipe a row or column to slide it. Line up 3 or more.", W / 2, 30, 13, "#99f6e4");
       E.text(c, "Score " + score, W / 2, 52, 18, "#fff");
       if (!g) return;
       for (var r = 0; r < N; r++) for (var q = 0; q < N; q++) {

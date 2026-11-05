@@ -80,12 +80,12 @@
       }
       planets.forEach(function (p) {
         var y = p.y - cam;
-        c.strokeStyle = "rgba(139,92,246,.2)";
+        c.strokeStyle = "rgba(20,224,204,.2)";
         c.lineWidth = 1;
         c.beginPath(); c.arc(p.x, y, OR, 0, Math.PI * 2); c.stroke();
         c.beginPath();
         c.arc(p.x, y, PR, 0, Math.PI * 2);
-        c.fillStyle = p.v ? "#22c55e" : "#8b5cf6";
+        c.fillStyle = p.v ? "#22c55e" : "#14e0cc";
         c.fill();
         c.strokeStyle = "rgba(255,255,255,.4)";
         c.lineWidth = 2;

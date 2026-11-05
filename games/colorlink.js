@@ -112,7 +112,7 @@
       var i, k;
       for (i = 0; i < N * N; i++) {
         var o = owner(i), x = (i % N) * cs, y = Math.floor(i / N) * cs;
-        c.fillStyle = o >= 0 ? E.PAL[o] + "33" : "#12121c";
+        c.fillStyle = o >= 0 ? E.PAL[o] + "33" : "#06201f";
         c.fillRect(x + 1, y + 1, cs - 2, cs - 2);
       }
       c.lineCap = "round"; c.lineJoin = "round";

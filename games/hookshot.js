@@ -53,7 +53,7 @@
       if (!pegs) return;
       pegs.forEach(function (p) {
         c.beginPath(); c.arc(p.x - cam, p.y, 8, 0, Math.PI * 2);
-        c.fillStyle = p === att ? "#22c55e" : "#8b5cf6"; c.fill();
+        c.fillStyle = p === att ? "#22c55e" : "#14e0cc"; c.fill();
         c.strokeStyle = "rgba(255,255,255,.5)"; c.lineWidth = 2; c.stroke();
       });
       if (att) {
@@ -62,7 +62,7 @@
       }
       c.beginPath(); c.arc(px - cam, py, 10, 0, Math.PI * 2);
       c.fillStyle = "#3b82f6"; c.fill(); c.strokeStyle = "#dbeafe"; c.lineWidth = 2; c.stroke();
-      E.text(c, score + " m", W - 40, 18, 16, "#c4b5fd");
+      E.text(c, score + " m", W - 40, 18, 16, "#99f6e4");
     }
   });
 })();

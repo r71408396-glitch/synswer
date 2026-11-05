@@ -56,8 +56,8 @@
       (stars || []).forEach(function (s) { star(c, s.x, s.y, 14, "#facc15"); });
       c.fillStyle = "#3b1d1d"; c.fillRect(0, H - 8, W, 8);
       if (px == null) return;
-      c.fillStyle = "#8b5cf6"; E.rr(c, tx - 52, GY, 104, 10, 5); c.fill();
-      c.fillStyle = "#c4b5fd"; c.fillRect(tx - 44, GY + 10, 4, 22); c.fillRect(tx + 40, GY + 10, 4, 22);
+      c.fillStyle = "#14e0cc"; E.rr(c, tx - 52, GY, 104, 10, 5); c.fill();
+      c.fillStyle = "#99f6e4"; c.fillRect(tx - 44, GY + 10, 4, 22); c.fillRect(tx + 40, GY + 10, 4, 22);
       c.beginPath(); c.arc(px, py, 14, 0, Math.PI * 2); c.fillStyle = "#3b82f6"; c.fill();
       c.strokeStyle = "#dbeafe"; c.lineWidth = 2; c.stroke();
       c.fillStyle = "#fff"; c.fillRect(px - 6, py - 4, 4, 5); c.fillRect(px + 2, py - 4, 4, 5);

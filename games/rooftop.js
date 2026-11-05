@@ -50,7 +50,7 @@
       B.forEach(function (b) {
         var sx = b.x - dist;
         c.fillStyle = "#2a2a4a"; c.fillRect(sx, b.top, b.w, H - b.top);
-        c.fillStyle = "#8b5cf6"; c.fillRect(sx, b.top, b.w, 4);
+        c.fillStyle = "#14e0cc"; c.fillRect(sx, b.top, b.w, 4);
         c.fillStyle = "rgba(250,204,21,.35)";
         for (var wx = sx + 12; wx < sx + b.w - 12; wx += 24) for (var wy = b.top + 18; wy < H - 10; wy += 28) c.fillRect(wx, wy, 8, 12);
         if (b.box && !b.box.got) { c.fillStyle = "#f59e0b"; c.fillRect(sx + b.box.dx - 8, b.top - 16, 16, 16); c.strokeStyle = "#fde68a"; c.lineWidth = 2; c.strokeRect(sx + b.box.dx - 8, b.top - 16, 16, 16); }

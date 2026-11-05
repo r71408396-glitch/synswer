@@ -74,7 +74,8 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
     if (adminLink && window.synswerUser && window.synswerUser.role === "admin") adminLink.hidden = false;
     var link = document.getElementById("account-link");
     if (link && window.synswerUser) {
-      link.textContent = "Sign out";
+      var lbl = document.getElementById("account-label");
+      if (lbl) lbl.textContent = "Sign out"; else link.textContent = "Sign out";
       link.setAttribute("href", "#");
       link.addEventListener("click", function (e) {
         e.preventDefault();

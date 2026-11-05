@@ -57,7 +57,7 @@
   function draw() {
     ctx.fillStyle = "#05050a";
     ctx.fillRect(0, 0, cv.width, cv.height);
-    ctx.strokeStyle = "rgba(139,92,246,.08)";
+    ctx.strokeStyle = "rgba(20,224,204,.08)";
     ctx.lineWidth = 1;
     for (var i = 1; i < N; i++) {
       ctx.beginPath(); ctx.moveTo(i * C, 0); ctx.lineTo(i * C, cv.height); ctx.stroke();

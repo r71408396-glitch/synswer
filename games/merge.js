@@ -1,6 +1,6 @@
 (function () {
   var E = Eng, N = 4, cs = 100, g, t, sx, sy, best;
-  var COL = { 2: "#3b3b5c", 4: "#4c4c7a", 8: "#6d28d9", 16: "#7c3aed", 32: "#8b5cf6", 64: "#a855f7", 128: "#2563eb", 256: "#3b82f6", 512: "#0ea5e9", 1024: "#06b6d4", 2048: "#22c55e" };
+  var COL = { 2: "#3b3b5c", 4: "#4c4c7a", 8: "#0e8f84", 16: "#0fc4b2", 32: "#14e0cc", 64: "#a855f7", 128: "#2563eb", 256: "#3b82f6", 512: "#0ea5e9", 1024: "#06b6d4", 2048: "#22c55e" };
   var setNext = E.stat("Next", "3");
 
   function empties() { var o = []; g.forEach(function (v, i) { if (!v) o.push(i); }); return o; }
@@ -77,7 +77,7 @@
       }
       c.fillStyle = "#171726";
       c.fillRect(20, 428, E.W - 40, 10);
-      c.fillStyle = "#8b5cf6";
+      c.fillStyle = "#14e0cc";
       c.fillRect(20, 428, (E.W - 40) * Math.max(0, t / 3), 10);
     }
   });

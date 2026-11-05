@@ -117,7 +117,7 @@
         c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + Math.cos(a2) * d * 1.3, by + Math.sin(a2) * d * 1.3); c.stroke(); c.setLineDash([]);
       }
       c.beginPath(); c.arc(bx, by, BR, 0, Math.PI * 2); c.fillStyle = "#fff"; c.fill(); c.strokeStyle = "#94a3b8"; c.lineWidth = 1.5; c.stroke();
-      E.text(c, msg || ("Score " + score + "   Pull back from the ball and release"), W / 2, 20, 13, msg ? "#86efac" : "#c4b5fd");
+      E.text(c, msg || ("Score " + score + "   Pull back from the ball and release"), W / 2, 20, 13, msg ? "#86efac" : "#99f6e4");
     }
   });
 })();

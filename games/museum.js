@@ -1,6 +1,6 @@
 (function () {
   var E = Eng, W = E.W, H = E.H, N = 6, CS = 52, X0 = 44, Y0 = 56, DAYS = 7, RENT = 30;
-  var T = [{ n: "Vase", cost: 20, val: 4, c: "#38bdf8" }, { n: "Statue", cost: 45, val: 10, c: "#a78bfa" }, { n: "Dino", cost: 90, val: 22, c: "#f97316" }];
+  var T = [{ n: "Vase", cost: 20, val: 4, c: "#38bdf8" }, { n: "Statue", cost: 45, val: 10, c: "#5eead4" }, { n: "Dino", cost: 90, val: 22, c: "#f97316" }];
   var grid, sel, money, day, phase, vis, tm, income, msg, setDay;
   setDay = E.stat("Day", "1/" + DAYS);
 
@@ -76,7 +76,7 @@
     draw: function (c) {
       c.fillStyle = "#14121c"; c.fillRect(0, 0, W, H);
       E.text(c, "Money " + money, W / 2, 24, 20, money < 40 ? "#fca5a5" : "#fde68a");
-      E.text(c, msg, W / 2, 44, 12, "#c4b5fd");
+      E.text(c, msg, W / 2, 44, 12, "#99f6e4");
       if (!grid) return;
       for (var i = 0; i < N * N; i++) {
         var p = cell(i);

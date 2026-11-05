@@ -85,7 +85,7 @@
       var i;
       for (i = 0; i < N * N; i++) {
         var x = (i % N) * cs, y = Math.floor(i / N) * cs;
-        c.fillStyle = rock[i] ? "#3f3f55" : "#12121c";
+        c.fillStyle = rock[i] ? "#3f3f55" : "#06201f";
         E.rr(c, x + 2, y + 2, cs - 4, cs - 4, rock[i] ? 8 : 4); c.fill();
         if (rock[i]) { c.fillStyle = "#64647e"; c.fillRect(x + cs * 0.3, y + cs * 0.3, cs * 0.4, cs * 0.4); }
       }

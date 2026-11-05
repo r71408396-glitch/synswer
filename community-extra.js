@@ -34,7 +34,7 @@
 
   function aiBox(parent) {
     var box = el("div", "cm-aibox");
-    box.style.cssText = "border:1px solid var(--cm-acc,#8b5cf6);border-radius:12px;padding:12px;margin:10px 0;background:rgba(139,92,246,.08)";
+    box.style.cssText = "border:1px solid var(--cm-acc,#14e0cc);border-radius:12px;padding:12px;margin:10px 0;background:rgba(20,224,204,.08)";
     var tag = el("span", "cm-cat", "Synswer AI");
     tag.style.cssText = "display:inline-block;font-weight:700;margin-bottom:6px";
     box.appendChild(tag);
@@ -233,7 +233,7 @@
             if (!rows.length) log.appendChild(el("p", "cm-meta", "Say hello. Messages are private between the two of you."));
             rows.forEach(function (m) {
               var mine = m.sender_id === me().id, b = el("div", "", m.content);
-              b.style.cssText = "max-width:80%;padding:8px 12px;border-radius:14px;white-space:pre-wrap;word-break:break-word;" + (mine ? "align-self:flex-end;background:#6d28d9;color:#fff" : "align-self:flex-start;background:rgba(139,92,246,.18)");
+              b.style.cssText = "max-width:80%;padding:8px 12px;border-radius:14px;white-space:pre-wrap;word-break:break-word;" + (mine ? "align-self:flex-end;background:#0e8f84;color:#fff" : "align-self:flex-start;background:rgba(20,224,204,.18)");
               b.title = C.ago(m.created_at); log.appendChild(b);
             });
             log.scrollTop = log.scrollHeight;

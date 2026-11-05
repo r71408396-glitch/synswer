@@ -78,8 +78,8 @@
     key: function (k, down) { keys[k] = down; if (down && k === " ") drop(aim); },
     draw: function (c) {
       c.fillStyle = "#12131e"; c.fillRect(0, 0, W, H);
-      c.fillStyle = "#2a2a40"; c.fillRect(0, FL, W, H - FL);
-      c.fillStyle = "#8b5cf6"; c.fillRect(0, FL, W, 3);
+      c.fillStyle = "#11574f"; c.fillRect(0, FL, W, H - FL);
+      c.fillStyle = "#14e0cc"; c.fillRect(0, FL, W, 3);
       if (!B) return;
       c.fillStyle = "rgba(255,255,255,.12)"; c.fillRect(aim - nextW / 2, 30, nextW, BH);
       c.strokeStyle = "rgba(255,255,255,.12)"; c.beginPath(); c.moveTo(aim, 30 + BH); c.lineTo(aim, FL); c.stroke();
@@ -95,7 +95,7 @@
         c.strokeStyle = "#94a3b8"; c.lineWidth = 3; c.beginPath(); c.moveTo(ball.x - ball.dir * 60, ball.y); c.lineTo(ball.x, ball.y); c.stroke();
         c.beginPath(); c.arc(ball.x, ball.y, 22, 0, Math.PI * 2); c.fillStyle = "#1f2937"; c.fill(); c.strokeStyle = "#ef4444"; c.lineWidth = 3; c.stroke();
       }
-      E.text(c, "Height " + height() + "   Banked " + banked, W / 2, 16, 15, "#c4b5fd");
+      E.text(c, "Height " + height() + "   Banked " + banked, W / 2, 16, 15, "#99f6e4");
       if (endT >= 0) E.text(c, "Final count...", W / 2, 70, 18, "#86efac");
     }
   });

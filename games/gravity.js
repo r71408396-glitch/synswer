@@ -45,7 +45,7 @@
       c.fillStyle = "#1c1c30";
       c.fillRect(0, 0, W, TOP);
       c.fillRect(0, BOT, W, H - BOT);
-      c.fillStyle = "#8b5cf6";
+      c.fillStyle = "#14e0cc";
       c.fillRect(0, TOP - 3, W, 3);
       c.fillRect(0, BOT, W, 3);
       (obs || []).forEach(function (o) {
@@ -64,7 +64,7 @@
       c.stroke();
       c.fillStyle = "#fff";
       c.fillRect(PX + 2, y + (dir > 0 ? 6 : 12), 6, 6);
-      E.text(c, Math.floor(dist) + " m", W - 50, 15, 15, "#c4b5fd");
+      E.text(c, Math.floor(dist) + " m", W - 50, 15, 15, "#99f6e4");
     }
   });
 })();

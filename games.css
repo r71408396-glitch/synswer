@@ -61,7 +61,7 @@ body[data-game] { touch-action: manipulation; }
   .canvas-wrap { max-width: min(var(--cw, 480px), max(220px, calc((100vh - 330px) * var(--ar, 1)))); }
 }
 
-.game-card:fullscreen, .game-card:-webkit-full-screen { display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; padding: 12px 16px; border: 0; border-radius: 0; background: #07070b; overflow: auto; }
+.game-card:fullscreen, .game-card:-webkit-full-screen { display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; padding: 12px 16px; border: 0; border-radius: 0; background: #031b1a; overflow: auto; }
 .game-card:fullscreen .canvas-wrap { max-width: min(var(--cw, 480px), max(220px, calc((100vh - 170px) * var(--ar, 1)))); }
 .game-card:fullscreen .hint { margin-top: 8px; }
 
@@ -70,7 +70,7 @@ body[data-game] { touch-action: manipulation; }
 .board li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 15px; counter-increment: rank; }
 .board li::before { content: counter(rank); width: 22px; color: var(--muted); font-size: 13px; }
 .board li .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
-.board li .sc { font-family: "Sora", sans-serif; color: #c4b5fd; }
+.board li .sc { font-family: "Sora", sans-serif; color: #99f6e4; }
 .board li.podium::before { content: none; }
 .board li .crown { width: 22px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .board li.p1 .crown { color: #facc15; filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.55)); }

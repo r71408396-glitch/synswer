@@ -18,8 +18,8 @@ body.home .stage { max-width: 560px; }
 .robot-float { width: 190px; margin: 0 auto 8px; position: relative; animation: robot-hover 3.6s ease-in-out infinite; }
 .robot-ring { width: 170px; height: 26px; margin: -6px auto 0; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 22px var(--accent), inset 0 0 14px rgba(20, 224, 204, .5); background: radial-gradient(closest-side, rgba(20, 224, 204, .35), transparent); animation: ring-pulse 3.6s ease-in-out infinite; }
 body.home .orb { width: 190px; height: 190px; margin: 0 auto; }
-body.home .orb svg { filter: drop-shadow(0 0 22px rgba(37, 99, 235, .55)); }
-body.home .robot-eye { fill: #22f0dd; filter: drop-shadow(0 0 7px #22f0dd); }
+body.home .orb svg { filter: drop-shadow(0 0 22px rgba(34, 200, 255, .45)); }
+body.home .robot-eye { fill: #4fe3ff; filter: drop-shadow(0 0 7px #4fe3ff); }
 @keyframes robot-hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
 @keyframes ring-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.82); opacity: .6; } }
 

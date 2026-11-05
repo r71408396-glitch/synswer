@@ -31,11 +31,11 @@
       c.fillStyle = "#0d0d16";
       c.fillRect(0, 0, E.W, E.H);
       var y = E.H / 2;
-      c.fillStyle = "#2a2a40";
+      c.fillStyle = "#11574f";
       c.fillRect(L, y - 3, R - L, 6);
-      c.fillStyle = flash > 0 ? "rgba(34,197,94,.45)" : "rgba(139,92,246,.35)";
+      c.fillStyle = flash > 0 ? "rgba(34,197,94,.45)" : "rgba(20,224,204,.35)";
       c.fillRect(cx - zone, y - 40, zone * 2, 80);
-      c.fillStyle = "#c4b5fd";
+      c.fillStyle = "#99f6e4";
       c.fillRect(cx - 1.5, y - 50, 3, 100);
       c.beginPath();
       c.arc(pos, y, 14, 0, Math.PI * 2);

@@ -61,7 +61,26 @@
     b.type = "button"; b.setAttribute("aria-label", "View " + uname(id));
     if (p && p.avatar_url) { var im = el("img"); im.src = p.avatar_url; im.alt = ""; im.loading = "lazy"; b.appendChild(im); }
     else b.textContent = dname(id).charAt(0).toUpperCase();
+    b.onclick = function (e) {
+      e.stopPropagation();
+      if (p && p.avatar_url) viewPhoto(p.avatar_url, dname(id) + " - profile picture", id);
+      else openProfile(id);
+    };
     return b;
+  }
+  // Full-size viewer for a profile picture or cover photo (private files load with the signed-in session).
+  function viewPhoto(url, label, uid) {
+    dialog(function (d) {
+      d.classList.add("cm-viewer");
+      var im = el("img"); im.src = url; im.alt = label;
+      d.appendChild(im);
+      d.appendChild(el("p", "cm-meta", label));
+      var r = el("div", "row");
+      if (uid && view.user !== uid) { var pb = el("button", "cm-btn ghost sm", "View profile"); pb.type = "button"; pb.onclick = function () { d.close(); openProfile(uid); }; r.appendChild(pb); }
+      var cl = el("button", "cm-btn sm", "Close"); cl.type = "button"; cl.onclick = function () { d.close(); };
+      r.appendChild(cl); d.appendChild(r);
+      d.addEventListener("click", function (e) { if (e.target === d) d.close(); });
+    });
   }
   function canAct() { if (standing.status !== "active") { toast(standing.status === "banned" ? "Your account is banned from interacting." : "Your account is suspended."); return false; } return true; }
 
@@ -486,9 +505,14 @@
     loadProfiles([uid]).then(function () {
       Promise.all([api("api/rows/follows/aggregate?agg=count&followee_id=eq." + uid), api("api/rows/follows/aggregate?agg=count&follower_id=eq." + uid), api("api/rows/follows?follower_id=eq." + me.id + "&followee_id=eq." + uid), loadHidden()]).then(function (r) {
         var p = prof[uid] || {}, card = el("div", "cm-prof"), cover = el("div", "cm-cover");
-        if (p.cover_url) cover.style.backgroundImage = "url('" + p.cover_url.replace(/'/g, "%27") + "')";
+        if (p.cover_url) {
+          cover.style.backgroundImage = "url('" + p.cover_url.replace(/'/g, "%27") + "')";
+          cover.style.cursor = "zoom-in"; cover.tabIndex = 0; cover.setAttribute("role", "button"); cover.setAttribute("aria-label", "View cover photo");
+          cover.onclick = function () { viewPhoto(p.cover_url, dname(uid) + " - cover photo"); };
+          cover.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); cover.onclick(); } };
+        }
         card.appendChild(cover);
-        var info = el("div", "cm-pi"), row = el("div", "row"), av = avatar(uid, "lg"); av.onclick = null; row.appendChild(av);
+        var info = el("div", "cm-pi"), row = el("div", "row"), av = avatar(uid, "lg"); row.appendChild(av);
         var followRow = (r[2].d.rows || [])[0];
         if (uid === me.id) { var e = el("button", "cm-btn ghost sm", "Edit profile"); e.type = "button"; e.onclick = editProfile; row.appendChild(e); }
         else {

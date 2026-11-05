@@ -44,7 +44,7 @@
     draw: function (c) {
       c.fillStyle = "#0d0d16";
       c.fillRect(0, 0, W, H);
-      E.text(c, (LABEL[phase] || "") + "  -  length " + (seq ? seq.length : 1), W / 2, 20, 18, "#c4b5fd");
+      E.text(c, (LABEL[phase] || "") + "  -  length " + (seq ? seq.length : 1), W / 2, 20, 18, "#99f6e4");
       for (var i = 0; i < 4; i++) {
         var x = (i % 2) * 200 + 8, y = 40 + (i >> 1) * 200 + 8;
         E.rr(c, x, y, 184, 184, 22);

@@ -50,7 +50,7 @@
         var x = q * cs, y = r * cs, exit = r === N - 1 && q === N - 1;
         c.fillStyle = exit ? "#14532d" : vis[r][q] ? "#1f2a44" : "#171726";
         c.fillRect(x + 2, y + 2, cs - 4, cs - 4);
-        if (vis[r][q] && !exit) { var n = num(r, q); if (n) E.text(c, String(n), x + cs / 2, y + cs / 2, 22, ["", "#60a5fa", "#86efac", "#fca5a5", "#c4b5fd", "#fde68a", "#fff", "#fff", "#fff"][n]); }
+        if (vis[r][q] && !exit) { var n = num(r, q); if (n) E.text(c, String(n), x + cs / 2, y + cs / 2, 22, ["", "#60a5fa", "#86efac", "#fca5a5", "#99f6e4", "#fde68a", "#fff", "#fff", "#fff"][n]); }
         if (exit) E.text(c, "EXIT", x + cs / 2, y + cs / 2, 13, "#86efac");
         if (dead && mines[r][q]) { c.fillStyle = "#ef4444"; c.beginPath(); c.arc(x + cs / 2, y + cs / 2, 10, 0, Math.PI * 2); c.fill(); }
       }

@@ -40,23 +40,22 @@
           <div class="robot-float">
             <button class="orb" id="orb" type="button" aria-label="Ask a question" data-animate="hero">
               <svg viewBox="0 0 100 100" aria-hidden="true">
-                <rect x="3" y="46" width="9" height="24" rx="4" fill="#0a0a0c" stroke="#2c4a8a" stroke-width="1.5"/>
-                <rect x="88" y="46" width="9" height="24" rx="4" fill="#0a0a0c" stroke="#2c4a8a" stroke-width="1.5"/>
-                <rect x="5" y="53" width="5" height="10" rx="2.5" fill="#2563eb"/>
-                <rect x="90" y="53" width="5" height="10" rx="2.5" fill="#2563eb"/>
-                <ellipse cx="50" cy="55" rx="40" ry="37" fill="#0c0c10" stroke="#34343f" stroke-width="2.5"/>
-                <ellipse cx="50" cy="55" rx="35" ry="32" fill="none" stroke="#1b2a4a" stroke-width="1.5"/>
-                <path d="M22 34 Q32 22 46 20" fill="none" stroke="#3a4a6a" stroke-width="2" stroke-linecap="round"/>
-                <path class="robot-bolt" d="M55 21 L44 30.5 H50 L46.5 39 L58 28.5 H52 Z" fill="#2563eb" stroke="#60a5fa" stroke-width="1.2" stroke-linejoin="round"/>
-                <rect x="18" y="42" width="64" height="26" rx="13" fill="#000" stroke="#23232d" stroke-width="1.5"/>
-                <rect class="robot-eye" x="27" y="48" width="17" height="14" rx="7" fill="#3b82f6"/>
-                <rect class="robot-eye" x="56" y="48" width="17" height="14" rx="7" fill="#3b82f6"/>
-                <circle cx="33" cy="52" r="2.4" fill="#dbeafe"/>
-                <circle cx="62" cy="52" r="2.4" fill="#dbeafe"/>
-                <circle cx="24" cy="76" r="2" fill="#2563eb"/>
-                <circle cx="76" cy="76" r="2" fill="#2563eb"/>
-                <rect x="38" y="76" width="24" height="9" rx="4.5" fill="#050507" stroke="#26262e" stroke-width="1"/>
-                <path d="M43 80.5 H57" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+                <defs>
+                  <linearGradient id="rb-head" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4b4d58"/><stop offset="1" stop-color="#2a2b33"/></linearGradient>
+                  <linearGradient id="rb-bolt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22e6ff"/><stop offset="1" stop-color="#1d6bff"/></linearGradient>
+                  <linearGradient id="rb-ear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3c46"/><stop offset="1" stop-color="#1f2027"/></linearGradient>
+                </defs>
+                <rect x="4" y="46" width="17" height="30" rx="8" fill="url(#rb-ear)"/>
+                <rect x="79" y="46" width="17" height="30" rx="8" fill="url(#rb-ear)"/>
+                <rect x="9" y="50" width="3" height="22" rx="1.5" fill="#1f8bff"/>
+                <rect x="88" y="50" width="3" height="22" rx="1.5" fill="#1f8bff"/>
+                <rect x="43" y="25" width="14" height="7" rx="3" fill="#15161b"/>
+                <path class="robot-bolt" d="M52 8 L38 24 H47 L43 36 L58 19 H49 Z" fill="url(#rb-bolt)" stroke="#7fe9ff" stroke-width=".6" stroke-linejoin="round"/>
+                <rect x="18" y="30" width="64" height="58" rx="24" fill="url(#rb-head)"/>
+                <rect x="18" y="30" width="64" height="58" rx="24" fill="none" stroke="#5d606c" stroke-width="1" opacity=".6"/>
+                <rect x="24" y="40" width="52" height="38" rx="17" fill="#050507" stroke="#1d1f29" stroke-width="2"/>
+                <rect class="robot-eye" x="33" y="51" width="11" height="17" rx="5.5" fill="#4fe3ff"/>
+                <rect class="robot-eye" x="56" y="51" width="11" height="17" rx="5.5" fill="#4fe3ff"/>
               </svg>
             </button>
             <div class="robot-ring" aria-hidden="true"></div>

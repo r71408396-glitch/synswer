@@ -60,9 +60,9 @@
     },
     draw: function (c) {
       c.fillStyle = "#0d0d16"; c.fillRect(0, 0, W, H);
-      E.text(c, "Tap a group of 2 or more matching hexes", W / 2, 22, 14, "#c4b5fd");
+      E.text(c, "Tap a group of 2 or more matching hexes", W / 2, 22, 14, "#99f6e4");
       c.fillStyle = "#171726"; c.fillRect(20, 40, W - 40, 12);
-      c.fillStyle = "#8b5cf6"; c.fillRect(20, 40, (W - 40) * E.clamp(1 - iv / Math.max(2.6, 6 - score * 0.0025), 0, 1), 12);
+      c.fillStyle = "#14e0cc"; c.fillRect(20, 40, (W - 40) * E.clamp(1 - iv / Math.max(2.6, 6 - score * 0.0025), 0, 1), 12);
       if (!st) return;
       for (var r = 0; r < R; r++) for (var q = 0; q < C; q++) {
         var v = get(r, q), x = cx(r, q), y = cy(r);

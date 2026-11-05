@@ -54,10 +54,10 @@
         c.restore();
       });
       if (sx == null) return;
-      c.fillStyle = "#8b5cf6";
+      c.fillStyle = "#14e0cc";
       c.beginPath(); c.moveTo(sx, sy - 18); c.lineTo(sx + 13, sy + 14); c.lineTo(sx, sy + 8); c.lineTo(sx - 13, sy + 14); c.closePath(); c.fill();
       c.fillStyle = "#60a5fa"; c.fillRect(sx - 2, sy + 10, 4, 8);
-      E.text(c, "Scrap " + score, W / 2, 18, 16, "#c4b5fd");
+      E.text(c, "Scrap " + score, W / 2, 18, 16, "#99f6e4");
     }
   });
 })();

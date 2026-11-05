@@ -45,7 +45,7 @@
     draw: function (c) {
       c.fillStyle = "#0d0d16";
       c.fillRect(0, 0, E.W, E.H);
-      c.strokeStyle = "rgba(139,92,246,.15)";
+      c.strokeStyle = "rgba(20,224,204,.15)";
       c.lineWidth = 1;
       c.beginPath(); c.arc(cx, cy, SR, 0, Math.PI * 2); c.stroke();
       shots.forEach(function (s) {
@@ -63,7 +63,7 @@
       c.stroke();
       c.beginPath();
       c.arc(cx, cy, SR, ang - HALF, ang + HALF);
-      c.strokeStyle = "#a78bfa";
+      c.strokeStyle = "#5eead4";
       c.lineWidth = 9;
       c.lineCap = "round";
       c.stroke();

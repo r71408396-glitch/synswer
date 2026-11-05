@@ -43,7 +43,7 @@
     },
     draw: function (c) {
       c.fillStyle = "#0d0d16"; c.fillRect(0, 0, W, H);
-      E.text(c, "Each switch also flips the one below it. Power IN to OUT.", W / 2, 20, 13, "#c4b5fd");
+      E.text(c, "Each switch also flips the one below it. Power IN to OUT.", W / 2, 20, 13, "#99f6e4");
       if (!on) return;
       var lit = litSet();
       for (var i = 0; i < N * N; i++) {

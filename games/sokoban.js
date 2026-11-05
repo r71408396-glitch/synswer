@@ -79,7 +79,7 @@
     },
     draw: function (c) {
       c.fillStyle = "#0d0d16"; c.fillRect(0, 0, W, H);
-      E.text(c, "Fill the lava with crates, reach the exit", 150, 20, 13, "#c4b5fd");
+      E.text(c, "Fill the lava with crates, reach the exit", 150, 20, 13, "#99f6e4");
       c.fillStyle = "#2a2a4a"; E.rr(c, W - 84, 6, 76, 28, 8); c.fill();
       E.text(c, "Undo (Z)", W - 46, 20, 13, "#fff");
       if (!g) return;

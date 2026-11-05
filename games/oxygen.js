@@ -60,7 +60,7 @@
       c.strokeStyle = "#dbeafe"; c.lineWidth = 2; c.stroke();
       c.fillStyle = "#171726"; c.fillRect(20, 10, W - 40, 12);
       c.fillStyle = o < 25 ? "#ef4444" : "#22d3ee"; c.fillRect(20, 10, (W - 40) * Math.max(0, o) / 100, 12);
-      E.text(c, "Oxygen   Canisters " + score, W / 2, 36, 13, "#c4b5fd");
+      E.text(c, "Oxygen   Canisters " + score, W / 2, 36, 13, "#99f6e4");
     }
   });
 })();

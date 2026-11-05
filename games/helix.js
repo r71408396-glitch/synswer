@@ -73,7 +73,7 @@
         if (f.smash) return;
         var y = f.y - cam;
         if (y < -TH || y > H) return;
-        seg(c, 0, 1, y, "#6d28d9");
+        seg(c, 0, 1, y, "#0e8f84");
         seg(c, f.g, GW, y, "#0d0d16");
         seg(c, f.r, RW, y, "#ef4444");
       });

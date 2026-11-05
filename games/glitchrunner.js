@@ -37,7 +37,7 @@
     key: function (k, down) { if (down && (k === " " || k === "arrowup" || k === "w")) jump(); },
     draw: function (c) {
       c.fillStyle = "#0a0a14"; c.fillRect(0, 0, W, H);
-      c.fillStyle = "#8b5cf6"; c.fillRect(0, GY, W, 3);
+      c.fillStyle = "#14e0cc"; c.fillRect(0, GY, W, 3);
       c.fillStyle = "#14142a"; c.fillRect(0, GY + 3, W, H - GY);
       (obs || []).forEach(function (o) {
         c.fillStyle = "#ef4444"; c.fillRect(o.x, GY - o.h, o.w, o.h);

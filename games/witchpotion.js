@@ -61,7 +61,7 @@
       bats.forEach(function (b) { c.fillStyle = "#1e1b4b"; c.beginPath(); c.arc(b.x, b.y, 9, 0, Math.PI * 2); c.fill(); c.fillStyle = "#ef4444"; c.fillRect(b.x - 5, b.y - 2, 3, 3); c.fillRect(b.x + 2, b.y - 2, 3, 3); c.strokeStyle = "#4c1d95"; c.lineWidth = 3; c.beginPath(); c.moveTo(b.x - 9, b.y); c.lineTo(b.x - 18, b.y - 6); c.moveTo(b.x + 9, b.y); c.lineTo(b.x + 18, b.y - 6); c.stroke(); });
       c.globalAlpha = inv > 0 && Math.floor(inv * 10) % 2 ? 0.4 : 1;
       var r = rad();
-      c.fillStyle = "#7c3aed"; c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#0fc4b2"; c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
       c.fillStyle = "#312e81"; c.beginPath(); c.moveTo(px - r, py - r * 0.4); c.lineTo(px, py - r * 2); c.lineTo(px + r, py - r * 0.4); c.closePath(); c.fill();
       c.globalAlpha = 1;
       E.text(c, "Stars " + score, 60, 16, 15, "#fde68a");

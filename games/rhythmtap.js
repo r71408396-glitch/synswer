@@ -44,7 +44,7 @@
         c.fillStyle = (fl && fl[l] > 0) ? E.PAL[l] + "44" : "#11111c";
         c.fillRect(l * LW + 2, 0, LW - 4, H);
       }
-      c.fillStyle = "#c4b5fd"; c.fillRect(0, TY - 2, W, 4);
+      c.fillStyle = "#99f6e4"; c.fillRect(0, TY - 2, W, 4);
       (notes || []).forEach(function (n) {
         c.globalAlpha = n.done ? 0.3 : 1;
         c.fillStyle = E.PAL[n.lane]; E.rr(c, n.lane * LW + 10, n.y - 14, LW - 20, 28, 8); c.fill();

@@ -39,7 +39,7 @@
     },
     draw: function (c) {
       c.fillStyle = "#101a16"; c.fillRect(0, 0, W, H);
-      E.text(c, "Tap to water. Tap a glowing plant to harvest.", W / 2, 24, 14, "#c4b5fd");
+      E.text(c, "Tap to water. Tap a glowing plant to harvest.", W / 2, 24, 14, "#99f6e4");
       E.text(c, "Harvested " + score, W / 2, 48, 18, "#fff");
       if (!P) return;
       P.forEach(function (p, i) {

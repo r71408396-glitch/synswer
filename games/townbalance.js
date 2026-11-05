@@ -31,14 +31,14 @@
       c.fillStyle = winter() ? "#0f1c2e" : "#12161f"; c.fillRect(0, 0, W, H);
       if (!res) return;
       E.text(c, winter() ? "WINTER: wood burns fast" : "Summer: stock up for winter", W / 2, 24, 18, winter() ? "#93c5fd" : "#fde68a");
-      E.text(c, "Day " + day + "   Workers " + N + "   Idle " + idle(), W / 2, 54, 15, "#c4b5fd");
+      E.text(c, "Day " + day + "   Workers " + N + "   Idle " + idle(), W / 2, 54, 15, "#99f6e4");
       E.text(c, msg, W / 2, 84, 13, "#8383a3");
       for (var i = 0; i < 3; i++) {
         var y = 150 + i * 80;
         E.rr(c, 14, y, W - 28, 60, 12); c.fillStyle = "#1c1c2c"; c.fill();
         c.fillStyle = COL[i]; c.fillRect(14, y, 8, 60);
         E.text(c, NAMES[i], 70, y + 18, 15, "#fff");
-        E.text(c, Math.floor(res[i]) + (i < 2 && res[i] < 12 ? " low" : ""), 70, y + 42, 15, res[i] < 12 && i < 2 ? "#fca5a5" : "#c4b5fd");
+        E.text(c, Math.floor(res[i]) + (i < 2 && res[i] < 12 ? " low" : ""), 70, y + 42, 15, res[i] < 12 && i < 2 ? "#fca5a5" : "#99f6e4");
         E.rr(c, 230, y + 10, 50, 40, 8); c.fillStyle = "#3b3b5c"; c.fill();
         E.text(c, "-", 255, y + 29, 24, "#fff");
         E.text(c, String(a[i]), 290 + 0, y + 29, 0.1, "#fff");

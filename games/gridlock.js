@@ -79,7 +79,7 @@
     draw: function (c) {
       c.fillStyle = "#0d0d16";
       c.fillRect(0, 0, E.W, E.H);
-      c.strokeStyle = "rgba(139,92,246,.18)";
+      c.strokeStyle = "rgba(20,224,204,.18)";
       c.lineWidth = 1;
       for (var i = 1; i < N; i++) {
         c.beginPath(); c.moveTo(i * cs, 0); c.lineTo(i * cs, E.H); c.stroke();
@@ -92,9 +92,9 @@
         var x = (p.h ? p.c + off : p.c) * cs + 4, y = (p.h ? p.r : p.r + off) * cs + 4;
         var w = (p.h ? p.len : 1) * cs - 8, h = (p.h ? 1 : p.len) * cs - 8;
         E.rr(c, x, y, w, h, 12);
-        c.fillStyle = p.t ? "#8b5cf6" : ["#3b82f6", "#0ea5e9", "#475569", "#64748b", "#2563eb"][i % 5];
+        c.fillStyle = p.t ? "#14e0cc" : ["#3b82f6", "#0ea5e9", "#475569", "#64748b", "#2563eb"][i % 5];
         c.fill();
-        c.strokeStyle = p.t ? "#c4b5fd" : "rgba(255,255,255,.18)";
+        c.strokeStyle = p.t ? "#99f6e4" : "rgba(255,255,255,.18)";
         c.lineWidth = 2;
         c.stroke();
         if (p.t) E.text(c, ">", x + w - 26, y + h / 2, 26, "#fff");

@@ -79,7 +79,7 @@
       var i, x, y;
       for (i = 0; i < N * N; i++) {
         x = (i % N) * cs; y = Math.floor(i / N) * cs;
-        c.fillStyle = "#12121c"; c.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+        c.fillStyle = "#06201f"; c.fillRect(x + 1, y + 1, cs - 2, cs - 2);
       }
       var tr = trace();
       c.lineCap = "round"; c.lineJoin = "round";
@@ -109,7 +109,7 @@
       c.beginPath(); c.moveTo(cx, cy - 20); c.lineTo(cx + 15, cy); c.lineTo(cx, cy + 20); c.lineTo(cx - 15, cy); c.closePath(); c.fill();
       c.strokeStyle = "#fff"; c.lineWidth = 2; c.stroke();
       c.fillStyle = "#ef4444"; c.fillRect(0, srow * cs + cs / 2 - 8, 8, 16);
-      E.text(c, "Solved " + level, W - 44, 14, 14, "#c4b5fd");
+      E.text(c, "Solved " + level, W - 44, 14, 14, "#99f6e4");
     }
   });
 })();

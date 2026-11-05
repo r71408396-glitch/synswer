@@ -32,7 +32,7 @@
     draw: function (c) {
       c.fillStyle = "#12141c"; c.fillRect(0, 0, W, H);
       if (!stock) return;
-      E.text(c, "Boxes waiting " + q.length + "/7", W / 2, 20, 14, q.length > 5 ? "#fca5a5" : "#c4b5fd");
+      E.text(c, "Boxes waiting " + q.length + "/7", W / 2, 20, 14, q.length > 5 ? "#fca5a5" : "#99f6e4");
       c.fillStyle = "#1f2233"; c.fillRect(0, 40, W, 90);
       if (q[0] != null) {
         E.rr(c, W / 2 - 150, 52, 90, 66, 10); c.fillStyle = D[q[0]][1]; c.fill();

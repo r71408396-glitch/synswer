@@ -11,7 +11,7 @@
     L: [[0,0,1],[1,1,1],[0,0,0]]
   };
   var NAMES = Object.keys(SHAPES);
-  var COLORS = { I: "#60a5fa", O: "#c4b5fd", T: "#c084fc", S: "#8b5cf6", Z: "#e879f9", J: "#3b82f6", L: "#a78bfa" };
+  var COLORS = { I: "#60a5fa", O: "#99f6e4", T: "#c084fc", S: "#14e0cc", Z: "#e879f9", J: "#3b82f6", L: "#5eead4" };
   var board, cur, score, lines, level, acc, running = false, runId = 0;
 
   function emptyBoard() {
@@ -120,7 +120,7 @@
   function draw() {
     ctx.fillStyle = "#05050a";
     ctx.fillRect(0, 0, cv.width, cv.height);
-    ctx.strokeStyle = "rgba(139,92,246,.07)";
+    ctx.strokeStyle = "rgba(20,224,204,.07)";
     for (var i = 1; i < COLS; i++) { ctx.beginPath(); ctx.moveTo(i * C, 0); ctx.lineTo(i * C, cv.height); ctx.stroke(); }
     for (var j = 1; j < ROWS; j++) { ctx.beginPath(); ctx.moveTo(0, j * C); ctx.lineTo(cv.width, j * C); ctx.stroke(); }
     board.forEach(function (row, y) { row.forEach(function (c, x) { if (c) cell(x, y, c); }); });

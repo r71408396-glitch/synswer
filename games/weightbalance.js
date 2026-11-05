@@ -42,18 +42,18 @@
       c.fillStyle = "#171726"; c.fillRect(20, 14, W - 40, 10);
       c.fillStyle = diff > 8 ? "#ef4444" : diff > 4 ? "#f97316" : "#22c55e";
       c.fillRect(20, 14, (W - 40) * Math.min(1, diff / LIMIT), 10);
-      E.text(c, "Imbalance " + diff + " / " + LIMIT, W / 2, 40, 13, "#c4b5fd");
+      E.text(c, "Imbalance " + diff + " / " + LIMIT, W / 2, 40, 13, "#99f6e4");
       if (cur) {
         shape(c, cur.s, W / 2, 86, 26, E.PAL[cur.n % 8], cur.n, 24);
         c.fillStyle = "#171726"; c.fillRect(W / 2 - 40, 122, 80, 6);
-        c.fillStyle = "#8b5cf6"; c.fillRect(W / 2 - 40, 122, 80 * Math.max(0, t / tmax), 6);
+        c.fillStyle = "#14e0cc"; c.fillRect(W / 2 - 40, 122, 80 * Math.max(0, t / tmax), 6);
         E.text(c, "next", W / 2 + 70, 74, 12, "#8383a3");
         shape(c, next.s, W / 2 + 70, 98, 14, E.PAL[next.n % 8], next.n, 14);
       }
       var ca = Math.cos(ang) * ARM, sa = Math.sin(ang) * ARM;
       var lx = PX - ca, ly = PY - sa, rx = PX + ca, ry = PY + sa;
       c.fillStyle = "#3b3b5c"; c.beginPath(); c.moveTo(PX, PY); c.lineTo(PX - 30, PY + 90); c.lineTo(PX + 30, PY + 90); c.closePath(); c.fill();
-      c.strokeStyle = "#c4b5fd"; c.lineWidth = 6; c.lineCap = "round";
+      c.strokeStyle = "#99f6e4"; c.lineWidth = 6; c.lineCap = "round";
       c.beginPath(); c.moveTo(lx, ly); c.lineTo(rx, ry); c.stroke();
       [[lx, ly, L], [rx, ry, R]].forEach(function (p) {
         c.strokeStyle = "#64647e"; c.lineWidth = 2;
@@ -62,9 +62,9 @@
         p[2].slice(-12).forEach(function (it, i) {
           shape(c, it.s, p[0] - 36 + (i % 4) * 24, p[1] + 36 - Math.floor(i / 4) * 24, 10, E.PAL[it.n % 8], it.n, 11);
         });
-        E.text(c, String(sum(p[2])), p[0], p[1] + 68, 14, "#c4b5fd");
+        E.text(c, String(sum(p[2])), p[0], p[1] + 68, 14, "#99f6e4");
       });
-      c.fillStyle = "#8b5cf6"; c.beginPath(); c.arc(PX, PY, 8, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#14e0cc"; c.beginPath(); c.arc(PX, PY, 8, 0, Math.PI * 2); c.fill();
       E.text(c, "Tap left or right side (or A and D) to place the shape", W / 2, H - 20, 13, "#8383a3");
     }
   });
