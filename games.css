@@ -61,8 +61,12 @@ body[data-game] { touch-action: manipulation; }
   .canvas-wrap { max-width: min(var(--cw, 480px), max(220px, calc((100vh - 330px) * var(--ar, 1)))); }
 }
 
-.game-card:fullscreen, .game-card:-webkit-full-screen { display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; padding: 12px 16px; border: 0; border-radius: 0; background: #031b1a; overflow: auto; }
-.game-card:fullscreen .canvas-wrap { max-width: min(var(--cw, 480px), max(220px, calc((100vh - 170px) * var(--ar, 1)))); }
+.game-card:fullscreen, .game-card:-webkit-full-screen { display: flex; flex-direction: column; justify-content: flex-start; width: 100%; height: 100%; padding: 12px 16px; border: 0; border-radius: 0; background: #031b1a; overflow: hidden; overscroll-behavior: none; touch-action: none; }
+.game-card:fullscreen .canvas-wrap, .game-card:-webkit-full-screen .canvas-wrap { flex: none; margin-top: 4px; }
+.game-card:fullscreen .hud, .game-card:-webkit-full-screen .hud { flex: none; min-height: 40px; }
+.hud b { font-variant-numeric: tabular-nums; display: inline-block; min-width: 2ch; }
+.game-card:fullscreen .canvas-wrap { max-width: min(var(--cw, 480px), max(220px, calc((100dvh - 190px) * var(--ar, 1)))); }
+.game-card:fullscreen .pad { flex: none; }
 .game-card:fullscreen .hint { margin-top: 8px; }
 
 .board h2 { font-size: 1.2rem; margin-bottom: 12px; }
