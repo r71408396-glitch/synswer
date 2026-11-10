@@ -1,17 +1,20 @@
 (function () {
   var E = Eng, W = E.W, H = E.H, GY = H - 50, PX = 70, S = 26;
-  var y, vy, sp, obs, dist;
+  var y, vy, sp, obs, dist, jumps = 0;
 
-  function jump() { if (y >= GY - S - 0.5) { vy = -640; E.snd("flip"); } }
+  function jump() {
+    if (y >= GY - S - 0.5) { vy = -640; jumps = 1; E.snd("flip"); }
+    else if (jumps < 2) { vy = -580; jumps = 2; E.snd("bounce"); }
+  }
 
   E.game({
-    reset: function () { y = GY - S; vy = 0; sp = 230; obs = []; dist = 0; E.score(0); },
+    reset: function () { y = GY - S; vy = 0; jumps = 0; sp = 230; obs = []; dist = 0; E.score(0); },
     update: function (dt) {
       sp = Math.min(520, sp + dt * 6);
       dist += sp * dt / 30;
       E.score(Math.floor(dist));
       vy += 1900 * dt; y += vy * dt;
-      if (y > GY - S) { y = GY - S; vy = 0; }
+      if (y > GY - S) { y = GY - S; vy = 0; jumps = 0; }
       var last = obs[obs.length - 1];
       if (!last || last.x < W - E.ri(230, 380)) obs.push({ x: W + 30, w: E.ri(28, 54), h: 0, max: E.ri(34, 54) });
       for (var i = 0; i < obs.length; i++) {
@@ -39,6 +42,8 @@
       c.fillStyle = "#3b82f6"; E.rr(c, PX, y, S, S, 6); c.fill();
       c.shadowBlur = 0;
       c.fillStyle = "#fff"; c.fillRect(PX + 15, y + 7, 6, 6);
+      c.fillStyle = jumps < 2 ? "#99f6e4" : "#334155";
+      c.beginPath(); c.arc(PX + S / 2, y - 8, 3, 0, Math.PI * 2); c.fill();
     }
   });
 })();

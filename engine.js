@@ -49,6 +49,36 @@
     G.over(score);
   };
 
+  // On-screen buttons under the game for touch screens (shown by the .pad rules in games.css).
+  var CTRL = {
+    neonrunner: [["Jump", " "]], glitchrunner: [["Jump", " "]], rooftop: [["Jump", " "]],
+    orbit: [["Release", " "]], towerstacker: [["Drop", " "]], perfecttap: [["Tap", " "]],
+    traffic: [["Switch lights", " "]], jetpack: [["Thrust", " ", 1]], hookshot: [["Hook", " ", 1]],
+    paperplane: [["Dive", " ", 1]],
+    asteroid: [["Left", "arrowleft", 1], ["Up", "arrowup", 1], ["Down", "arrowdown", 1], ["Right", "arrowright", 1]],
+    lavaescape: [["Left", "arrowleft", 1], ["Right", "arrowright", 1]],
+    trampoline: [["Left", "arrowleft", 1], ["Right", "arrowright", 1]],
+    traindefense: [["Up", "arrowup"], ["Down", "arrowdown"]]
+  };
+  function buildControls() {
+    var list = CTRL[cfg.id], wrap = document.getElementById("wrap");
+    if (!list || !wrap) return;
+    var pad = document.createElement("div");
+    pad.className = "pad ctrl";
+    pad.style.setProperty("--n", list.length);
+    list.forEach(function (b) {
+      var btn = document.createElement("button");
+      btn.type = "button"; btn.textContent = b[0];
+      function on(e) { e.preventDefault(); if (running && def && def.key) def.key(b[1], true); }
+      function off(e) { e.preventDefault(); if (def && def.key && (b[2] || false)) def.key(b[1], false); }
+      btn.addEventListener("pointerdown", on);
+      ["pointerup", "pointerleave", "pointercancel"].forEach(function (n) { btn.addEventListener(n, off); });
+      pad.appendChild(btn);
+    });
+    wrap.parentNode.insertBefore(pad, wrap.nextSibling);
+  }
+  buildControls();
+
   E.game = function (d) {
     def = d;
     d.reset();
