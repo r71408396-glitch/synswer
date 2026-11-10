@@ -399,7 +399,7 @@
         function node(rp, depth) {
           var row = el("div", "cm-rep"); row.appendChild(avatar(rp.user_id, "sm"));
           var b = el("div", "body"), m = el("div", "cm-meta");
-          m.appendChild(el("b", "", dname(rp.user_id))); m.appendChild(el("span", "", "@" + uname(rp.user_id) + " - " + ago(rp.created_at)));
+          m.appendChild(el("b", "", dname(rp.user_id))); m.appendChild(vbadge(rp.user_id)); m.appendChild(el("span", "", "@" + uname(rp.user_id) + " - " + ago(rp.created_at)));
           b.appendChild(m); var t = el("p"); t.appendChild(richText(rp.content)); b.appendChild(t);
           var act = el("div");
           var rb = el("button", "cm-link", "Reply"); rb.type = "button";
@@ -618,7 +618,8 @@
           bk.onclick = function () { bk.disabled = true; toggleRel("block", uid).then(function () { toast(H.blocked[uid] ? "Blocked. You will not see each other's posts and cannot message." : "Unblocked"); openProfile(uid, true); }); };
           row.appendChild(mu); row.appendChild(bk);
         }
-        info.appendChild(row); info.appendChild(el("h2", "", dname(uid))); info.appendChild(el("p", "", "@" + uname(uid)));
+        var h2 = el("h2", "", dname(uid)); h2.appendChild(document.createTextNode(" ")); h2.appendChild(vbadge(uid));
+        info.appendChild(row); info.appendChild(h2); info.appendChild(el("p", "", "@" + uname(uid)));
         if (p.bio) info.appendChild(el("p", "", p.bio));
         var st = el("p", "stats");
         if (p.follows_private && uid !== me.id) { st.textContent = "Followers and following are private."; }

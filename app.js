@@ -111,6 +111,20 @@ window.synswerUserReady = fetch("api/auth/me", { credentials: "include" })
   })
   .catch(function () { return null; });
 
+// Games and AI Tools are for signed-in users only
+(function () {
+  var page = location.pathname.split("/").pop() || "index.html";
+  if (!/^(games|play|snake|tetris|shooter|tools)(\.html)?$/.test(page)) return;
+  var hide = document.createElement("style");
+  hide.textContent = "body{visibility:hidden}";
+  document.head.appendChild(hide);
+  function toLogin() { location.replace("login.html?next=" + encodeURIComponent(page + location.search)); }
+  window.synswerUserReady.then(function (u) {
+    if (!u) { toLogin(); return; }
+    hide.remove();
+  }).catch(toLogin);
+})();
+
 // Ask Synswer
 (function () {
   var form = document.getElementById("ask-form");

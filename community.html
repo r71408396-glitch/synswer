@@ -103,5 +103,23 @@
     <script src="gamesmeta.js"></script>
     <script src="community.js"></script>
     <script src="community-extra.js"></script>
+    <script>
+      // The top bar slides away when scrolling down and returns when scrolling up
+      (function () {
+        var bar = document.querySelector(".cm-top"), last = window.scrollY || 0, tick = false;
+        if (!bar) return;
+        window.addEventListener("scroll", function () {
+          if (tick) return; tick = true;
+          requestAnimationFrame(function () {
+            var y = window.scrollY || 0, d = y - last;
+            if (y < 80 || d < -6) bar.classList.remove("cm-away");
+            else if (d > 6) bar.classList.add("cm-away");
+            if (Math.abs(d) > 6) last = y;
+            tick = false;
+          });
+        }, { passive: true });
+        document.addEventListener("focusin", function (e) { if (bar.contains(e.target)) bar.classList.remove("cm-away"); });
+      })();
+    </script>
   </body>
 </html>

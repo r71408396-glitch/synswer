@@ -68,7 +68,13 @@
     pad.style.setProperty("--n", list.length);
     list.forEach(function (b) {
       var btn = document.createElement("button");
-      btn.type = "button"; btn.textContent = b[0];
+      btn.type = "button";
+      var dir = { Left: "M15 5l-7 7 7 7", Right: "M9 5l7 7-7 7", Up: "M5 15l7-7 7 7", Down: "M5 9l7 7 7-7", Jump: "M5 15l7-7 7 7", Thrust: "M5 15l7-7 7 7", Dive: "M5 9l7 7 7-7" }[b[0]];
+      if (dir) {
+        btn.setAttribute("aria-label", b[0]);
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + dir + '"/></svg>';
+        btn.style.display = "flex"; btn.style.alignItems = "center"; btn.style.justifyContent = "center";
+      } else btn.textContent = b[0];
       function on(e) { e.preventDefault(); if (running && def && def.key) def.key(b[1], true); }
       function off(e) { e.preventDefault(); if (def && def.key && (b[2] || false)) def.key(b[1], false); }
       btn.addEventListener("pointerdown", on);

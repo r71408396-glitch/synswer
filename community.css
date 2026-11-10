@@ -16,6 +16,9 @@ body.cm-body { margin:0; background:var(--m-bg); color:var(--m-text); font-famil
 .cm-btn.danger { background:var(--m-bad); }
 
 .cm-top { position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:12px; padding:10px 16px; background:color-mix(in srgb, var(--m-bg) 88%, transparent); backdrop-filter:blur(12px); border-bottom:1px solid var(--m-line); }
+.cm-top { transition:transform .25s ease; }
+.cm-top.cm-away { transform:translateY(-110%); }
+@media (prefers-reduced-motion: reduce) { .cm-top { transition:none; } }
 .cm-brand { font:800 15px Sora,Inter,sans-serif; letter-spacing:.16em; color:var(--m-text); text-decoration:none; white-space:nowrap; }
 .cm-brand b { color:var(--m-acc); }
 .cm-search { flex:1; max-width:420px; margin:0 auto; position:relative; }
