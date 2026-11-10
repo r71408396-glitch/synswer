@@ -23,11 +23,15 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="community.css" />
     <link rel="stylesheet" href="messenger.css" />
+    <style>
+      .cm-body .cookie .btn:not(.btn-ghost) { color: #02201d; }
+      .cm-body .cm-av { color: #02201d; }
+    </style>
     <script>try { var t = localStorage.getItem("synswer-theme"); if (t) document.documentElement.setAttribute("data-theme", t); if (localStorage.getItem("synswer-consent")) document.documentElement.classList.add("consent-set"); } catch (e) {}</script>
   </head>
   <body class="cm-body" style="display:none">
     <header class="cm-top">
-      <a class="cm-brand" href="index.html">SYNSWER<span> <b>Community</b></span></a>
+      <a class="cm-brand" href="index.html" aria-label="Synswer Community home" style="display:inline-flex;align-items:center;gap:8px"><img src="assets/logo.png" alt="Synswer" width="109" height="28" style="height:28px;width:auto" /><b style="font-size:.85em">Community</b></a>
       <form class="cm-search" id="search-form" role="search">
         <input id="search-q" type="search" maxlength="60" placeholder="Search posts, people or #topics" autocomplete="off" aria-label="Search the community" />
       </form>
@@ -91,7 +95,6 @@
 
     <nav class="cm-tab-bar" id="tabbar" aria-label="Community"></nav>
     <p class="cm-toast" id="toast" role="status" hidden></p>
-    {footer}
     {cookie}
     <script src="app.js"></script>
     <script src="md.js"></script>

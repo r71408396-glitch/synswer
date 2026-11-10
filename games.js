@@ -369,7 +369,7 @@
 
   // ----- leaderboard -----
   var CROWN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="currentColor" stroke="rgba(0,0,0,.35)" stroke-width="1" stroke-linejoin="round"/><circle cx="3" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="21" cy="8" r="1.6" fill="currentColor"/></svg>';
-  var FB = '<svg viewBox="0 0 40 40" width="18" height="18" aria-hidden="true"><path d="M27 4 L13 18 H21 L15 26 H8 L22 36 L26 22 H19 L27 4Z" fill="#2563eb"/><path d="M30 6 L18 20 H25 L12 36" fill="none" stroke="#14e0cc" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+  var FB = '<svg viewBox="0 0 40 40" width="20" height="20" aria-hidden="true"><path d="M20 4C11 4 4 10.500 4 18.500c0 4.200 1.900 8 5 10.600L8 36l7-3.500c1.600.4 3.200.6 5 .6 9 0 16-6.500 16-14.600S29 4 20 4z" fill="none" stroke="#14e0cc" stroke-width="2.500" stroke-linejoin="round"/><path d="M22.500 9 14 20.500h6L17.500 29 27 16.500h-6z" fill="#2563eb" stroke="#7fe9ff" stroke-width=".8" stroke-linejoin="round"/></svg>';
   var shareToast = null, shareToastT = 0;
   function toastMsg(html) {
     if (!shareToast) {
