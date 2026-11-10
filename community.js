@@ -7,6 +7,7 @@
   var LEET = { "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b", "@": "a", "$": "s", "!": "i", "|": "i", "+": "t" };
   function normalize(t) { t = String(t).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); return t.replace(/[0134578@$!|+]/g, function (c) { return LEET[c]; }); }
   function violates(raw) {
+    raw = String(raw).replace(/https?:\/\/(www\.)?(synswer\.com|[a-z0-9-]+\.krva\.cc)\/[^\s]*/gi, " ");
     if (/(https?:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|xxx|porn|sex|adult|tv|io|co|me|ly|info)\b)/i.test(raw)) return true;
     var n = normalize(raw), spaced = n.replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim(), set = {};
     spaced.split(" ").forEach(function (w) {
@@ -179,11 +180,92 @@
     });
   }
 
+  // ---------- reactions, verified badge, link previews, theme ----------
+  var KINDS = [["like", "Like"], ["love", "Love"], ["laugh", "Haha"], ["wow", "Wow"], ["sad", "Sad"]];
+  function kindLabel(k) { for (var i = 0; i < KINDS.length; i++) if (KINDS[i][0] === k) return KINDS[i][1]; return k; }
+  function reactBar(cfg) {
+    var st = cfg.st, wrap = el("div", "cm-rx"), chips = el("span", "cm-rxchips"), pick = el("span", "cm-rxpick"), btn = el("button", "cm-rxbtn", "React");
+    btn.type = "button"; btn.setAttribute("aria-expanded", "false"); pick.hidden = true;
+    function paint() {
+      chips.textContent = "";
+      KINDS.forEach(function (k) {
+        var n = st.counts[k[0]] || 0; if (!n) return;
+        chips.appendChild(el("span", "cm-rxchip k-" + k[0] + (st.mine && st.mine.kind === k[0] ? " mine" : ""), k[1] + " " + n));
+      });
+      btn.textContent = st.mine ? "You: " + kindLabel(st.mine.kind) : "React";
+      btn.classList.toggle("on", !!st.mine);
+    }
+    function choose(kind) {
+      if (!canAct()) return;
+      var prev = st.mine;
+      if (prev && prev.kind === kind) {
+        st.counts[kind] = Math.max(0, (st.counts[kind] || 1) - 1); st.mine = null; paint();
+        api("api/rows/" + cfg.table + "/" + prev.id, "DELETE").then(function (r) { if (!r.ok) { st.counts[kind] = (st.counts[kind] || 0) + 1; st.mine = prev; paint(); toast("Could not update reaction."); } });
+        return;
+      }
+      if (prev) st.counts[prev.kind] = Math.max(0, (st.counts[prev.kind] || 1) - 1);
+      st.counts[kind] = (st.counts[kind] || 0) + 1; st.mine = { id: prev ? prev.id : null, kind: kind }; paint();
+      var vals = { kind: kind }; if (!prev) for (var k in cfg.keys) vals[k] = cfg.keys[k];
+      var req = prev ? api("api/rows/" + cfg.table + "/" + prev.id, "PATCH", { kind: kind }) : api("api/rows/" + cfg.table, "POST", vals);
+      req.then(function (r) {
+        if (!r.ok) { st.counts[kind] = Math.max(0, (st.counts[kind] || 1) - 1); if (prev) st.counts[prev.kind] = (st.counts[prev.kind] || 0) + 1; st.mine = prev; paint(); toast(r.d.error || "Could not react."); }
+        else { if (r.d.row) st.mine.id = r.d.row.id; if (cfg.notify) cfg.notify(); }
+      });
+    }
+    KINDS.forEach(function (k) { var b = el("button", "cm-rxopt k-" + k[0], k[1]); b.type = "button"; b.onclick = function () { pick.hidden = true; btn.setAttribute("aria-expanded", "false"); choose(k[0]); }; pick.appendChild(b); });
+    btn.onclick = function () { pick.hidden = !pick.hidden; btn.setAttribute("aria-expanded", String(!pick.hidden)); };
+    wrap.appendChild(chips); wrap.appendChild(btn); wrap.appendChild(pick); paint();
+    return wrap;
+  }
+  function reactState(rows) {
+    var st = { counts: {}, mine: null };
+    (rows || []).forEach(function (r) { st.counts[r.kind] = (st.counts[r.kind] || 0) + 1; if (me && r.user_id === me.id) st.mine = { id: r.id, kind: r.kind }; });
+    return st;
+  }
+  function vbadge(id) {
+    var p = prof[id], s = el("span", "cm-vf");
+    if (!p || !p.verified) return document.createTextNode("");
+    s.title = "Verified by Synswer"; s.setAttribute("role", "img"); s.setAttribute("aria-label", "Verified");
+    s.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 1.5l2.6 1.9 3.2-.1 1 3 2.6 1.9-1 3.100 1 3.100-2.600 1.900-1 3-3.200-.1L12 22.500l-2.600-1.900-3.200.1-1-3L2.600 15.800l1-3.100-1-3.100 2.600-1.900 1-3 3.200.1z" fill="#14e0cc"/><path d="M7.800 12.200l2.900 2.900 5.600-5.800" fill="none" stroke="#02201d" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    return s;
+  }
+  var ORIGIN = (function () { var m = document.querySelector('meta[name="kreova-site-origin"]'); return m ? m.content.replace(/\/$/, "") : location.origin; })();
+  function ownUrl(u) { try { var x = new URL(u, location.href); return x.host === location.host || x.origin === ORIGIN || /(^|\.)synswer\.com$/.test(x.hostname) ? x : null; } catch (e) { return null; } }
+  function gameTitle(id) { var l = window.GAME_META || []; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i].title; return null; }
+  var LINKTITLES = { "snake.html": "Snake", "tetris.html": "Tetris", "shooter.html": "Space Shooter" };
+  function linkCard(url) {
+    var x = ownUrl(url); if (!x) return null;
+    var page = x.pathname.split("/").pop() || "index.html", g = x.searchParams.get("g");
+    var card = el("a", "cm-lcard"); card.href = x.pathname + x.search; card.target = "_blank"; card.rel = "noopener";
+    var logo = el("img"); logo.src = "assets/logo.png"; logo.alt = "Synswer"; logo.width = 78; logo.height = 20; card.appendChild(logo);
+    var t = el("div", "t"), kind = el("span", "k", "Synswer"), ttl = el("b", "", "Open on Synswer"), sub = el("span", "s", "synswer.com");
+    t.appendChild(kind); t.appendChild(ttl); t.appendChild(sub); card.appendChild(t);
+    if (page === "play.html" && g) { kind.textContent = "Game"; ttl.textContent = gameTitle(g) || "Play a game"; sub.textContent = "Tap to play and beat the score"; }
+    else if (LINKTITLES[page]) { kind.textContent = "Game"; ttl.textContent = LINKTITLES[page]; sub.textContent = "Tap to play and beat the score"; }
+    else if (page === "article.html" && x.searchParams.get("slug")) {
+      kind.textContent = "Article"; ttl.textContent = "Read on Synswer";
+      api("api/rows/articles?slug=eq." + encodeURIComponent(x.searchParams.get("slug")) + "&select=title,excerpt&limit=1").then(function (r) { var a = (r.d.rows || [])[0]; if (a) { ttl.textContent = a.title; if (a.excerpt) sub.textContent = String(a.excerpt).slice(0, 110); } });
+    } else if (page === "games.html") { kind.textContent = "Games"; ttl.textContent = "Synswer Games"; }
+    else if (page === "articles.html") { kind.textContent = "Articles"; ttl.textContent = "Synswer Articles"; }
+    return card;
+  }
+  var ACCENTS = [["Teal", "#0e8f84"], ["Blue", "#2f7bff"], ["Violet", "#7c3aed"], ["Pink", "#db2777"], ["Orange", "#ea580c"], ["Green", "#16a34a"]];
+  function applyTheme(p) {
+    var root = document.documentElement;
+    if (p && p.theme_accent && /^#[0-9a-f]{6}$/i.test(p.theme_accent)) { root.style.setProperty("--m-acc", p.theme_accent); root.style.setProperty("--m-acc-soft", p.theme_accent + "33"); }
+    else { root.style.removeProperty("--m-acc"); root.style.removeProperty("--m-acc-soft"); }
+    if (p && (p.theme_mode === "light" || p.theme_mode === "dark")) { root.setAttribute("data-theme", p.theme_mode); try { localStorage.setItem("synswer-theme", p.theme_mode); } catch (e) {} }
+  }
+
   // ---------- rendering ----------
   function richText(text) {
     var f = document.createDocumentFragment();
-    String(text).split(/(#[A-Za-z0-9_]{2,30}|@[A-Za-z0-9_]{3,20})/).forEach(function (part) {
-      if (/^#/.test(part)) { var b = el("button", "lnk", part); b.type = "button"; b.onclick = function () { setView({ tag: part.slice(1).toLowerCase() }, "#" + part.slice(1)); }; f.appendChild(b); }
+    String(text).split(/(https?:\/\/[^\s]+|#[A-Za-z0-9_]{2,30}|@[A-Za-z0-9_]{3,20})/).forEach(function (part) {
+      if (/^https?:\/\//.test(part)) {
+        var u = part.replace(/[.,;:!?)]+$/, ""), tail = part.slice(u.length), a = el("a", "", u.length > 48 ? u.slice(0, 45) + "..." : u);
+        var own = ownUrl(u); a.href = own ? own.pathname + own.search : u; a.target = "_blank"; a.rel = "noopener noreferrer ugc"; f.appendChild(a); if (tail) f.appendChild(document.createTextNode(tail));
+      }
+      else if (/^#/.test(part)) { var b = el("button", "lnk", part); b.type = "button"; b.onclick = function () { setView({ tag: part.slice(1).toLowerCase() }, "#" + part.slice(1)); }; f.appendChild(b); }
       else if (/^@/.test(part)) { var m = el("button", "lnk", part); m.type = "button"; m.onclick = function () { setView({ search: part }, part); $("search-q").value = part.slice(1); runSearch(part.slice(1)); }; f.appendChild(m); }
       else f.appendChild(document.createTextNode(part));
     });
@@ -200,13 +282,16 @@
     if (!embedded) li.appendChild(avatar(p.user_id));
     var body = el("div", "cm-pb"), meta = el("div", "cm-meta");
     var nm = el("button", "nm", dname(p.user_id)); nm.type = "button"; nm.onclick = function () { openProfile(p.user_id); };
-    meta.appendChild(nm); meta.appendChild(el("span", "", "@" + uname(p.user_id))); var agoTxt = ago(p.created_at); meta.appendChild(el("span", "", "\u2022 " + (/^\d+[mhd]$/.test(agoTxt) ? agoTxt + " ago" : agoTxt)));
+    meta.appendChild(nm); meta.appendChild(vbadge(p.user_id)); meta.appendChild(el("span", "", "@" + uname(p.user_id))); var agoTxt = ago(p.created_at); meta.appendChild(el("span", "", "\u2022 " + (/^\d+[mhd]$/.test(agoTxt) ? agoTxt + " ago" : agoTxt)));
     if (p.edited_at) meta.appendChild(el("span", "", "edited"));
     if (p.category && p.category !== "general") meta.appendChild(el("span", "cm-cat", CATS[p.category] || p.category));
     body.appendChild(meta);
     if (p.status && p.status !== "approved") body.appendChild(el("span", "cm-hidden", "Hidden by an admin - only you can see this"));
     if (p.repost_of) body.appendChild(el("div", "cm-meta", "Reposted"));
-    if (p.content) { var t = el("p", "cm-text"); t.appendChild(richText(p.content)); body.appendChild(t); }
+    if (p.content) {
+      var t = el("p", "cm-text"); t.appendChild(richText(p.content)); body.appendChild(t);
+      var um = p.content.match(/https?:\/\/[^\s]+/); if (um) { var lc = linkCard(um[0].replace(/[.,;:!?)]+$/, "")); if (lc) body.appendChild(lc); }
+    }
     var acc = null;
     if (!embedded) { acc = el("div", "cm-insights"); acc.hidden = true; body.appendChild(acc); }
     if (p.image_url) body.appendChild(window.MediaSafe ? window.MediaSafe.node(p.image_url, p.media_type) : el("img", "cm-img"));
@@ -217,6 +302,8 @@
     if (Array.isArray(p.poll_options) && p.poll_options.length) body.appendChild(buildPoll(p, S));
     if (embedded) { li.appendChild(body); return li; }
 
+    S.rx = S.rx || { counts: {}, mine: null };
+    body.appendChild(reactBar({ table: "post_reactions", keys: { post_id: p.id }, st: S.rx, notify: function () { notify(p.user_id, "like", p.id); } }));
     var bar = el("div", "cm-acts");
     var like = actBtn("like", P.like, "", "Like"), cmt = actBtn("cmt", P.cmt, "", "Comments"), rep = actBtn("rep", P.rep, "", "Repost"), bm = actBtn("bm", P.bm, "", "Save"), sh = actBtn("share", P.share, "", "Share");
     function paint() {
@@ -431,10 +518,17 @@
           ids.length ? api("api/rows/posts?user_id=eq." + me.id + "&repost_of=in." + idStr + "&select=id,repost_of&limit=200") : { d: {} },
           ids.length ? api("api/rows/bookmarks?user_id=eq." + me.id + "&post_id=in." + idStr + "&select=id,post_id&limit=200") : { d: {} },
           ids.length ? api("api/rows/poll_votes/aggregate?agg=count&group=post_id,option_index&post_id=in." + idStr + "&limit=200") : { d: {} },
-          ids.length ? api("api/rows/poll_votes?user_id=eq." + me.id + "&post_id=in." + idStr + "&limit=200") : { d: {} }
+          ids.length ? api("api/rows/poll_votes?user_id=eq." + me.id + "&post_id=in." + idStr + "&limit=200") : { d: {} },
+          ids.length ? api("api/rows/post_reactions/aggregate?agg=count&group=post_id,kind&post_id=in." + idStr + "&limit=200") : { d: {} },
+          ids.length ? api("api/rows/post_reactions?user_id=eq." + me.id + "&post_id=in." + idStr + "&select=id,post_id,kind&limit=200") : { d: {} }
         ]).then(function (r) {
+          var rxs = {};
+          ids.forEach(function (id) { rxs[id] = { counts: {}, mine: null }; });
+          (r[9].d.rows || []).forEach(function (x) { if (rxs[x.post_id]) rxs[x.post_id].counts[x.kind] = Number(x.count); });
+          (r[10].d.rows || []).forEach(function (x) { if (rxs[x.post_id]) rxs[x.post_id].mine = { id: x.id, kind: x.kind }; });
           var st = {};
           ids.forEach(function (id) { st[id] = { likes: 0, comments: 0, reposts: 0 }; });
+          ids.forEach(function (id) { st[id].rx = rxs[id]; });
           (r[1].d.rows || []).forEach(function (x) { st[x.post_id].likes = Number(x.count); });
           (r[2].d.rows || []).forEach(function (x) { var s = st[x.post_id]; s.voteId = x.id; s.liked = Number(x.value) === 1; });
           (r[3].d.rows || []).forEach(function (x) { st[x.post_id].comments = Number(x.count); });
