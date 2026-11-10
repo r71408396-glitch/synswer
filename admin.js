@@ -185,13 +185,13 @@
     return li;
   }
 
-  function userCard(u, count) {
+  function userCard(u, count, prof) {
     var li = document.createElement("li");
     li.className = "post user-row";
     var meta = document.createElement("div");
     meta.className = "meta";
     var who = document.createElement("b");
-    who.textContent = handle(u.user_id);
+    who.textContent = prof ? "@" + prof.username + (prof.verified ? " (verified)" : "") : handle(u.user_id);
     who.title = u.user_id;
     var t = document.createElement("span");
     t.textContent = "Joined community " + when(u.created_at);
@@ -207,6 +207,15 @@
       bar.appendChild(btn("Unban", "on", function () { setBan(u.user_id, false).then(function (ok) { if (ok) toast("User unbanned"); refresh(); }); }));
     } else if (u.user_id !== me.id) {
       bar.appendChild(btn("Ban user", "del-soft", function () { banFlow(u.user_id); }));
+    }
+    if (prof) {
+      bar.appendChild(btn(prof.verified ? "Remove verified badge" : "Verify", prof.verified ? "" : "on", function () {
+        api("api/rows/profiles/" + prof.id, "PATCH", { verified: !prof.verified }).then(function (r) {
+          if (!r.ok) toast(r.d.error || "Could not change the badge.");
+          else toast(prof.verified ? "Badge removed" : "Verified badge given");
+          refresh();
+        });
+      }));
     }
     li.appendChild(bar);
     return li;
@@ -247,15 +256,17 @@
     if (tab === "users") {
       return Promise.all([
         api("api/rows/member_standing?sort=-created_at&limit=200"),
-        api("api/rows/posts/aggregate?agg=count&group=user_id&limit=200")
+        api("api/rows/posts/aggregate?agg=count&group=user_id&limit=200"),
+        api("api/rows/profiles?select=id,user_id,username,verified&limit=200")
       ]).then(function (r) {
-        var counts = {};
+        var counts = {}, profs = {};
+        (r[2].d.rows || []).forEach(function (p) { profs[p.user_id] = p; });
         (r[1].d.rows || []).forEach(function (x) { counts[x.user_id] = x.count; });
         var rows = r[0].d.rows || [];
         list.innerHTML = "";
         if (!rows.length) { list.appendChild(empty("No community members yet.")); return; }
         rows.sort(function (a, b) { return (a.status === "banned" ? 0 : 1) - (b.status === "banned" ? 0 : 1); });
-        rows.forEach(function (u) { list.appendChild(userCard(u, counts[u.user_id] || 0)); });
+        rows.forEach(function (u) { list.appendChild(userCard(u, counts[u.user_id] || 0, profs[u.user_id])); });
       });
     }
     if (tab === "reports") {
