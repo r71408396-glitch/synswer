@@ -272,16 +272,37 @@
   fsBtn.type = "button";
   fsBtn.className = "pause-btn";
   fsBtn.textContent = "Fullscreen";
-  var canFs = card && (card.requestFullscreen || card.webkitRequestFullscreen);
-  function fsOn() { return document.fullscreenElement || document.webkitFullscreenElement; }
-  function fsLabel() { fsBtn.textContent = fsOn() ? "Exit fullscreen" : "Fullscreen"; }
+  var canFs = !!card;
+  var pseudoFs = false;
+  function fsOn() { return document.fullscreenElement || document.webkitFullscreenElement || pseudoFs; }
+  function fsLabel() {
+    var on = !!fsOn();
+    fsBtn.textContent = on ? "Exit fullscreen" : "Fullscreen";
+    document.body.classList.toggle("fs-on", on);
+    if (card) card.classList.toggle("is-fs", on);
+    window.dispatchEvent(new Event("resize"));
+  }
+  function exitFs() {
+    pseudoFs = false;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (_) {}
+    }
+    fsLabel();
+  }
   fsBtn.addEventListener("click", function () {
     fsBtn.blur();
-    if (fsOn()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
-    else { try { (card.requestFullscreen || card.webkitRequestFullscreen).call(card); } catch (_) {} }
+    if (fsOn()) { exitFs(); return; }
+    var req = card.requestFullscreen || card.webkitRequestFullscreen;
+    if (req) {
+      try {
+        var p = req.call(card);
+        if (p && p.catch) p.catch(function () { pseudoFs = true; fsLabel(); });
+      } catch (_) { pseudoFs = true; fsLabel(); }
+    } else { pseudoFs = true; fsLabel(); }
   });
   document.addEventListener("fullscreenchange", fsLabel);
   document.addEventListener("webkitfullscreenchange", fsLabel);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && pseudoFs && !playing) exitFs(); });
   if (hud) { hud.appendChild(muteBtn); hud.appendChild(vol); if (canFs) hud.appendChild(fsBtn); hud.appendChild(pauseBtn); }
 
   // While a round is running, the game area never scrolls the page (touch, wheel, space and arrow keys).
