@@ -64,18 +64,26 @@
     else b.textContent = dname(id).charAt(0).toUpperCase();
     b.onclick = function (e) {
       e.stopPropagation();
-      if (p && p.avatar_url) viewPhoto(p.avatar_url, dname(id) + " - profile picture", id);
+      if (p && p.avatar_url) viewPhoto(p.avatar_url, dname(id) + " - profile picture", id, "avatar");
       else openProfile(id);
     };
     return b;
   }
   // Full-size viewer for a profile picture or cover photo (private files load with the signed-in session).
-  function viewPhoto(url, label, uid) {
+  function viewPhoto(url, label, uid, target) {
     dialog(function (d) {
       d.classList.add("cm-viewer");
       var im = el("img"); im.src = url; im.alt = label;
       d.appendChild(im);
       d.appendChild(el("p", "cm-meta", label));
+      if (uid && target) {
+        var rxBox = el("div"); rxBox.style.cssText = "display:flex;justify-content:center;margin:6px 0"; d.appendChild(rxBox);
+        var keys = { target_user_id: uid, target: target };
+        api("api/rows/profile_reactions?target_user_id=eq." + uid + "&target=eq." + target + "&limit=200").then(function (r) {
+          var rc = reactControl({ variant: "post", table: "profile_reactions", keys: keys, st: reactState(r.d.rows), notify: function (kind) { notify(uid, "react", null, { kind: kind }); } });
+          rxBox.appendChild(rc.node);
+        });
+      }
       var r = el("div", "row");
       if (uid && view.user !== uid) { var pb = el("button", "cm-btn ghost sm", "View profile"); pb.type = "button"; pb.onclick = function () { d.close(); openProfile(uid); }; r.appendChild(pb); }
       var cl = el("button", "cm-btn sm", "Close"); cl.type = "button"; cl.onclick = function () { d.close(); };
@@ -197,6 +205,8 @@
     var st = cfg.st, msg = cfg.variant === "msg", wrap = el("span", "cm-rxwrap" + (msg ? " msg" : "")), btn = el("button", "cm-rxtrig" + (msg ? " msgpill" : "")), picker = el("span", "cm-rxpick"), timer = null, held = false, opts = {};
     btn.type = "button"; picker.hidden = true; picker.setAttribute("role", "menu");
     var self = { node: wrap, wrap: wrap };
+    var who = el("button", "cm-rxwho"); who.type = "button"; who.hidden = true;
+    who.onclick = function (e) { e.stopPropagation(); close(); whoReacted(cfg, st, msg); };
     function total() { var n = 0; KINDS.forEach(function (k) { n += st.counts[k[0]] || 0; }); return n; }
     function paint() {
       btn.textContent = ""; var tot = total();
@@ -205,8 +215,11 @@
       else {
         btn.hidden = false; var stack = el("span", "cm-rxstack");
         top.forEach(function (x, i) { var s = el("span", "cm-rxe", EMO[x[0]]); s.style.zIndex = String(3 - i); stack.appendChild(s); });
-        btn.appendChild(stack); btn.appendChild(el("span", "cm-rxn", String(tot)));
+        btn.appendChild(stack);
       }
+      who.hidden = !tot; who.textContent = tot ? String(tot) : "";
+      who.title = who.getAttribute("aria-label") !== null && tot ? "See who reacted" : "See who reacted";
+      who.setAttribute("aria-label", tot ? "See who reacted (" + tot + ")" : "See who reacted");
       btn.classList.toggle("on", !!st.mine);
       var parts = KINDS.filter(function (k) { return st.counts[k[0]]; }).map(function (k) { return k[1] + " " + st.counts[k[0]]; });
       var lab = (st.mine ? "You reacted " + kindLabel(st.mine.kind) + ". " : "React. ") + (parts.length ? parts.join(", ") + "." : "No reactions yet.") + " Tap to like, hold to choose.";
@@ -250,11 +263,45 @@
       if (!picker.hidden) { close(); return; }
       choose(st.mine ? st.mine.kind : "like");
     };
-    wrap.appendChild(btn);
+    wrap.appendChild(btn); wrap.appendChild(who);
     if (!msg) { var mb = el("button", "cm-rxmore"); mb.type = "button"; mb.setAttribute("aria-label", "Choose a reaction"); mb.innerHTML = svg(MORE); mb.onclick = function () { if (picker.hidden) open(); else close(); }; wrap.appendChild(mb); }
     wrap.appendChild(picker); paint();
     self.open = function () { open(); }; self.close = close; self.paint = paint;
     return self;
+  }
+  // Tap the reaction count to see who reacted, with a tab per reaction.
+  function whoReacted(cfg, st, msg) {
+    var q = Object.keys(cfg.keys).map(function (k) { return k + "=eq." + encodeURIComponent(cfg.keys[k]); }).join("&");
+    dialog(function (d) {
+      d.appendChild(el("h2", "", "Reactions"));
+      var tabs = el("div", "cm-tabs"); tabs.style.padding = "2px 0 8px"; d.appendChild(tabs);
+      var list = el("div", "list"); list.textContent = "Loading..."; d.appendChild(list);
+      var r = el("div", "row"), cl = el("button", "cm-btn sm", "Close"); cl.type = "button"; cl.onclick = function () { d.close(); }; r.appendChild(cl); d.appendChild(r);
+      api("api/rows/" + cfg.table + "?" + q + "&sort=-created_at&limit=200").then(function (res) {
+        var rows = res.d.rows || [], cur = "all";
+        return loadProfiles(rows.map(function (x) { return x.user_id; })).then(function () {
+          function draw() {
+            tabs.textContent = "";
+            var all = el("button", cur === "all" ? "on" : "", "All " + rows.length); all.type = "button"; all.onclick = function () { cur = "all"; draw(); }; tabs.appendChild(all);
+            KINDS.forEach(function (k) {
+              var n = rows.filter(function (x) { return x.kind === k[0]; }).length; if (!n) return;
+              var b = el("button", cur === k[0] ? "on" : "", EMO[k[0]] + " " + n); b.type = "button"; b.setAttribute("aria-label", k[1] + " " + n); b.onclick = function () { cur = k[0]; draw(); }; tabs.appendChild(b);
+            });
+            list.textContent = "";
+            var shown = rows.filter(function (x) { return cur === "all" || x.kind === cur; });
+            if (!shown.length) { list.appendChild(el("p", "cm-meta", "No reactions yet.")); return; }
+            shown.forEach(function (x) {
+              var row = el("div", "cm-person"); row.appendChild(avatar(x.user_id, "sm"));
+              var w = el("button", "who"); w.type = "button"; w.appendChild(el("b", "", x.user_id === (me && me.id) ? "You" : dname(x.user_id))); w.appendChild(el("span", "", "@" + uname(x.user_id)));
+              w.onclick = function () { d.close(); openProfile(x.user_id); }; row.appendChild(w);
+              row.appendChild(el("span", "cm-rxe-big", EMO[x.kind] || ""));
+              list.appendChild(row);
+            });
+          }
+          draw();
+        });
+      }).catch(function () { list.textContent = "Could not load reactions."; });
+    });
   }
   // Hold anywhere on a post or bubble (not on links, buttons or media controls) to open its reaction picker.
   function holdReact(host, rc) {
@@ -344,12 +391,14 @@
     else if (page === "articles.html") { kind.textContent = "Articles"; ttl.textContent = "Synswer Articles"; }
     return card;
   }
-  var ACCENTS = [["Teal", "#0e8f84"], ["Blue", "#2f7bff"], ["Violet", "#7c3aed"], ["Pink", "#db2777"], ["Orange", "#ea580c"], ["Green", "#16a34a"]];
+  var ACCENTS = [["Teal", "#0e8f84"], ["Blue", "#2563eb"], ["Violet", "#7c3aed"], ["Pink", "#db2777"], ["Orange", "#c2410c"], ["Green", "#15803d"]];
   function applyTheme(p) {
     var root = document.documentElement;
     if (p && p.theme_accent && /^#[0-9a-f]{6}$/i.test(p.theme_accent)) { root.style.setProperty("--m-acc", p.theme_accent); root.style.setProperty("--m-acc-soft", p.theme_accent + "33"); }
     else { root.style.removeProperty("--m-acc"); root.style.removeProperty("--m-acc-soft"); }
-    if (p && (p.theme_mode === "light" || p.theme_mode === "dark")) { root.setAttribute("data-theme", p.theme_mode); try { localStorage.setItem("synswer-theme", p.theme_mode); } catch (e) {} }
+    var mode = p && p.theme_mode;
+    if (mode === "auto") mode = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    if (mode === "light" || mode === "dark") { root.setAttribute("data-theme", mode); try { localStorage.setItem("synswer-theme", mode); } catch (e) {} }
   }
 
   // ---------- rendering ----------
@@ -739,7 +788,7 @@
         if (p.cover_url) {
           cover.style.backgroundImage = "url('" + p.cover_url.replace(/'/g, "%27") + "')";
           cover.style.cursor = "zoom-in"; cover.tabIndex = 0; cover.setAttribute("role", "button"); cover.setAttribute("aria-label", "View cover photo");
-          cover.onclick = function () { viewPhoto(p.cover_url, dname(uid) + " - cover photo"); };
+          cover.onclick = function () { viewPhoto(p.cover_url, dname(uid) + " - cover photo", uid, "cover"); };
           cover.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); cover.onclick(); } };
         }
         card.appendChild(cover);
@@ -865,8 +914,8 @@
           if (!rows.length) { list.appendChild(el("p", "cm-meta", "You are all caught up.")); return; }
           rows.forEach(function (n) {
             var it = el("button", "cm-item" + (n.read ? "" : " unread")); it.type = "button";
-            it.appendChild(avatar(n.actor_id, "sm")); var t = el("div", "t"); t.appendChild(el("b", "", dname(n.actor_id))); t.appendChild(document.createTextNode(" " + (n.type === "react" ? "reacted " + (EMO[n.kind] || "") + " to your " + (n.post_id ? "post" : "message") : (VERB[n.type] || "interacted with you")))); t.appendChild(el("span", "", ago(n.created_at))); it.appendChild(t);
-            it.onclick = function () { if (!n.read) api("api/rows/notifications/" + n.id, "PATCH", { read: true }).then(unread); d.close(); if (n.post_id) { setView({ post: n.post_id }, "the post"); } else if (n.type === "react" && window.CMX) { window.CMX.openMessages(n.actor_id); } else openProfile(n.actor_id); };
+            it.appendChild(avatar(n.actor_id, "sm")); var t = el("div", "t"); t.appendChild(el("b", "", dname(n.actor_id))); t.appendChild(document.createTextNode(" " + (n.type === "react" ? "reacted " + (EMO[n.kind] || "") + " to your " + (n.post_id ? "post" : n.message_id ? "message" : "profile photo") : (VERB[n.type] || "interacted with you")))); t.appendChild(el("span", "", ago(n.created_at))); it.appendChild(t);
+            it.onclick = function () { if (!n.read) api("api/rows/notifications/" + n.id, "PATCH", { read: true }).then(unread); d.close(); if (n.post_id) { setView({ post: n.post_id }, "the post"); } else if (n.type === "react" && n.message_id && window.CMX) { window.CMX.openMessages(n.actor_id); } else openProfile(n.actor_id); };
             list.appendChild(it);
           });
         });
@@ -952,6 +1001,24 @@
       var dm = el("select"); [["everyone", "Anyone"], ["followers", "Only people I follow"], ["none", "Nobody"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; dm.appendChild(op); });
       dm.value = (profile && profile.dm_policy) || "everyone"; d.appendChild(dm);
       dm.onchange = function () { if (!profile) return; api("api/rows/profiles/" + profile.id, "PATCH", { dm_policy: dm.value }).then(function (x) { if (x.ok) { profile = x.d.row; prof[me.id] = profile; toast("Saved"); } else toast("Could not save."); }); };
+      d.appendChild(el("h2", "", "Theme")).style.marginTop = "18px";
+      d.appendChild(el("label", "", "Accent colour"));
+      var sw = el("div"); sw.style.cssText = "display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 4px"; d.appendChild(sw);
+      function saveTheme(v) {
+        if (!profile) return Promise.resolve();
+        return api("api/rows/profiles/" + profile.id, "PATCH", v).then(function (x) { if (x.ok) { profile.theme_accent = x.d.row.theme_accent; profile.theme_mode = x.d.row.theme_mode; prof[me.id] = profile; applyTheme(profile); toast("Theme saved"); } else toast("Could not save theme."); });
+      }
+      function paintSw() { Array.prototype.forEach.call(sw.children, function (b) { var on = (profile && profile.theme_accent || ACCENTS[0][1]).toLowerCase() === b.getAttribute("data-c"); b.style.boxShadow = on ? "0 0 0 3px var(--m-card), 0 0 0 5px " + b.getAttribute("data-c") : "none"; b.setAttribute("aria-pressed", on ? "true" : "false"); }); }
+      ACCENTS.forEach(function (a) {
+        var b = el("button"); b.type = "button"; b.title = a.name || a[0]; b.setAttribute("aria-label", a[0] + " accent"); b.setAttribute("data-c", a[1]);
+        b.style.cssText = "width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;background:" + a[1];
+        b.onclick = function () { saveTheme({ theme_accent: a[1] }).then(paintSw); }; sw.appendChild(b);
+      });
+      paintSw();
+      d.appendChild(el("label", "", "Appearance"));
+      var tm = el("select"); [["auto", "Auto (follow my device)"], ["light", "Light"], ["dark", "Dark"]].forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; tm.appendChild(op); });
+      tm.value = (profile && profile.theme_mode) || "auto"; d.appendChild(tm);
+      tm.onchange = function () { saveTheme({ theme_mode: tm.value }); };
       d.appendChild(el("h2", "", "Preferences")).style.marginTop = "18px";
       [["hide_from_suggestions", "Do not suggest my account to others", false], ["notify_likes", "Notify me about likes", true], ["notify_comments", "Notify me about comments and replies", true], ["notify_follows", "Notify me about new followers", true], ["notify_mentions", "Notify me when I am mentioned", true]].forEach(function (o) {
         var lab = el("label", ""); lab.style.display = "flex"; lab.style.gap = "8px"; lab.style.alignItems = "center";
@@ -1065,7 +1132,7 @@
         if (s.user) { openProfile(s.user, true); return; }
         view = {}; tab = s.tab || "foryou"; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true);
       });
-      loadFollowedBy(); setCompAv(); loadFeed(true); loadSide(); unread(); setInterval(unread, 60000);
+      applyTheme(profile); loadFollowedBy(); setCompAv(); loadFeed(true); loadSide(); unread(); setInterval(unread, 60000);
     });
   }).catch(function () { location.replace("login.html?next=community.html"); });
 })();
