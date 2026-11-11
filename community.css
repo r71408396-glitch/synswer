@@ -223,3 +223,17 @@ html[data-theme="dark"] .cm-act.on.bm { color:#8b7cff; } html[data-theme="dark"]
 .cm-rxwho[hidden] { display:none; }
 .cm-rxe-big { font-size:20px; line-height:1; }
 .cm-dlg .cm-tabs button { min-height:34px; padding:5px 12px; }
+/* Theme palettes: the accent also tints the page background. Text colours stay fixed so everything stays readable. */
+:root { --m-acc-soft: rgba(20,224,204,.18); }
+html[data-theme="dark"][data-accent="#2563eb"] { --m-bg:#060f24; --m-card:#0a1733; --m-card2:#0f2045; --m-line:#1e3a7a; }
+html[data-theme="dark"][data-accent="#7c3aed"] { --m-bg:#0d0820; --m-card:#140d2e; --m-card2:#1c1340; --m-line:#3b2a7a; }
+html[data-theme="dark"][data-accent="#db2777"] { --m-bg:#1a0613; --m-card:#240a1c; --m-card2:#310f27; --m-line:#6b1d4a; }
+html[data-theme="dark"][data-accent="#c2410c"] { --m-bg:#180a04; --m-card:#22110a; --m-card2:#2e180d; --m-line:#6b3315; }
+html[data-theme="dark"][data-accent="#15803d"] { --m-bg:#04160a; --m-card:#082010; --m-card2:#0d2e18; --m-line:#14572e; }
+html[data-theme="light"][data-accent="#0e8f84"] { --m-bg:#eefaf8; --m-card:#ffffff; --m-card2:#e2f4f1; --m-line:#c5e6e1; }
+html[data-theme="light"][data-accent="#2563eb"] { --m-bg:#eff4ff; --m-card:#ffffff; --m-card2:#e3ebfd; --m-line:#c9d8f8; }
+html[data-theme="light"][data-accent="#7c3aed"] { --m-bg:#f5f1ff; --m-card:#ffffff; --m-card2:#ebe4fd; --m-line:#d8cbf7; }
+html[data-theme="light"][data-accent="#db2777"] { --m-bg:#fff0f6; --m-card:#ffffff; --m-card2:#fce4ee; --m-line:#f5c8da; }
+html[data-theme="light"][data-accent="#c2410c"] { --m-bg:#fff4ec; --m-card:#ffffff; --m-card2:#fde8d8; --m-line:#f6cfb3; }
+html[data-theme="light"][data-accent="#15803d"] { --m-bg:#effaf2; --m-card:#ffffff; --m-card2:#e0f4e6; --m-line:#bfe3ca; }
+html, body.cm-body { transition: background-color .25s ease; }

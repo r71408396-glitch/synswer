@@ -394,8 +394,8 @@
   var ACCENTS = [["Teal", "#0e8f84"], ["Blue", "#2563eb"], ["Violet", "#7c3aed"], ["Pink", "#db2777"], ["Orange", "#c2410c"], ["Green", "#15803d"]];
   function applyTheme(p) {
     var root = document.documentElement;
-    if (p && p.theme_accent && /^#[0-9a-f]{6}$/i.test(p.theme_accent)) { root.style.setProperty("--m-acc", p.theme_accent); root.style.setProperty("--m-acc-soft", p.theme_accent + "33"); }
-    else { root.style.removeProperty("--m-acc"); root.style.removeProperty("--m-acc-soft"); }
+    if (p && p.theme_accent && /^#[0-9a-f]{6}$/i.test(p.theme_accent)) { root.style.setProperty("--m-acc", p.theme_accent); root.style.setProperty("--m-acc-soft", p.theme_accent + "33"); root.setAttribute("data-accent", p.theme_accent.toLowerCase()); }
+    else { root.style.removeProperty("--m-acc"); root.style.removeProperty("--m-acc-soft"); root.removeAttribute("data-accent"); }
     var mode = p && p.theme_mode;
     if (mode === "auto") mode = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
     if (mode === "light" || mode === "dark") { root.setAttribute("data-theme", mode); try { localStorage.setItem("synswer-theme", mode); } catch (e) {} }
