@@ -65,5 +65,47 @@
     <script src="sound.js"></script>
     <script src="games.js"></script>
     <script src="shooter.js"></script>
+    <script type="module">
+      import { sound } from "@kreova/sound";
+      var S = window.Sound, on = false, bossMode = false, last = {};
+      var NORMAL = { chords: "Em C G D", style: "rock", bpm: 132, seed: 4 };
+      var BOSS = { chords: "Em Em C B7 Am Em F# B7", style: "rock", bpm: 152, seed: 9 };
+      function sync() { if (!S) return; sound.setMuted(!!S.muted); sound.setVolume(S.volume == null ? 0.7 : S.volume); }
+      function gap(k, ms) { var n = performance.now(); if (last[k] && n - last[k] < ms) return false; last[k] = n; return true; }
+      function play(n, o) { sync(); sound.play(n, o); }
+      function later(fn, ms) { setTimeout(function () { if (on) fn(); }, ms); }
+      function music() { sync(); sound.music(on ? (bossMode ? BOSS : NORMAL) : false); }
+      window.ShooterSfx = {
+        shoot: function () { if (gap("s", 90)) play("laser", { volume: 0.6, pitch: 1.2 + Math.random() * 0.4 }); },
+        enemyDie: function () { play("explosion", { volume: 0.8, pitch: 1.1 + Math.random() * 0.3 }); },
+        bossHit: function () { if (gap("bh", 70)) play("hit", { volume: 0.7, pitch: 0.6 }); },
+        bossFire: function () { if (gap("bf", 120)) play("laser", { volume: 0.7, pitch: 0.45 }); },
+        bossSpawn: function () {
+          play("swoosh", { pitch: 0.5 }); play("explosion", { volume: 1.2, pitch: 0.4 });
+          later(function () { play("error", { volume: 0.8, pitch: 0.5 }); }, 350);
+          bossMode = true; music();
+        },
+        bossDie: function () {
+          play("explosion", { volume: 1.4, pitch: 0.5 });
+          later(function () { play("explosion", { pitch: 0.7 }); }, 200);
+          later(function () { play("explosion", { pitch: 0.9 }); }, 420);
+          later(function () { play("win"); }, 700);
+          bossMode = false; music();
+        },
+        hurt: function () { play("hurt", { volume: 1.2, pitch: 0.7 }); play("explosion", { volume: 0.9, pitch: 0.55 }); }
+      };
+      if (S) {
+        var map = { start: "start", pause: "pause", gameover: "gameover", saved: "saved", eat: "blip" };
+        S.play = function (n) { if (map[n]) play(map[n]); };
+        S.music = function (v) {
+          on = !!v;
+          if (!on) bossMode = false;
+          music();
+        };
+        var tg = S.toggle, sv = S.setVolume;
+        S.toggle = function () { var r = tg.apply(S, arguments); sync(); return r; };
+        S.setVolume = function () { var r = sv.apply(S, arguments); sync(); return r; };
+      }
+    </script>
   </body>
 </html>

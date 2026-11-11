@@ -8,6 +8,7 @@
   var bossBar = document.getElementById("boss-bar"), bossFill = document.getElementById("boss-fill"), bossName = document.getElementById("boss-name");
   var BOSS_NAMES = ["Warden", "Devourer", "Dreadnought", "Leviathan", "Overlord"];
 
+  function sfx(n) { if (window.ShooterSfx && ShooterSfx[n]) ShooterSfx[n](); }
   function rand(a, b) { return a + Math.random() * (b - a); }
 
   function makeStars() {
@@ -52,13 +53,14 @@
     bossLevel++;
     var hp = 30 + 14 * bossLevel;
     boss = { x: W / 2, y: -50, w: 120, h: 62, hp: hp, max: hp, vx: 80 + bossLevel * 12, fireT: 1.6, shots: 0, flash: 0, hue: (bossLevel - 1) % 3 };
-    if (window.Sound) Sound.play("hurt");
+    sfx("bossSpawn");
     barUpdate();
   }
 
   function bossFire() {
     var n = bossLevel, b = boss, sp = 160 + n * 12, i, a, cnt;
     var ox = b.x, oy = b.y + b.h / 2;
+    sfx("bossFire");
     if (b.shots++ % 2 === 0) {
       var base = Math.atan2(p.y - oy, p.x - ox);
       cnt = 3 + Math.min(4, n);
@@ -78,7 +80,7 @@
   function hurt() {
     burst(p.x, p.y, "#99f6e4");
     lives--;
-    if (window.Sound) Sound.play("hurt");
+    sfx("hurt");
     document.getElementById("lives").textContent = Math.max(0, lives);
     inv = 1.5;
     if (lives <= 0) { end(); return true; }
@@ -96,7 +98,7 @@
     fireT -= dt;
     if ((keys[" "] || firing) && fireT <= 0) {
       bullets.push({ x: p.x, y: p.y - 18 });
-      if (window.Sound) Sound.play("shoot");
+      sfx("shoot");
       fireT = 0.22;
     }
     bullets.forEach(function (b) { b.y -= 560 * dt; });
@@ -127,7 +129,7 @@
           score += 10;
           GameUI.setScore(score);
           burst(e.x, e.y, e.kind ? "#60a5fa" : "#e879f9");
-          if (window.Sound) Sound.play("boom");
+          sfx("enemyDie");
         }
       });
     });
@@ -151,6 +153,7 @@
           bs.hp--;
           bs.flash = 0.08;
           burst(b.x, b.y, "#fde68a", 2);
+          sfx("bossHit");
         }
       });
       bullets = bullets.filter(function (b) { return !b.dead; });
@@ -159,7 +162,7 @@
         GameUI.setScore(score);
         burst(bs.x, bs.y, "#f87171", 40);
         burst(bs.x, bs.y, "#fde68a", 30);
-        if (window.Sound) { Sound.play("boom"); Sound.play("win"); }
+        sfx("bossDie");
         boss = null;
         ebullets = [];
         nextBossAt = score + 300;
