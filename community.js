@@ -139,12 +139,15 @@
   }
   function group(rows, key) { var m = {}; rows.forEach(function (r) { (m[r[key]] = m[r[key]] || []).push(r); }); return m; }
 
-  function notify(userId, type, postId) {
+  function notify(userId, type, postId, extra) {
     if (!userId || userId === me.id || standing.status !== "active") return;
-    var key = { like: "notify_likes", repost: "notify_likes", comment: "notify_comments", reply: "notify_comments", follow: "notify_follows", mention: "notify_mentions" }[type];
+    var key = { react: "notify_likes", like: "notify_likes", repost: "notify_likes", comment: "notify_comments", reply: "notify_comments", follow: "notify_follows", mention: "notify_mentions" }[type];
     loadProfiles([userId]).then(function () {
       if (key && prof[userId] && prof[userId][key] === false) return;
-      api("api/rows/notifications", "POST", { user_id: userId, type: type, post_id: postId || null });
+      var v = { user_id: userId, type: type, post_id: postId || null };
+      if (extra && extra.kind) v.kind = extra.kind;
+      if (extra && extra.message_id) v.message_id = extra.message_id;
+      api("api/rows/notifications", "POST", v);
     });
   }
   function mentions(text, postId) {
@@ -183,7 +186,99 @@
   // ---------- reactions, verified badge, link previews, theme ----------
   var KINDS = [["like", "Like"], ["love", "Love"], ["laugh", "Haha"], ["wow", "Wow"], ["sad", "Sad"]];
   function kindLabel(k) { for (var i = 0; i < KINDS.length; i++) if (KINDS[i][0] === k) return KINDS[i][1]; return k; }
-  function reactBar(cfg) {
+  var EMO = { like: "\u{1F44D}", love: "\u2764\uFE0F", laugh: "\u{1F602}", wow: "\u{1F62E}", sad: "\u{1F622}" };
+  var MORE = "M6 9l6 6 6-6", DOTS = "M5 12h.01M12 12h.01M19 12h.01";
+  var openPick = null;
+  document.addEventListener("pointerdown", function (e) { if (openPick && !openPick.wrap.contains(e.target)) { openPick.close(); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && openPick) openPick.close(); });
+  // One reaction control for posts (cfg.variant "post") and messenger bubbles (cfg.variant "msg").
+  // Tap = quick like, hold = pick any reaction. The button shows the top reactions as an overlapping stack plus the total.
+  function reactControl(cfg) {
+    var st = cfg.st, msg = cfg.variant === "msg", wrap = el("span", "cm-rxwrap" + (msg ? " msg" : "")), btn = el("button", "cm-rxtrig" + (msg ? " msgpill" : "")), picker = el("span", "cm-rxpick"), timer = null, held = false, opts = {};
+    btn.type = "button"; picker.hidden = true; picker.setAttribute("role", "menu");
+    var self = { node: wrap, wrap: wrap };
+    function total() { var n = 0; KINDS.forEach(function (k) { n += st.counts[k[0]] || 0; }); return n; }
+    function paint() {
+      btn.textContent = ""; var tot = total();
+      var top = KINDS.map(function (k) { return [k[0], st.counts[k[0]] || 0]; }).filter(function (x) { return x[1]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 3);
+      if (!top.length) { if (msg) { btn.hidden = true; } else { btn.hidden = false; btn.innerHTML = svg(P.like); } }
+      else {
+        btn.hidden = false; var stack = el("span", "cm-rxstack");
+        top.forEach(function (x, i) { var s = el("span", "cm-rxe", EMO[x[0]]); s.style.zIndex = String(3 - i); stack.appendChild(s); });
+        btn.appendChild(stack); btn.appendChild(el("span", "cm-rxn", String(tot)));
+      }
+      btn.classList.toggle("on", !!st.mine);
+      var parts = KINDS.filter(function (k) { return st.counts[k[0]]; }).map(function (k) { return k[1] + " " + st.counts[k[0]]; });
+      var lab = (st.mine ? "You reacted " + kindLabel(st.mine.kind) + ". " : "React. ") + (parts.length ? parts.join(", ") + "." : "No reactions yet.") + " Tap to like, hold to choose.";
+      btn.title = lab; btn.setAttribute("aria-label", lab);
+      KINDS.forEach(function (k) { var o = opts[k[0]]; if (!o) return; o.classList.toggle("sel", !!(st.mine && st.mine.kind === k[0])); o.lastChild.textContent = st.counts[k[0]] ? String(st.counts[k[0]]) : ""; });
+    }
+    function close() { picker.hidden = true; if (openPick === self) openPick = null; }
+    function open() {
+      if (openPick && openPick !== self) openPick.close();
+      picker.hidden = false; openPick = self;
+      try { picker.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
+    }
+    function choose(kind) {
+      if (!canAct()) return;
+      var prev = st.mine;
+      if (prev && prev.kind === kind) {
+        st.counts[kind] = Math.max(0, (st.counts[kind] || 1) - 1); st.mine = null; paint();
+        api("api/rows/" + cfg.table + "/" + prev.id, "DELETE").then(function (r) { if (!r.ok) { st.counts[kind] = (st.counts[kind] || 0) + 1; st.mine = prev; paint(); toast("Could not update reaction."); } });
+        return;
+      }
+      if (prev) st.counts[prev.kind] = Math.max(0, (st.counts[prev.kind] || 1) - 1);
+      st.counts[kind] = (st.counts[kind] || 0) + 1; st.mine = { id: prev ? prev.id : null, kind: kind }; paint();
+      var vals = { kind: kind }; if (!prev) for (var k in cfg.keys) vals[k] = cfg.keys[k];
+      var req = prev ? api("api/rows/" + cfg.table + "/" + prev.id, "PATCH", { kind: kind }) : api("api/rows/" + cfg.table, "POST", vals);
+      req.then(function (r) {
+        if (!r.ok) { st.counts[kind] = Math.max(0, (st.counts[kind] || 1) - 1); if (prev) st.counts[prev.kind] = (st.counts[prev.kind] || 0) + 1; st.mine = prev; paint(); toast(r.d.error || "Could not react."); }
+        else { if (r.d.row) st.mine.id = r.d.row.id; if (!prev && cfg.notify) cfg.notify(kind); }
+      });
+    }
+    KINDS.forEach(function (k) {
+      var b = el("button", "cm-rxopt k-" + k[0]); b.type = "button"; b.title = k[1]; b.setAttribute("aria-label", k[1]);
+      b.appendChild(el("span", "e", EMO[k[0]])); b.appendChild(el("span", "n"));
+      b.onclick = function (e) { e.stopPropagation(); close(); choose(k[0]); }; opts[k[0]] = b; picker.appendChild(b);
+    });
+    btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    btn.addEventListener("pointerdown", function () { if (msg) return; held = false; clearTimeout(timer); timer = setTimeout(function () { held = true; open(); try { navigator.vibrate && navigator.vibrate(15); } catch (e) {} }, 420); });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) { btn.addEventListener(ev, function () { clearTimeout(timer); }); });
+    btn.onclick = function () {
+      if (held) { held = false; return; }
+      if (msg) { if (picker.hidden) open(); else close(); return; }
+      if (!picker.hidden) { close(); return; }
+      choose(st.mine ? st.mine.kind : "like");
+    };
+    wrap.appendChild(btn);
+    if (!msg) { var mb = el("button", "cm-rxmore"); mb.type = "button"; mb.setAttribute("aria-label", "Choose a reaction"); mb.innerHTML = svg(MORE); mb.onclick = function () { if (picker.hidden) open(); else close(); }; wrap.appendChild(mb); }
+    wrap.appendChild(picker); paint();
+    self.open = function () { open(); }; self.close = close; self.paint = paint;
+    return self;
+  }
+  // Hold anywhere on a post or bubble (not on links, buttons or media controls) to open its reaction picker.
+  function holdReact(host, rc) {
+    var t = null, sx = 0, sy = 0;
+    function stop() { clearTimeout(t); t = null; }
+    host.addEventListener("pointerdown", function (e) {
+      if (e.button > 0 || (e.target.closest && e.target.closest("a,button,input,textarea,select,video,audio,.cm-rxpick,.cm-poll,.cm-thread"))) return;
+      sx = e.clientX; sy = e.clientY; stop();
+      t = setTimeout(function () { t = null; rc.open(); try { navigator.vibrate && navigator.vibrate(15); } catch (x) {} }, 520);
+    });
+    host.addEventListener("pointermove", function (e) { if (t && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) stop(); });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { host.addEventListener(ev, stop); });
+    host.addEventListener("contextmenu", function (e) { if (window.matchMedia("(pointer: coarse)").matches && !(e.target.closest && e.target.closest("a,input,textarea"))) e.preventDefault(); });
+  }
+  // A small "..." menu that holds the less common actions under a post.
+  function moreMenu() {
+    var wrap = el("span", "cm-mnwrap"), btn = el("button", "cm-act more"), pan = el("div", "cm-mn"), self = { node: wrap, wrap: wrap };
+    btn.type = "button"; btn.title = "More"; btn.setAttribute("aria-label", "More actions"); btn.setAttribute("aria-expanded", "false"); btn.innerHTML = svg(DOTS); pan.hidden = true;
+    self.close = function () { pan.hidden = true; btn.setAttribute("aria-expanded", "false"); if (openPick === self) openPick = null; };
+    btn.onclick = function () { if (!pan.hidden) { self.close(); return; } if (openPick && openPick !== self) openPick.close(); pan.hidden = false; openPick = self; btn.setAttribute("aria-expanded", "true"); };
+    self.add = function (b, label) { b.classList.add("mnitem"); b.lastChild.textContent = label; b.title = label; var orig = b.onclick; b.onclick = function (e) { self.close(); return orig && orig.call(b, e); }; pan.appendChild(b); };
+    wrap.appendChild(btn); wrap.appendChild(pan); return self;
+  }
+  function reactBarOld(cfg) {
     var st = cfg.st, wrap = el("div", "cm-rx"), chips = el("span", "cm-rxchips"), pick = el("span", "cm-rxpick"), btn = el("button", "cm-rxbtn", "React");
     btn.type = "button"; btn.setAttribute("aria-expanded", "false"); pick.hidden = true;
     function paint() {
@@ -303,7 +398,8 @@
     if (embedded) { li.appendChild(body); return li; }
 
     S.rx = S.rx || { counts: {}, mine: null };
-    body.appendChild(reactBar({ table: "post_reactions", keys: { post_id: p.id }, st: S.rx, notify: function () { notify(p.user_id, "like", p.id); } }));
+    var rc = reactControl({ variant: "post", table: "post_reactions", keys: { post_id: p.id }, st: S.rx, notify: function (kind) { notify(p.user_id, "react", p.id, { kind: kind }); } });
+    holdReact(li, rc);
     var bar = el("div", "cm-acts");
     var like = actBtn("like", P.like, "", "Like"), cmt = actBtn("cmt", P.cmt, "", "Comments"), rep = actBtn("rep", P.rep, "", "Repost"), bm = actBtn("bm", P.bm, "", "Save"), sh = actBtn("share", P.share, "", "Share");
     function paint() {
@@ -346,15 +442,19 @@
       acc.hidden = !acc.hidden; aib.setAttribute("aria-expanded", String(!acc.hidden)); aib.classList.toggle("open", !acc.hidden);
       if (!acc.hidden && !acc.dataset.init) { acc.dataset.init = "1"; window.CMX.insights(p, acc); }
     };
-    [like, cmt, rep, bm, aib, sh].forEach(function (b) { bar.appendChild(b); });
+    bar.appendChild(rc.node);
+    [cmt, rep, bm].forEach(function (b) { bar.appendChild(b); });
+    var menu = moreMenu();
+    menu.add(aib, "Ask Synswer AI"); menu.add(sh, "Share");
     if (me.id === p.user_id) {
-      if (!p.repost_of) { var ed = actBtn("edit", P.edit, "", "Edit post"); ed.onclick = function () { editPost(p); }; bar.appendChild(ed); }
+      if (!p.repost_of) { var ed = actBtn("edit", P.edit, "", "Edit post"); ed.onclick = function () { editPost(p); }; menu.add(ed, "Edit post"); }
       var del = actBtn("del", P.trash, "", "Delete post");
       del.onclick = function () { confirmBox("Delete this post?", "The post, its comments and likes will be removed.").then(function (ok) { if (ok) api("api/rows/posts/" + p.id, "DELETE").then(function (r) { if (r.ok) { li.remove(); toast("Post deleted"); } else toast("Could not delete."); }); }); };
-      bar.appendChild(del);
+      menu.add(del, "Delete post");
     } else {
-      var fl = actBtn("flag", P.flag, "", "Report post"); fl.onclick = function () { reportPost(p); }; bar.appendChild(fl);
+      var fl = actBtn("flag", P.flag, "", "Report post"); fl.onclick = function () { reportPost(p); }; menu.add(fl, "Report post");
     }
+    bar.appendChild(menu.node);
     body.appendChild(bar);
     var thread = el("div", "cm-thread"); thread.hidden = true; body.appendChild(thread);
     cmt.onclick = function () { thread.hidden = !thread.hidden; if (!thread.hidden) loadThread(p, thread, S, paint); };
@@ -484,13 +584,14 @@
   function fetchPosts() {
     var base = "api/rows/posts?sort=-created_at&limit=" + PAGE + "&offset=" + offset;
     if (view.tag) return api("api/rows/post_tags?tag=eq." + encodeURIComponent(view.tag) + "&limit=100").then(function (r) { var ids = (r.d.rows || []).map(function (t) { return t.post_id; }); return ids.length ? api("api/rows/posts?id=in." + ids.join(",") + "&sort=-created_at&limit=100") : { d: { rows: [] } }; });
+    if (view.post) return api("api/rows/posts?id=eq." + view.post + "&limit=1");
     if (view.user) return api(base + "&user_id=eq." + view.user);
     if (view.search) return api(base + "&content=like." + encodeURIComponent(view.search.replace(/^[#@]/, "")));
     if (tab === "saved") return api("api/rows/bookmarks?sort=-created_at&limit=100").then(function (r) { var ids = (r.d.rows || []).map(function (b) { return b.post_id; }); return ids.length ? api("api/rows/posts?id=in." + ids.join(",") + "&sort=-created_at&limit=100") : { d: { rows: [] } }; });
     if (tab === "following") return api("api/rows/follows?follower_id=eq." + me.id + "&limit=200").then(function (r) { var ids = (r.d.rows || []).map(function (f) { return f.followee_id; }); return ids.length ? api(base + "&user_id=in." + ids.join(",")) : { d: { rows: [] } }; });
     if (tab === "trending") {
       var since = new Date(Date.now() - 7 * 86400000).toISOString();
-      return api("api/rows/post_votes/aggregate?agg=count&group=post_id&value=eq.1&created_at=gte." + since + "&sort=-count&limit=20").then(function (r) { var ids = (r.d.rows || []).map(function (x) { return x.post_id; }); return ids.length ? api("api/rows/posts?id=in." + ids.join(",") + "&limit=20") : api("api/rows/posts?sort=-created_at&limit=10"); });
+      return api("api/rows/post_reactions/aggregate?agg=count&group=post_id&created_at=gte." + since + "&sort=-count&limit=20").then(function (r) { var ids = (r.d.rows || []).map(function (x) { return x.post_id; }); return ids.length ? api("api/rows/posts?id=in." + ids.join(",") + "&limit=20") : api("api/rows/posts?sort=-created_at&limit=10"); });
     }
     if (CATS[tab] && tab !== "general") return api(base + "&category=eq." + tab);
     return api(base);
@@ -548,7 +649,7 @@
       });
     }).catch(function () { feed.textContent = ""; var li = empty("Could not load posts", "Check your connection and try again."); var b = el("button", "cm-btn sm", "Retry"); b.type = "button"; b.onclick = function () { loadFeed(true); }; li.appendChild(document.createElement("br")); li.appendChild(b); feed.appendChild(li); });
   }
-  function score(p, st) { var s = st[p.id] || {}; return (s.likes || 0) * 2 + (s.comments || 0) * 3 + (s.reposts || 0) * 3 + (new Date(p.created_at).getTime() / 3.6e6) * 0.5; }
+  function score(p, st) { var s = st[p.id] || {}; var rxn = 0; if (s.rx) for (var k in s.rx.counts) rxn += s.rx.counts[k] || 0; return rxn * 2 + (s.comments || 0) * 3 + (s.reposts || 0) * 3 + (new Date(p.created_at).getTime() / 3.6e6) * 0.5; }
   function emptyTitle() { return view.search ? "No results" : tab === "following" ? "Nothing here yet" : tab === "saved" ? "No saved posts" : "No posts yet"; }
   function emptyText() { return tab === "following" && !view.user ? "Follow people from the Who to follow box to fill this feed." : tab === "saved" ? "Tap the bookmark on a post to keep it here." : "Be the first to share something."; }
 
@@ -728,8 +829,8 @@
           if (!rows.length) { list.appendChild(el("p", "cm-meta", "You are all caught up.")); return; }
           rows.forEach(function (n) {
             var it = el("button", "cm-item" + (n.read ? "" : " unread")); it.type = "button";
-            it.appendChild(avatar(n.actor_id, "sm")); var t = el("div", "t"); t.appendChild(el("b", "", dname(n.actor_id))); t.appendChild(document.createTextNode(" " + (VERB[n.type] || "interacted with you"))); t.appendChild(el("span", "", ago(n.created_at))); it.appendChild(t);
-            it.onclick = function () { if (!n.read) api("api/rows/notifications/" + n.id, "PATCH", { read: true }).then(unread); d.close(); if (n.post_id) { location.hash = "post-" + n.post_id; view = {}; tab = "latest"; renderTabs(); loadFeed(true); } else openProfile(n.actor_id); };
+            it.appendChild(avatar(n.actor_id, "sm")); var t = el("div", "t"); t.appendChild(el("b", "", dname(n.actor_id))); t.appendChild(document.createTextNode(" " + (n.type === "react" ? "reacted " + (EMO[n.kind] || "") + " to your " + (n.post_id ? "post" : "message") : (VERB[n.type] || "interacted with you")))); t.appendChild(el("span", "", ago(n.created_at))); it.appendChild(t);
+            it.onclick = function () { if (!n.read) api("api/rows/notifications/" + n.id, "PATCH", { read: true }).then(unread); d.close(); if (n.post_id) { setView({ post: n.post_id }, "the post"); } else if (n.type === "react" && window.CMX) { window.CMX.openMessages(n.actor_id); } else openProfile(n.actor_id); };
             list.appendChild(it);
           });
         });
@@ -901,7 +1002,7 @@
     toggleRel: toggleRel, rel: function (id) { return { blocked: !!H.blocked[id], blockedMe: !!H.blockedMe[id], muted: !!H.muted[id] }; },
     setView: setView, runSearch: runSearch, followBtn: followBtn, loadFeed: loadFeed, loadHidden: loadHidden, isBlocked: function (id) { return !!(H.blocked[id] || H.blockedMe[id]); },
     setTab: function (t) { tab = t; view = {}; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true); }, cats: CATS,
-    followedBy: function (id) { return !!FB[id]; },
+    followedBy: function (id) { return !!FB[id]; }, reactControl: reactControl, holdReact: holdReact, notify: notify, vbadge: vbadge, EMO: EMO,
     me: function () { return me; }, standing: function () { return standing; }
   };
 

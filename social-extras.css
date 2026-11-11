@@ -9,6 +9,42 @@
 .cm-rxpick[hidden] { display: none; }
 .cm-rxopt { background: var(--m-card2); border: 1px solid var(--m-line); border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
 .cm-rxopt:hover { border-color: var(--m-acc); }
+.cm-btn:not(.ghost):not(.danger) { background: linear-gradient(135deg, #0b7a70, #1d4ed8); }
+/* Compact post actions, stacked reactions, hold-to-react picker, "..." menu */
+.cm-acts { align-items: center; gap: 2px; margin: 0 -6px; flex-wrap: nowrap; }
+.cm-acts .cm-act { padding: 5px 8px; min-height: 34px; }
+.cm-acts .cm-act span:not(:empty) { padding: 0; background: none; min-width: 0; }
+.cm-rxwrap { position: relative; display: inline-flex; align-items: center; }
+.cm-rxtrig { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; border-radius: 999px; padding: 4px 8px; min-height: 34px; color: var(--m-mute); cursor: pointer; font-size: 13px; -webkit-touch-callout: none; user-select: none; }
+.cm-rxtrig svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.cm-rxtrig:hover { background: var(--m-card2); color: var(--m-text); }
+.cm-rxtrig.on { box-shadow: inset 0 0 0 1.5px var(--m-acc); color: var(--m-text); }
+.cm-rxstack { display: inline-flex; }
+.cm-rxe { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--m-card2); box-shadow: 0 0 0 2px var(--m-card); font-size: 13px; line-height: 1; position: relative; }
+.cm-rxe + .cm-rxe { margin-left: -8px; }
+.cm-rxn { font-weight: 600; font-size: 13px; }
+.cm-rxmore { display: none; background: none; border: 0; color: var(--m-mute); width: 22px; height: 30px; padding: 0; cursor: pointer; }
+.cm-rxmore svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (hover: hover) { .cm-rxmore { display: inline-grid; place-items: center; } }
+.cm-rxpick { position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 30; flex-wrap: nowrap; gap: 2px; padding: 6px 8px; border-radius: 999px; animation: cmRise .16s ease-out; }
+.cm-rxwrap.msg.mine-side .cm-rxpick { left: auto; right: 0; }
+.cm-rxopt { display: flex; flex-direction: column; align-items: center; gap: 0; background: none; border: 0; border-radius: 14px; padding: 2px 5px; min-width: 38px; transition: transform .12s ease; }
+.cm-rxopt .e { font-size: 24px; line-height: 1.2; }
+.cm-rxopt .n { font-size: 10px; min-height: 12px; color: var(--m-mute); }
+.cm-rxopt:hover, .cm-rxopt:focus-visible { transform: translateY(-4px) scale(1.25); }
+.cm-rxopt.sel { background: var(--m-card2); box-shadow: inset 0 0 0 1.5px var(--m-acc); }
+@keyframes cmRise { from { opacity: 0; transform: translateY(6px) scale(.95); } to { opacity: 1; transform: none; } }
+.cm-rxwrap.msg { margin-top: -2px; }
+.cm-rxtrig.msgpill { padding: 1px 6px; min-height: 24px; background: var(--m-card); border: 1px solid var(--m-line); color: var(--m-text); }
+.cm-rxtrig.msgpill .cm-rxe { width: 18px; height: 18px; font-size: 11px; box-shadow: 0 0 0 2px var(--m-card); }
+.cm-mnwrap { position: relative; margin-left: auto; display: inline-flex; }
+.cm-mn { position: absolute; right: 0; bottom: calc(100% + 4px); z-index: 30; min-width: 190px; padding: 6px; border: 1px solid var(--m-line); border-radius: 14px; background: var(--m-card); box-shadow: 0 10px 28px rgba(0,0,0,.35); display: flex; flex-direction: column; }
+.cm-mn[hidden] { display: none; }
+.cm-mn .cm-act.mnitem { width: 100%; justify-content: flex-start; border-radius: 10px; order: 0; margin: 0; box-shadow: none; background: none; color: var(--m-text); font-weight: 500; }
+.cm-mn .cm-act.mnitem:hover { background: var(--m-card2); }
+.cm-mn .cm-act.mnitem span { font-size: 14px; }
+.cm-mn .cm-act.ai { background: none; color: var(--m-ai); }
+@media (pointer: coarse) { .cm-post .cm-text { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; } }
 .cm-vf { display: inline-flex; vertical-align: middle; margin-left: -2px; }
 .cm-vf svg { width: 16px; height: 16px; }
 .cm-lcard { display: flex; align-items: center; gap: 12px; margin: 4px 0 10px; padding: 10px 12px; border: 1px solid var(--m-line); border-radius: 14px; background: var(--m-card2); color: var(--m-text); text-decoration: none; }
