@@ -8,45 +8,6 @@
   var bossBar = document.getElementById("boss-bar"), bossFill = document.getElementById("boss-fill"), bossName = document.getElementById("boss-name");
   var BOSS_NAMES = ["Warden", "Devourer", "Dreadnought", "Leviathan", "Overlord"];
 
-  function sfx(n, a) { if (window.ShooterSfx && ShooterSfx[n]) ShooterSfx[n](a); }
-  var pickups = [], pw = {}, puBar = null;
-  var PU = {
-    spread: { c: "#facc15", l: "S", name: "Spread shot", t: 12 },
-    rapid: { c: "#f97316", l: "R", name: "Rapid fire", t: 10 },
-    pierce: { c: "#38bdf8", l: "P", name: "Piercing beam", t: 10 },
-    shield: { c: "#4ade80", l: "O", name: "Shield", t: 0 },
-    bomb: { c: "#f43f5e", l: "B", name: "Bomb", t: 0 }
-  };
-  var PU_KEYS = ["spread", "rapid", "pierce", "shield", "bomb"];
-  function dropPickup(x, y, force) {
-    if (!force && Math.random() > 0.13) return;
-    var k = PU_KEYS[Math.floor(Math.random() * PU_KEYS.length)];
-    pickups.push({ x: x, y: y, type: k, vy: 85, c: PU[k].c });
-  }
-  function updateBar() {
-    if (!puBar) return;
-    var out = [];
-    ["spread", "rapid", "pierce"].forEach(function (k) { if (pw[k] > 0) out.push(PU[k].name + " " + Math.ceil(pw[k]) + "s"); });
-    if (p && p.shield) out.push("Shield");
-    puBar.textContent = out.join("  |  ");
-    puBar.hidden = !out.length;
-  }
-  function collect(pk) {
-    var d = PU[pk.type];
-    burst(pk.x, pk.y, d.c, 14);
-    if (pk.type === "bomb") {
-      sfx("bomb");
-      enemies.forEach(function (e) { burst(e.x, e.y, e.kind ? "#60a5fa" : "#e879f9", 12); score += 10; });
-      enemies = []; ebullets = [];
-      if (boss) { boss.hp = Math.max(1, boss.hp - 12); boss.flash = 0.2; burst(boss.x, boss.y, "#fde68a", 30); }
-      GameUI.setScore(score);
-    } else if (pk.type === "shield") {
-      p.shield = true; sfx("shield");
-    } else {
-      pw[pk.type] = d.t; sfx("pickup");
-    }
-    updateBar();
-  }
   function rand(a, b) { return a + Math.random() * (b - a); }
 
   function makeStars() {
@@ -57,17 +18,6 @@
   function reset() {
     p = { x: W / 2, y: H - 50, w: 34, h: 30 };
     bullets = []; enemies = []; ebullets = []; parts = [];
-    pickups = []; pw = {}; p.shield = false;
-    if (!puBar) {
-      var wr = document.querySelector(".canvas-wrap");
-      if (wr) {
-        puBar = document.createElement("div");
-        puBar.style.cssText = "position:absolute;left:10px;right:10px;bottom:8px;z-index:3;pointer-events:none;font:500 12px Inter,sans-serif;color:#fde68a;text-shadow:0 1px 3px #000";
-        puBar.hidden = true;
-        wr.appendChild(puBar);
-      }
-    }
-    updateBar();
     boss = null; bossLevel = 0; nextBossAt = 300;
     score = 0; lives = 3; elapsed = 0; spawnT = 0.5; fireT = 0; inv = 0;
     GameUI.setScore(0);
@@ -102,14 +52,13 @@
     bossLevel++;
     var hp = 30 + 14 * bossLevel;
     boss = { x: W / 2, y: -50, w: 120, h: 62, hp: hp, max: hp, vx: 80 + bossLevel * 12, fireT: 1.6, shots: 0, flash: 0, hue: (bossLevel - 1) % 3 };
-    sfx("bossSpawn");
+    if (window.Sound) Sound.play("hurt");
     barUpdate();
   }
 
   function bossFire() {
     var n = bossLevel, b = boss, sp = 160 + n * 12, i, a, cnt;
     var ox = b.x, oy = b.y + b.h / 2;
-    sfx("bossFire");
     if (b.shots++ % 2 === 0) {
       var base = Math.atan2(p.y - oy, p.x - ox);
       cnt = 3 + Math.min(4, n);
@@ -127,13 +76,9 @@
   }
 
   function hurt() {
-    if (p.shield) {
-      p.shield = false; inv = 1; sfx("shieldBreak"); burst(p.x, p.y, "#4ade80", 16); updateBar();
-      return false;
-    }
     burst(p.x, p.y, "#99f6e4");
     lives--;
-    sfx("hurt");
+    if (window.Sound) Sound.play("hurt");
     document.getElementById("lives").textContent = Math.max(0, lives);
     inv = 1.5;
     if (lives <= 0) { end(); return true; }
@@ -148,29 +93,14 @@
     if (pointerX !== null && !left && !right) p.x += (pointerX - p.x) * Math.min(1, dt * 14);
     p.x = Math.max(p.w / 2, Math.min(W - p.w / 2, p.x));
 
-    ["spread", "rapid", "pierce"].forEach(function (k) { if (pw[k] > 0) { pw[k] -= dt; if (pw[k] <= 0) { pw[k] = 0; updateBar(); } } });
-    if (Math.floor(elapsed * 4) !== Math.floor((elapsed - dt) * 4)) updateBar();
-
     fireT -= dt;
     if ((keys[" "] || firing) && fireT <= 0) {
-      var pierce = pw.pierce > 0;
-      if (pw.spread > 0) {
-        [-130, 0, 130].forEach(function (vx) { bullets.push({ x: p.x, y: p.y - 18, vx: vx, pierce: pierce, bt: 0 }); });
-        sfx("shoot", "spread");
-      } else {
-        bullets.push({ x: p.x, y: p.y - 18, vx: 0, pierce: pierce, bt: 0 });
-        sfx("shoot", pierce ? "pierce" : pw.rapid > 0 ? "rapid" : "");
-      }
-      fireT = pw.rapid > 0 ? 0.1 : 0.22;
+      bullets.push({ x: p.x, y: p.y - 18 });
+      if (window.Sound) Sound.play("shoot");
+      fireT = 0.22;
     }
-    bullets.forEach(function (b) { b.y -= 560 * dt; b.x += (b.vx || 0) * dt; if (b.bt > 0) b.bt -= dt; });
-    bullets = bullets.filter(function (b) { return b.y > -10 && b.x > -10 && b.x < W + 10; });
-
-    pickups.forEach(function (k) { k.y += k.vy * dt; });
-    pickups = pickups.filter(function (k) {
-      if (Math.abs(k.x - p.x) < 24 && Math.abs(k.y - p.y) < 26) { collect(k); return false; }
-      return k.y < H + 20;
-    });
+    bullets.forEach(function (b) { b.y -= 560 * dt; });
+    bullets = bullets.filter(function (b) { return b.y > -10; });
 
     if (!boss && score >= nextBossAt) spawnBoss();
 
@@ -193,13 +123,11 @@
     bullets.forEach(function (b) {
       enemies.forEach(function (e) {
         if (!e.dead && !b.dead && Math.abs(b.x - e.x) < e.w / 2 + 3 && Math.abs(b.y - e.y) < e.h / 2 + 6) {
-          e.dead = true; if (!b.pierce) b.dead = true;
+          e.dead = true; b.dead = true;
           score += 10;
           GameUI.setScore(score);
-          burst(e.x, e.y, e.kind ? "#60a5fa" : "#e879f9", 16);
-          burst(e.x, e.y, "#fde68a", 6);
-          dropPickup(e.x, e.y);
-          sfx("enemyDie");
+          burst(e.x, e.y, e.kind ? "#60a5fa" : "#e879f9");
+          if (window.Sound) Sound.play("boom");
         }
       });
     });
@@ -218,12 +146,11 @@
         if (bs.fireT <= 0) { bossFire(); bs.fireT = Math.max(0.65, 1.35 - bossLevel * 0.1); }
       }
       bullets.forEach(function (b) {
-        if (!b.dead && !(b.pierce && b.bt > 0) && Math.abs(b.x - bs.x) < bs.w / 2 && Math.abs(b.y - bs.y) < bs.h / 2 + 4) {
-          if (b.pierce) b.bt = 0.12; else b.dead = true;
+        if (!b.dead && Math.abs(b.x - bs.x) < bs.w / 2 && Math.abs(b.y - bs.y) < bs.h / 2 + 4) {
+          b.dead = true;
           bs.hp--;
           bs.flash = 0.08;
           burst(b.x, b.y, "#fde68a", 2);
-          sfx("bossHit");
         }
       });
       bullets = bullets.filter(function (b) { return !b.dead; });
@@ -232,8 +159,7 @@
         GameUI.setScore(score);
         burst(bs.x, bs.y, "#f87171", 40);
         burst(bs.x, bs.y, "#fde68a", 30);
-        sfx("bossDie");
-        dropPickup(bs.x, bs.y, true);
+        if (window.Sound) { Sound.play("boom"); Sound.play("win"); }
         boss = null;
         ebullets = [];
         nextBossAt = score + 300;
@@ -285,13 +211,8 @@
     stars.forEach(function (s) { ctx.globalAlpha = 0.3 + s.s / 3; ctx.fillRect(s.x, s.y, s.s, s.s); });
     ctx.globalAlpha = 1;
 
-    bullets.forEach(function (b) { ctx.fillStyle = b.pierce ? "#38bdf8" : "#99f6e4"; ctx.fillRect(b.x - (b.pierce ? 3 : 2), b.y - 8, b.pierce ? 6 : 4, b.pierce ? 22 : 14); });
-    pickups.forEach(function (k) {
-      ctx.fillStyle = k.c; ctx.beginPath(); ctx.arc(k.x, k.y, 11, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#05050a"; ctx.font = "700 13px Sora, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(PU[k.type].l, k.x, k.y + 1);
-    });
-    if (p && p.shield && running) { ctx.strokeStyle = "#4ade80"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 24, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.fillStyle = "#99f6e4";
+    bullets.forEach(function (b) { ctx.fillRect(b.x - 2, b.y - 8, 4, 14); });
     ctx.fillStyle = "#fb923c";
     ebullets.forEach(function (b) { ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, Math.PI * 2); ctx.fill(); });
 
@@ -373,8 +294,6 @@
     enemies: function () { return enemies; },
     ebullets: function () { return ebullets; },
     boss: function () { return boss; },
-    pickups: function () { return pickups; },
-    shield: function () { return !!(p && p.shield); },
     parts: function () { return parts; }
   };
   var wrap = document.querySelector(".canvas-wrap");

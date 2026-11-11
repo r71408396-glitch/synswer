@@ -9,8 +9,7 @@ try {
   let T, sceneRef, ship, shipFlame, bulletGeo, bulletMat, ebGeo, ebMat;
   let geoA, geoB, matA, matB, bossGroup, bossBody, bossMats = [], bossLevelShown = 0;
   let starPts, starPos, starSpeed, partPts, partPos, partCol, col;
-  const bulletMap = new Map(), enemyMap = new Map(), ebMap = new Map(), puMap = new Map();
-  let pierceMat, puGeo, puMat, shieldMesh;
+  const bulletMap = new Map(), enemyMap = new Map(), ebMap = new Map();
 
   const BOSS_COLORS = [0xdc2626, 0x7c3aed, 0x0891b2];
 
@@ -55,12 +54,6 @@ try {
 
       bulletGeo = new THREE.CapsuleGeometry(0.12, 0.5, 4, 8);
       bulletMat = new THREE.MeshStandardMaterial({ color: 0xc4b5fd, emissive: 0xa78bfa, emissiveIntensity: 1.6 });
-      pierceMat = new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x0ea5e9, emissiveIntensity: 2 });
-      puGeo = new THREE.OctahedronGeometry(0.6);
-      puMat = (c) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 1.2, roughness: 0.3 });
-      shieldMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 1), new THREE.MeshBasicMaterial({ color: 0x4ade80, wireframe: true, transparent: true, opacity: 0.7 }));
-      shieldMesh.visible = false;
-      scene.add(shieldMesh);
       ebGeo = new THREE.SphereGeometry(0.28, 10, 10);
       ebMat = new THREE.MeshStandardMaterial({ color: 0xfb923c, emissive: 0xea580c, emissiveIntensity: 1.6 });
 
@@ -130,10 +123,7 @@ try {
         shipFlame.scale.y = 0.8 + Math.sin(elapsed * 40) * 0.3;
       }
 
-      sync(S.bullets(), bulletMap, (b) => { const m = new T.Mesh(bulletGeo, b.pierce ? pierceMat : bulletMat); if (b.pierce) m.scale.set(1.6, 1.6, 1.6); return m; }, (m, b) => m.position.set(wx(b.x), wy(b.y), 0));
-      sync(S.pickups(), puMap, (k) => new T.Mesh(puGeo, puMat(k.c)), (m, k) => { m.position.set(wx(k.x), wy(k.y), 0); m.rotation.y = elapsed * 3; m.rotation.x = elapsed * 1.5; });
-      shieldMesh.visible = S.shield() && S.running();
-      if (shieldMesh.visible) { shieldMesh.position.set(ship.position.x, ship.position.y, 0); shieldMesh.rotation.y = elapsed * 2; }
+      sync(S.bullets(), bulletMap, () => new T.Mesh(bulletGeo, bulletMat), (m, b) => m.position.set(wx(b.x), wy(b.y), 0));
       sync(S.ebullets(), ebMap, () => new T.Mesh(ebGeo, ebMat), (m, b) => m.position.set(wx(b.x), wy(b.y), 0));
       sync(S.enemies(), enemyMap, (e) => new T.Mesh(e.kind ? geoB : geoA, e.kind ? matB : matA), (m, e) => {
         m.position.set(wx(e.x), wy(e.y), 0);
