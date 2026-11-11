@@ -337,7 +337,7 @@
         C.loadProfiles([uid]);
         var th = el("div", "mm-th");
         var back = el("button", "cm-btn ghost sm mm-back", "Back"); back.type = "button"; back.onclick = empty;
-        var who = el("button", "mm-who"); who.type = "button"; who.appendChild(C.avatar(uid, "sm")); who.appendChild(el("b", "", "@" + C.uname(uid)));
+        var who = el("button", "mm-who"); who.type = "button"; who.appendChild(C.avatar(uid, "sm")); who.appendChild(el("b", "", "@" + C.uname(uid))); who.appendChild(C.vbadge(uid));
         who.onclick = function () { d.close(); C.openProfile(uid); };
         var mute = el("button", "cm-btn ghost sm"), block = el("button", "cm-btn ghost sm"); mute.type = block.type = "button";
         th.appendChild(back); th.appendChild(who); th.appendChild(mute); th.appendChild(block); main.appendChild(th);
@@ -379,21 +379,45 @@
             if (cur !== uid) return;
             var rows = (r[0].d.rows || []).filter(function (m) { return m.recipient_id === me().id; }).concat(r[1].d.rows || []);
             rows.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
-            var sig = rows.length + ":" + rows.filter(function (m) { return m.read; }).length;
-            if (sig !== lastSig) {
+            var idList = rows.slice(-100).map(function (m) { return m.id; });
+            (idList.length ? api("api/rows/message_reactions?message_id=in." + idList.join(",") + "&limit=200") : Promise.resolve({ d: { rows: [] } })).then(function (rx) {
+              if (cur !== uid) return;
+              var rxRows = rx.d.rows || [];
+              var sig = rows.length + ":" + rows.filter(function (m) { return m.read; }).length + ":" + rxRows.map(function (x) { return x.id + x.kind; }).join("|");
+              if (sig === lastSig) return;
               lastSig = sig; log.textContent = "";
               if (!rows.length) log.appendChild(el("p", "cm-meta", "Say hello. Messages are private between the two of you."));
-              var lastMine = null;
+              var lastMine = null, byMsg = {};
               rows.forEach(function (m) { if (m.sender_id === me().id) lastMine = m; });
+              rxRows.forEach(function (x) { (byMsg[x.message_id] = byMsg[x.message_id] || []).push(x); });
               rows.forEach(function (m) {
-                var mine = m.sender_id === me().id, b = el("div", "mm-b " + (mine ? "mine" : "theirs"));
+                var mine = m.sender_id === me().id, side = mine ? "mine" : "theirs";
+                var wrapB = el("div", "mm-bw " + side), b = el("div", "mm-b " + side);
                 if (m.image_url && window.MediaSafe) b.appendChild(window.MediaSafe.node(m.image_url, m.media_type, ""));
                 if (m.content) b.appendChild(el("span", "", m.content));
-                b.title = C.ago(m.created_at); log.appendChild(b);
+                b.title = C.ago(m.created_at); wrapB.appendChild(b);
+                var st = { counts: {}, mine: null };
+                (byMsg[m.id] || []).forEach(function (x) { st.counts[x.kind] = (st.counts[x.kind] || 0) + 1; if (x.user_id === me().id) st.mine = { id: x.id, kind: x.kind }; });
+                var rc = C.reactControl({ variant: "msg", table: "message_reactions", keys: { message_id: m.id }, st: st, notify: function (kind) { C.notify(uid, "react", null, { kind: kind, message_id: m.id }); } });
+                C.holdReact(b, rc);
+                b.addEventListener("dblclick", function () { rc.open(); });
+                var rr = el("div", "mm-rxrow"), add = el("button", "mm-rxadd", "+");
+                add.type = "button"; add.title = "React"; add.setAttribute("aria-label", "React to this message");
+                add.onclick = function () { rc.open(); };
+                rr.appendChild(rc.node); rr.appendChild(add);
+                if (mine && Date.now() - new Date(m.created_at).getTime() < 600000) {
+                  var del = el("button", "mm-del", "Delete"); del.type = "button"; del.title = "You can delete a message for 10 minutes after sending it";
+                  del.onclick = function () {
+                    del.disabled = true;
+                    api("api/rows/messages/" + m.id, "DELETE").then(function (x) { if (!x.ok) { toast("The 10 minutes to delete this message are over."); del.disabled = false; return; } lastSig = ""; refresh(); refreshList(); });
+                  };
+                  rr.appendChild(del);
+                }
+                wrapB.appendChild(rr); log.appendChild(wrapB);
                 if (m === lastMine) log.appendChild(el("span", "mm-seen", m.read ? "Seen" : "Delivered"));
               });
               log.scrollTop = log.scrollHeight;
-            }
+            });
             var ups = rows.filter(function (m) { return m.recipient_id === me().id && !m.read; }).map(function (m) { return { id: m.id, values: { read: true } }; });
             if (ups.length) fetch("api/rows/messages/bulk", { method: "PATCH", credentials: "include", headers: JSON_H, body: JSON.stringify({ updates: ups }) }).then(function () { badge(); refreshList(); });
           });

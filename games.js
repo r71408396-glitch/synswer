@@ -533,16 +533,8 @@
     "</form>";
   document.body.appendChild(dlg);
 
-  async function armCaptcha() {
-    try {
-      var w = $("captcha-score");
-      var challenge = await (await fetch("api/auth/challenge")).json();
-      await customElements.whenDefined("altcha-widget");
-      w.reset();
-      w.configure({ challenge: challenge });
-      w.verify();
-    } catch (_) {}
-  }
+  // Only signed-in players save scores, so no robot check is needed here.
+  function armCaptcha() {}
 
   // Signed-in players with a social profile play under their profile name.
   var socialName = "";

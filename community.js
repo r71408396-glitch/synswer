@@ -371,6 +371,41 @@
     b.innerHTML = svg(icon) + "<span></span>"; b.lastChild.textContent = label; return b;
   }
 
+  // ---------- video views and ads ----------
+  var VQ = { ids: [], cbs: {}, t: null }, VIDEO_N = 0;
+  function viewInfo(postId, cb) {
+    VQ.cbs[postId] = cb; VQ.ids.push(postId); clearTimeout(VQ.t);
+    VQ.t = setTimeout(function () {
+      var ids = VQ.ids.splice(0), cbs = VQ.cbs; VQ.cbs = {};
+      Promise.all([api("api/rows/video_views/aggregate?agg=count&group=post_id&post_id=in." + ids.join(",") + "&limit=200"), api("api/rows/video_views?user_id=eq." + me.id + "&post_id=in." + ids.join(",") + "&select=post_id&limit=200")]).then(function (r) {
+        var cnt = {}, mine = {};
+        (r[0].d.rows || []).forEach(function (x) { cnt[x.post_id] = Number(x.count); });
+        (r[1].d.rows || []).forEach(function (x) { mine[x.post_id] = 1; });
+        ids.forEach(function (id) { if (cbs[id]) cbs[id](cnt[id] || 0, !!mine[id]); });
+      });
+    }, 40);
+  }
+  function videoExtras(p, body) {
+    var box = el("div", "cm-vx"), views = el("span", "cm-views", ""), n = 0, seen = false, ready = false;
+    function paint() { views.textContent = n + (n === 1 ? " view" : " views"); }
+    viewInfo(p.id, function (c, mine) { n = c; seen = mine; ready = true; paint(); });
+    box.appendChild(views);
+    setTimeout(function () {
+      var v = body.querySelector("video"); if (!v) return;
+      v.addEventListener("play", function () {
+        if (seen || !ready) return; seen = true; n++; paint();
+        api("api/rows/video_views", "POST", { post_id: p.id });
+      });
+    }, 0);
+    // One display ad under every second video post, below the player, never over it, and only after cookies are accepted.
+    VIDEO_N++;
+    if (VIDEO_N % 2 === 1 && window.SynswerAds) {
+      var ad = el("div", "cm-vad"); ad.setAttribute("data-ad-box", ""); ad.hidden = true; box.appendChild(ad);
+      setTimeout(function () { window.SynswerAds.fill(ad); }, 300);
+    }
+    return box;
+  }
+
   function buildPost(p, ctx, embedded) {
     var S = ctx.st[p.id] || (ctx.st[p.id] = {});
     var li = el(embedded ? "div" : "li", embedded ? "cm-quote" : "cm-post"); if (!embedded) li.id = "post-" + p.id;
@@ -390,6 +425,7 @@
     var acc = null;
     if (!embedded) { acc = el("div", "cm-insights"); acc.hidden = true; body.appendChild(acc); }
     if (p.image_url) body.appendChild(window.MediaSafe ? window.MediaSafe.node(p.image_url, p.media_type) : el("img", "cm-img"));
+    if (p.image_url && p.media_type === "video" && !embedded) body.appendChild(videoExtras(p, body));
     if (p.repost_of) {
       var o = ctx.orig[p.repost_of];
       body.appendChild(o ? buildPost(o, ctx, true) : el("div", "cm-quote", "The original post is no longer available."));
