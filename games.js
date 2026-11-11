@@ -527,7 +527,6 @@
     '<p id="score-line"></p>' +
     '<label for="player-name">Your name</label>' +
     '<input id="player-name" type="text" maxlength="20" required />' +
-    '<altcha-widget id="captcha-score" style="display:block;margin:14px 0 0"></altcha-widget>' +
     '<p class="form-error" id="score-error" role="alert"></p>' +
     '<div class="row"><button type="button" class="btn btn-ghost" id="score-cancel">Cancel</button>' +
     '<button type="submit" class="btn" id="score-submit">Save</button></div>' +
@@ -577,9 +576,6 @@
     var name = $("player-name").value.trim();
     var err = $("score-error");
     if (!name) return;
-    var field = $("captcha-score").querySelector('input[name="altcha"]');
-    var altcha = field ? field.value : "";
-    if (!altcha) { err.textContent = "Finishing the security check, try again in a second."; return; }
     var btn = $("score-submit");
     btn.disabled = true;
     err.textContent = "";
@@ -587,7 +583,7 @@
       var res = await fetch("api/rows/scores", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ values: (function () { var v = { game: game, player: name, score: lastScore }; if (window.synswerUser && window.synswerUser.id) v.user_id = window.synswerUser.id; return v; })(), altcha: altcha })
+        body: JSON.stringify({ values: (function () { var v = { game: game, player: name, score: lastScore }; if (window.synswerUser && window.synswerUser.id) v.user_id = window.synswerUser.id; return v; })() })
       });
       var data = await res.json().catch(function () { return {}; });
       if (!res.ok) {
