@@ -114,12 +114,12 @@
 
   // ---------- loading data helpers ----------
   function loadProfiles(ids) {
-    var need = ids.filter(function (i, n) { return i && !prof[i] && ids.indexOf(i) === n; });
+    var need = ids.filter(function (i, n) { return i && (!prof[i] || !prof[i]._ph) && ids.indexOf(i) === n; });
     if (!need.length) return Promise.resolve();
     var q = need.slice(0, 100).join(",");
     return Promise.all([api("api/rows/profiles?user_id=in." + q + "&limit=100"), api("api/rows/profile_photos?user_id=in." + q + "&limit=100")]).then(function (r) {
       var ph = {}; (r[1].d.rows || []).forEach(function (x) { ph[x.user_id] = x; });
-      (r[0].d.rows || []).forEach(function (p) { p.avatar_url = ph[p.user_id] ? ph[p.user_id].avatar_url : null; p.cover_url = ph[p.user_id] ? ph[p.user_id].cover_url : null; p.photo_visibility = ph[p.user_id] ? ph[p.user_id].visibility : "everyone"; prof[p.user_id] = p; });
+      (r[0].d.rows || []).forEach(function (p) { p.avatar_url = ph[p.user_id] ? ph[p.user_id].avatar_url : null; p.cover_url = ph[p.user_id] ? ph[p.user_id].cover_url : null; p.photo_visibility = ph[p.user_id] ? ph[p.user_id].visibility : "everyone"; p._ph = true; prof[p.user_id] = p; });
     });
   }
   // Blocked and muted users: who I blocked, who blocked me, who I muted.
@@ -391,7 +391,7 @@
     else if (page === "articles.html") { kind.textContent = "Articles"; ttl.textContent = "Synswer Articles"; }
     return card;
   }
-  var ACCENTS = [["Teal", "#0e8f84"], ["Blue", "#2563eb"], ["Violet", "#7c3aed"], ["Pink", "#db2777"], ["Orange", "#c2410c"], ["Green", "#15803d"]];
+  var ACCENTS = [["Teal", "#0e8f84"], ["Blue", "#2563eb"], ["Violet", "#7c3aed"], ["Pink", "#db2777"], ["Orange", "#c2410c"], ["Green", "#15803d"], ["Black", "#171717"], ["Indigo", "#4f46e5"], ["Cyan", "#0e7490"], ["Red", "#dc2626"], ["Gold", "#a16207"], ["Slate", "#475569"]];
   function applyTheme(p) {
     var root = document.documentElement;
     if (p && p.theme_accent && /^#[0-9a-f]{6}$/i.test(p.theme_accent)) { root.style.setProperty("--m-acc", p.theme_accent); root.style.setProperty("--m-acc-soft", p.theme_accent + "33"); root.setAttribute("data-accent", p.theme_accent.toLowerCase()); }
@@ -888,13 +888,13 @@
     Promise.all([api("api/rows/profiles?sort=-created_at&limit=30"), api("api/rows/follows?follower_id=eq." + me.id + "&limit=200")]).then(function (r) {
       var fol = {}; (r[1].d.rows || []).forEach(function (f) { fol[f.followee_id] = 1; });
       var list = (r[0].d.rows || []).filter(function (p) { return p.user_id !== me.id && !fol[p.user_id] && !p.hide_from_suggestions; }).slice(0, 5), box = $("suggest"); box.textContent = "";
-      list.forEach(function (p) { prof[p.user_id] = p; });
       if (!list.length) { box.appendChild(el("p", "cm-meta", "You are following everyone for now.")); return; }
-      list.forEach(function (p) {
+      list.forEach(function (p) { if (!prof[p.user_id]) prof[p.user_id] = p; });
+      loadProfiles(list.map(function (p) { return p.user_id; })).then(function () { box.textContent = ""; list.forEach(function (p) {
         var row = el("div", "cm-person"); row.appendChild(avatar(p.user_id, "sm"));
         var w = el("button", "who"); w.type = "button"; w.appendChild(el("b", "", dname(p.user_id))); w.appendChild(el("span", "", "@" + p.username)); w.onclick = function () { openProfile(p.user_id); };
         row.appendChild(w); row.appendChild(followBtn(p.user_id, null, loadSide)); box.appendChild(row);
-      });
+      }); });
     });
   }
 
@@ -978,8 +978,11 @@
     setView(q.charAt(0) === "#" ? { tag: q.slice(1).toLowerCase() } : { search: q }, q.charAt(0) === "#" ? q : 'search "' + q + '"');
     if (q.charAt(0) !== "#") api("api/rows/profiles?username=like." + encodeURIComponent(q.replace(/^@/, "")) + "&limit=5").then(function (r) {
       var rows = r.d.rows || []; if (!rows.length) return; var s = $("profile-slot"), box = el("div", "cm-box"); box.style.marginBottom = "12px"; box.appendChild(el("h3", "", "People"));
-      rows.forEach(function (p) { prof[p.user_id] = p; var row = el("div", "cm-person"); row.appendChild(avatar(p.user_id, "sm")); var w = el("button", "who"); w.type = "button"; w.appendChild(el("b", "", dname(p.user_id))); w.appendChild(el("span", "", "@" + p.username)); w.onclick = function () { openProfile(p.user_id); }; row.appendChild(w); box.appendChild(row); });
-      s.appendChild(box);
+      rows.forEach(function (p) { if (!prof[p.user_id]) prof[p.user_id] = p; });
+      loadProfiles(rows.map(function (p) { return p.user_id; })).then(function () {
+        rows.forEach(function (p) { var row = el("div", "cm-person"); row.appendChild(avatar(p.user_id, "sm")); var w = el("button", "who"); w.type = "button"; w.appendChild(el("b", "", dname(p.user_id))); w.appendChild(el("span", "", "@" + p.username)); w.onclick = function () { openProfile(p.user_id); }; row.appendChild(w); box.appendChild(row); });
+        s.appendChild(box);
+      });
     });
   }
   $("search-form").onsubmit = function (e) { e.preventDefault(); runSearch($("search-q").value); };
@@ -1128,6 +1131,7 @@
     }).then(function () {
       try { history.replaceState({ tab: tab }, ""); } catch (e) {}
       window.addEventListener("popstate", function (e) {
+        if (window.__mmOpen) return;
         var s = e.state || {};
         if (s.user) { openProfile(s.user, true); return; }
         view = {}; tab = s.tab || "foryou"; $("profile-slot").textContent = ""; renderTabs(); loadFeed(true);

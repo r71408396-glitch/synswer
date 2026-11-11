@@ -280,8 +280,19 @@
       var vv = window.visualViewport;
       function fit() { if (!vv) return; d.style.height = vv.height + "px"; d.style.top = vv.offsetTop + "px"; }
       if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); fit(); }
-      var cur = null, pending = null;
+      var cur = null, pending = null, depth = 0, viaPop = false;
+      window.__mmOpen = true;
+      try { window.history.pushState({ mm: 1 }, "", location.href); depth = 1; } catch (e) {}
+      function onPop() {
+        var s = window.history.state;
+        if (s && s.mm === 1) { depth = 1; if (cur) empty(); }
+        else { depth = 0; viaPop = true; d.close(); }
+      }
+      window.addEventListener("popstate", onPop);
       d.addEventListener("close", function () {
+        window.removeEventListener("popstate", onPop);
+        if (!viaPop && depth > 0) { try { window.history.go(-depth); } catch (e) {} }
+        setTimeout(function () { window.__mmOpen = false; }, 400);
         clearInterval(pollT); clearInterval(listT); badge();
         if (vv) { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); }
       });
@@ -334,9 +345,10 @@
       }
       function thread(uid) {
         cur = uid; clearInterval(pollT); d.setAttribute("data-view", "thread"); main.textContent = ""; pending = null; markActive();
+        if (depth === 1) { try { window.history.pushState({ mm: 2 }, "", location.href); depth = 2; } catch (e) {} }
         C.loadProfiles([uid]);
         var th = el("div", "mm-th");
-        var back = el("button", "cm-btn ghost sm mm-back", "Back"); back.type = "button"; back.onclick = empty;
+        var back = el("button", "cm-btn ghost sm mm-back", "Back"); back.type = "button"; back.onclick = function () { if (depth === 2) window.history.back(); else empty(); };
         var who = el("button", "mm-who"); who.type = "button"; who.appendChild(C.avatar(uid, "sm")); who.appendChild(el("b", "", "@" + C.uname(uid))); who.appendChild(C.vbadge(uid));
         who.onclick = function () { d.close(); C.openProfile(uid); };
         var mute = el("button", "cm-btn ghost sm"), block = el("button", "cm-btn ghost sm"); mute.type = block.type = "button";
@@ -576,8 +588,8 @@
           want("tags") ? tagCounts(term.replace(/^#/, "").toLowerCase()) : []
         ]).then(function (r) {
           var people = (r[1].d.rows || []).filter(function (p) { return !C.isBlocked(p.user_id); }), posts = (r[2].d.rows || []).filter(function (p) { return !C.isBlocked(p.user_id); });
-          people.forEach(function (p) { C.prof[p.user_id] = p; });
-          return C.loadProfiles(posts.map(function (p) { return p.user_id; })).then(function () {
+          people.forEach(function (p) { if (!C.prof[p.user_id]) C.prof[p.user_id] = p; });
+          return C.loadProfiles(posts.map(function (p) { return p.user_id; }).concat(people.map(function (p) { return p.user_id; }))).then(function () {
             res.textContent = ""; var any = false;
             if (want("people") && people.length) { any = true; var a = section("People"); people.forEach(function (p) { a.appendChild(personRow(p.user_id)); }); }
             if (want("posts") && posts.length) { any = true; var b = section("Posts"); posts.forEach(function (p) { b.appendChild(postRow(p, "", term)); }); }
